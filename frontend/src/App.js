@@ -800,16 +800,11 @@ function App() {
                     <p className="text-sm text-gray-400 mt-1">Mínimo: R$ 10,00</p>
                   </div>
                   <div className="bg-white/5 rounded-lg p-4">
-                    <h4 className="text-white font-medium mb-2">Métodos de Pagamento:</h4>
+                    <h4 className="text-white font-medium mb-2">🛡️ Proteção BetArena:</h4>
                     <div className="space-y-2 text-sm text-gray-300">
-                      <div className="flex items-center space-x-2">
-                        <CreditCard className="w-4 h-4" />
-                        <span>PIX (Instantâneo)</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <CreditCard className="w-4 h-4" />
-                        <span>Cartão de Crédito/Débito</span>
-                      </div>
+                      <p>• <strong>Dinheiro protegido:</strong> Valores ficam seguros na plataforma</p>
+                      <p>• <strong>Transferência garantida:</strong> Pagamento automático ao vencedor</p>
+                      <p>• <strong>Zero risco de perda:</strong> Seu dinheiro está 100% seguro</p>
                     </div>
                   </div>
                   <Button 
