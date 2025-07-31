@@ -162,15 +162,18 @@ backend:
 
   - task: "Mercado Pago API integration"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: false
           agent: "user"
           comment: "User reports Mercado Pago payment links are not working. Need to investigate API keys, configuration, and payment flow."
+        - working: true
+          agent: "testing"
+          comment: "COMPREHENSIVE TESTING COMPLETED: Mercado Pago backend integration is WORKING CORRECTLY. ✅ Real MP integration active (real_mp: true), ✅ Production keys valid and functional, ✅ Payment preferences created successfully for all test amounts (R$10, R$50, R$100, R$250), ✅ Valid Mercado Pago URLs generated (both init_point and sandbox_init_point), ✅ Webhook endpoint accessible, ✅ Transaction history working. URLs return 403 status when accessed directly (normal MP behavior). Issue is likely frontend-related: popup blockers, JavaScript errors, or incorrect frontend implementation of window.open() for payment links."
 
 metadata:
   created_by: "main_agent"
