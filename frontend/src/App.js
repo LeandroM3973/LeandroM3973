@@ -269,6 +269,13 @@ function App() {
     setLoading(false);
   };
 
+  const logout = () => {
+    setCurrentUser(null);
+    setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+    setIsLogin(true);
+    setEmailExists(false);
+  };
+
   const createBet = async () => {
     if (!currentUser || !newBet.event_title.trim() || !newBet.event_description.trim()) return;
     setLoading(true);
