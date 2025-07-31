@@ -28,15 +28,19 @@ function App() {
   const [userTransactions, setUserTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // User form - simplified to just email for returning users
-  const [userForm, setUserForm] = useState({
+  // Login/Register form
+  const [authForm, setAuthForm] = useState({
     name: '',
     email: '',
-    phone: ''
+    phone: '',
+    password: '',
+    confirmPassword: ''
   });
 
-  // Check if user is returning (has email but missing name/phone)
-  const [isReturningUser, setIsReturningUser] = useState(false);
+  // Auth states
+  const [isLogin, setIsLogin] = useState(true); // true = login, false = register
+  const [emailExists, setEmailExists] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Create Bet Form
   const [newBet, setNewBet] = useState({
