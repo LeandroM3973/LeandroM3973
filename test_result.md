@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "o mercado pago não está funcionando o link de pagamento que foi integrado no site, indetifique o erro e me ajude a corrigir, por favor"
+user_problem_statement: "a função '' depositar '' não está funcionando em dispositivos movél, apenas no computador. Preciso que todas as funções funcionem perfeitamente tanto no computador quanto no celular"
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
