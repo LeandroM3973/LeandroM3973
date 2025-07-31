@@ -168,7 +168,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Fix mobile navigation tabs text overlap"
+    - "Bet creation API endpoint functionality"
+    - "User authentication and balance management"
+    - "Invite code system for bet sharing"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -176,3 +178,5 @@ test_plan:
 agent_communication:
     - agent: "main"
       message: "Successfully fixed mobile navigation tabs text overlap issue. Changed layout from 6 columns to 3 columns on mobile with responsive text sizing and shorter labels. Navigation is now fully readable on mobile devices."
+    - agent: "testing"
+      message: "BACKEND TESTING COMPLETED - CRITICAL FINDINGS: All backend APIs are working perfectly. Bet creation endpoint tested with exact user credentials (test@mobile.com, R$ 75.00 balance) - successfully created bet, deducted balance, generated invite code, and all related API calls responded correctly. The reported issue where 'frontend requests are not reaching backend' is NOT a backend problem. Backend is fully functional. Issue is likely: 1) Frontend JavaScript errors, 2) Network connectivity problems, 3) Incorrect API URL configuration in frontend, or 4) Browser-specific issues. Recommend checking browser developer tools console and network tab for failed requests."
