@@ -58,12 +58,23 @@ function App() {
     loadUsers();
     loadBets();
     loadWaitingBets();
+    
+    // Load user data if user is saved in localStorage
+    if (currentUser) {
+      loadUserBets();
+      loadUserTransactions();
+    }
   }, []);
 
   useEffect(() => {
     if (currentUser) {
+      // Save user to localStorage whenever currentUser changes
+      localStorage.setItem('betarena_user', JSON.stringify(currentUser));
       loadUserBets();
       loadUserTransactions();
+    } else {
+      // Remove user from localStorage when logged out
+      localStorage.removeItem('betarena_user');
     }
   }, [currentUser]);
 
