@@ -429,7 +429,7 @@ function App() {
             </div>
             <Button 
               variant="outline" 
-              onClick={() => setCurrentUser(null)}
+              onClick={logout}
               className="border-white/20 text-white hover:bg-white/10"
             >
               Sair
