@@ -895,7 +895,9 @@ function App() {
                 
                 <div className="bg-yellow-500/20 rounded-lg p-3 border border-yellow-500/30">
                   <p className="text-yellow-200 text-sm">
-                    ⏰ <strong>Tempo Limite:</strong> Após criar a aposta, você terá um <strong>link de convite</strong> para compartilhar. O adversário tem <strong>20 minutos</strong> para aceitar e depositar. Caso ninguém participe, o valor será <strong>automaticamente devolvido</strong> para sua conta.
+                    ⏰ <strong>Como Funciona:</strong> Após criar a aposta, você receberá um <strong>link completo</strong> para enviar ao seu adversário. 
+                    O link contém todas as informações da aposta (valor, evento, seu nome). O adversário tem <strong>20 minutos</strong> para clicar no link e aceitar. 
+                    Caso ninguém aceite, o valor será <strong>automaticamente devolvido</strong>.
                   </p>
                 </div>
               </CardContent>
