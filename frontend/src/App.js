@@ -380,6 +380,13 @@ function App() {
     }
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(amount);
+  };
+
   const formatTimeRemaining = (expiresAt) => {
     const now = new Date();
     const expiry = new Date(expiresAt);
