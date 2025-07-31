@@ -397,6 +397,11 @@ function App() {
             <p className="text-gray-300">
               {isLogin ? 'Entre na sua conta' : 'Crie sua conta'}
             </p>
+            <div className="mt-4 p-3 bg-blue-500/20 rounded-lg border border-blue-500/30">
+              <p className="text-blue-200 text-sm">
+                🛡️ <strong>Proteção Garantida:</strong> Protegemos seu dinheiro e garantimos que o valor seja entregue ao vencedor após o resultado final
+              </p>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
