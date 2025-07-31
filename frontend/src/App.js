@@ -827,7 +827,6 @@ function App() {
                     <div className="space-y-1 text-sm text-gray-300">
                       <p>• Transferência via PIX</p>
                       <p>• Processamento em até 24h</p>
-                      <p>• Sem taxas de saque</p>
                     </div>
                   </div>
                   <Button 
