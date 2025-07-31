@@ -370,46 +370,67 @@ function App() {
         // Redirect to real Mercado Pago (when using real keys)
         const paymentUrl = response.data.sandbox_init_point || response.data.init_point;
         
-        // Show payment confirmation dialog
-        const userChoice = window.confirm(
-          `💳 PAGAMENTO VIA MERCADO PAGO\n\n` +
-          `Valor: ${formatCurrency(depositAmount)}\n` +
-          `Você será redirecionado para o Mercado Pago\n\n` +
-          `✅ Clique OK para abrir o pagamento\n` +
-          `❌ Clique Cancelar para desistir`
-        );
+        // Detect if user is on mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+                         window.innerWidth <= 768;
         
-        if (userChoice) {
-          // Try window.open first
-          const paymentWindow = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+        if (isMobile) {
+          // Mobile-optimized flow
+          const userChoice = window.confirm(
+            `📱 PAGAMENTO MERCADO PAGO\n\n` +
+            `Valor: ${formatCurrency(depositAmount)}\n\n` +
+            `Você será redirecionado para completar o pagamento.\n\n` +
+            `✅ OK - Continuar com pagamento\n` +
+            `❌ Cancelar - Voltar`
+          );
           
-          // Check if popup was blocked after a short delay
-          setTimeout(() => {
-            if (!paymentWindow || paymentWindow.closed || typeof paymentWindow.closed == 'undefined') {
-              // Popup was blocked - show fallback
-              const fallbackChoice = window.confirm(
-                `🔒 POPUP BLOQUEADO\n\n` +
-                `Seu navegador bloqueou o popup do Mercado Pago.\n\n` +
-                `✅ Clique OK para abrir na mesma aba\n` +
-                `❌ Clique Cancelar para copiar o link`
-              );
-              
-              if (fallbackChoice) {
-                // Navigate to payment page in same tab
-                window.location.href = paymentUrl;
+          if (userChoice) {
+            // For mobile, navigate directly to avoid popup issues
+            alert('🚀 Redirecionando para o Mercado Pago...\n\nVocê será levado para a página de pagamento.');
+            window.location.href = paymentUrl;
+          }
+        } else {
+          // Desktop flow with popup handling
+          const userChoice = window.confirm(
+            `💳 PAGAMENTO VIA MERCADO PAGO\n\n` +
+            `Valor: ${formatCurrency(depositAmount)}\n` +
+            `Você será redirecionado para o Mercado Pago\n\n` +
+            `✅ Clique OK para abrir o pagamento\n` +
+            `❌ Clique Cancelar para desistir`
+          );
+          
+          if (userChoice) {
+            // Try window.open first on desktop
+            const paymentWindow = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+            
+            // Check if popup was blocked after a short delay
+            setTimeout(() => {
+              if (!paymentWindow || paymentWindow.closed || typeof paymentWindow.closed == 'undefined') {
+                // Popup was blocked - show fallback
+                const fallbackChoice = window.confirm(
+                  `🔒 POPUP BLOQUEADO\n\n` +
+                  `Seu navegador bloqueou o popup do Mercado Pago.\n\n` +
+                  `✅ Clique OK para abrir na mesma aba\n` +
+                  `❌ Clique Cancelar para copiar o link`
+                );
+                
+                if (fallbackChoice) {
+                  // Navigate to payment page in same tab
+                  window.location.href = paymentUrl;
+                } else {
+                  // Copy link to clipboard
+                  navigator.clipboard.writeText(paymentUrl).then(() => {
+                    alert(`🔗 LINK COPIADO!\n\n${paymentUrl}\n\n📋 Cole este link em uma nova aba para pagar no Mercado Pago.`);
+                  }).catch(() => {
+                    alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📋 Copie este link e abra em uma nova aba.`);
+                  });
+                }
               } else {
-                // Copy link to clipboard
-                navigator.clipboard.writeText(paymentUrl).then(() => {
-                  alert(`🔗 LINK COPIADO!\n\n${paymentUrl}\n\n📋 Cole este link em uma nova aba para pagar no Mercado Pago.`);
-                }).catch(() => {
-                  alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📋 Copie este link e abra em uma nova aba.`);
-                });
+                // Popup opened successfully
+                alert('🚀 Redirecionando para o Mercado Pago...\n\nComplete o pagamento na nova janela.');
               }
-            } else {
-              // Popup opened successfully
-              alert('🚀 Redirecionando para o Mercado Pago...\n\nComplete o pagamento na nova janela.');
-            }
-          }, 1000);
+            }, 1000);
+          }
         }
       }
       
