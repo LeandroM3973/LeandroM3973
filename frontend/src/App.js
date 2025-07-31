@@ -577,12 +577,15 @@ function App() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="my-bets" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-white/10 backdrop-blur-lg">
+          <TabsList className="grid w-full grid-cols-6 bg-white/10 backdrop-blur-lg">
             <TabsTrigger value="my-bets" className="text-white data-[state=active]:bg-white/20">
               Minhas Apostas
             </TabsTrigger>
             <TabsTrigger value="create" className="text-white data-[state=active]:bg-white/20">
               Criar Aposta
+            </TabsTrigger>
+            <TabsTrigger value="join-invite" className="text-white data-[state=active]:bg-white/20">
+              Aceitar Convite
             </TabsTrigger>
             <TabsTrigger value="payments" className="text-white data-[state=active]:bg-white/20">
               Pagamentos
