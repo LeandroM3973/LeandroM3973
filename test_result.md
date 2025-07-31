@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "a função '' depositar '' não está funcionando em dispositivos movél, apenas no computador. Preciso que todas as funções funcionem perfeitamente tanto no computador quanto no celular"
+user_problem_statement: "ao tentar efetuar um pagamento teste, gera a mensagem no mercado pago '' não foi possível processar seu pagamento ''"
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
