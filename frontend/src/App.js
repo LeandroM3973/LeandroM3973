@@ -189,12 +189,36 @@ function App() {
         amount: depositAmount
       });
       
-      // Redirect to Mercado Pago payment page
-      window.open(response.data.sandbox_init_point, '_blank');
+      if (response.data.demo_mode) {
+        // Show demo payment options
+        const result = window.confirm(
+          `💰 MODO DEMONSTRAÇÃO\n\n` +
+          `Valor: ${formatCurrency(depositAmount)}\n` +
+          `Transação: ${response.data.transaction_id}\n\n` +
+          `Clique OK para SIMULAR PAGAMENTO APROVADO\n` +
+          `Clique Cancelar para testar pagamento pendente`
+        );
+        
+        if (result) {
+          // Simulate approved payment
+          const approvalResponse = await axios.post(`${API}/payments/simulate-approval/${response.data.transaction_id}`);
+          alert(`✅ PAGAMENTO SIMULADO COM SUCESSO!\n\n${approvalResponse.data.message}\nValor: ${formatCurrency(approvalResponse.data.amount)}`);
+          
+          // Refresh user data
+          const userResponse = await axios.get(`${API}/users/${currentUser.id}`);
+          setCurrentUser(userResponse.data);
+          await loadUserTransactions();
+        } else {
+          alert('💡 Pagamento deixado como pendente para demonstração.\nEm produção, o usuário seria redirecionado para o Mercado Pago.');
+        }
+      } else {
+        // Redirect to real Mercado Pago (when using real keys)
+        window.open(response.data.sandbox_init_point, '_blank');
+      }
       
     } catch (error) {
       console.error('Error creating payment:', error);
-      alert('Erro ao criar pagamento');
+      alert('Erro ao criar pagamento: ' + (error.response?.data?.detail || 'Erro desconhecido'));
     }
     setLoading(false);
   };
