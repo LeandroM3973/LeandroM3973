@@ -54,9 +54,10 @@ function App() {
   const [depositAmount, setDepositAmount] = useState(100.00);
   const [withdrawAmount, setWithdrawAmount] = useState(50.00);
 
-  // Judge Panel
-  const [selectedBetForJudge, setSelectedBetForJudge] = useState(null);
-  const [selectedWinner, setSelectedWinner] = useState('');
+  // Invite handling
+  const [inviteCode, setInviteCode] = useState('');
+  const [inviteBet, setInviteBet] = useState(null);
+  const [inviteLoading, setInviteLoading] = useState(false);
 
   useEffect(() => {
     loadUsers();
