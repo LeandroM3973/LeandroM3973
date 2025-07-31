@@ -98,6 +98,7 @@ class Transaction(BaseModel):
 
 class Bet(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    invite_code: str = Field(default_factory=lambda: str(uuid.uuid4())[:8])  # Short invite code
     event_title: str
     event_type: EventType
     event_description: str
@@ -111,7 +112,7 @@ class Bet(BaseModel):
     status: BetStatus = BetStatus.WAITING
     created_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
-    expires_at: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(hours=24))  # 24h timeout
+    expires_at: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(minutes=20))  # 20 min timeout
     # New fields for platform fee tracking
     platform_fee: Optional[float] = None
     winner_payout: Optional[float] = None
