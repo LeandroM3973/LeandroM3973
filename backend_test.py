@@ -171,7 +171,51 @@ class BetArenaAPITester:
         )
         return response if success else []
 
-    def test_edge_cases(self):
+    def test_create_payment_preference(self, user_id, amount):
+        """Test creating Mercado Pago payment preference - PRIORITY TEST"""
+        success, response = self.run_test(
+            f"Create Payment Preference for R$ {amount}",
+            "POST",
+            "payments/create-preference",
+            200,
+            data={
+                "user_id": user_id,
+                "amount": amount
+            }
+        )
+        if success and 'preference_id' in response:
+            self.created_transactions.append(response)
+            print(f"   ✅ Payment preference created successfully!")
+            print(f"   📋 Preference ID: {response['preference_id']}")
+            print(f"   🔗 Payment URL: {response.get('init_point', 'N/A')}")
+            print(f"   🧪 Sandbox URL: {response.get('sandbox_init_point', 'N/A')}")
+            print(f"   📄 Transaction ID: {response.get('transaction_id', 'N/A')}")
+            return response
+        return None
+
+    def test_withdraw_funds(self, user_id, amount):
+        """Test withdrawal functionality"""
+        success, response = self.run_test(
+            f"Withdraw R$ {amount}",
+            "POST",
+            "payments/withdraw",
+            200,
+            data={
+                "user_id": user_id,
+                "amount": amount
+            }
+        )
+        return response if success else None
+
+    def test_get_user_transactions(self, user_id):
+        """Test getting user transaction history"""
+        success, response = self.run_test(
+            "Get User Transactions",
+            "GET",
+            f"transactions/{user_id}",
+            200
+        )
+        return response if success else []
         """Test edge cases and validations"""
         print("\n🧪 Testing Edge Cases...")
         
