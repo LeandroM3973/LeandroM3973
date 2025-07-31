@@ -591,15 +591,71 @@ async def get_waiting_bets():
     bets = await db.bets.find({"status": BetStatus.WAITING}).sort("created_at", -1).to_list(1000)
     return [Bet(**bet) for bet in bets]
 
-@api_router.get("/bets/user/{user_id}", response_model=List[Bet])
-async def get_user_bets(user_id: str):
-    bets = await db.bets.find({
-        "$or": [
-            {"creator_id": user_id},
-            {"opponent_id": user_id}
-        ]
-    }).sort("created_at", -1).to_list(1000)
-    return [Bet(**bet) for bet in bets]
+@api_router.post("/bets/process-expired")
+async def process_expired_bets():
+    """Process and cancel expired bets, refunding money to creators"""
+    current_time = datetime.utcnow()
+    
+    # Find expired bets that are still waiting
+    expired_bets = await db.bets.find({
+        "status": BetStatus.WAITING,
+        "expires_at": {"$lt": current_time}
+    }).to_list(1000)
+    
+    refunded_count = 0
+    
+    for bet in expired_bets:
+        # Refund money to creator
+        await db.users.update_one(
+            {"id": bet["creator_id"]},
+            {"$inc": {"balance": bet["amount"]}}
+        )
+        
+        # Create refund transaction
+        refund_transaction = Transaction(
+            user_id=bet["creator_id"],
+            amount=bet["amount"],
+            type=TransactionType.BET_CREDIT,  # Using bet_credit for refund
+            status=TransactionStatus.APPROVED
+        )
+        await db.transactions.insert_one(refund_transaction.dict())
+        
+        # Update bet status to expired
+        await db.bets.update_one(
+            {"id": bet["id"]},
+            {
+                "$set": {
+                    "status": BetStatus.EXPIRED,
+                    "completed_at": current_time
+                }
+            }
+        )
+        
+        refunded_count += 1
+    
+    return {
+        "message": f"Processed {refunded_count} expired bets",
+        "refunded_bets": refunded_count
+    }
+
+@api_router.get("/bets/check-expiry/{bet_id}")
+async def check_bet_expiry(bet_id: str):
+    """Check if a specific bet has expired"""
+    bet = await db.bets.find_one({"id": bet_id})
+    if not bet:
+        raise HTTPException(status_code=404, detail="Bet not found")
+    
+    current_time = datetime.utcnow()
+    is_expired = bet["expires_at"] < current_time
+    time_remaining = bet["expires_at"] - current_time if not is_expired else None
+    
+    return {
+        "bet_id": bet_id,
+        "status": bet["status"],
+        "is_expired": is_expired,
+        "expires_at": bet["expires_at"],
+        "time_remaining_seconds": time_remaining.total_seconds() if time_remaining else 0
+    }
 
 # Health Check
 @api_router.get("/")
