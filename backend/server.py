@@ -38,6 +38,7 @@ class BetStatus(str, Enum):
     ACTIVE = "active"
     COMPLETED = "completed"
     CANCELLED = "cancelled"
+    EXPIRED = "expired"
 
 class EventType(str, Enum):
     SPORTS = "sports"
