@@ -94,6 +94,10 @@ class Bet(BaseModel):
     status: BetStatus = BetStatus.WAITING
     created_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
+    # New fields for platform fee tracking
+    platform_fee: Optional[float] = None
+    winner_payout: Optional[float] = None
+    total_pot: Optional[float] = None
 
 class BetCreate(BaseModel):
     event_title: str
