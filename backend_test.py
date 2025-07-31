@@ -191,6 +191,44 @@ class BetArenaAPITester:
             print(f"   🔗 Payment URL: {response.get('init_point', 'N/A')}")
             print(f"   🧪 Sandbox URL: {response.get('sandbox_init_point', 'N/A')}")
             print(f"   📄 Transaction ID: {response.get('transaction_id', 'N/A')}")
+            
+            # CRITICAL ANALYSIS FOR MERCADO PAGO ISSUE
+            print(f"\n   🔍 MERCADO PAGO INTEGRATION ANALYSIS:")
+            if response.get('real_mp'):
+                print(f"   ✅ Real Mercado Pago integration is ACTIVE")
+                print(f"   🔑 Using production keys successfully")
+            elif response.get('demo_mode'):
+                print(f"   ⚠️  DEMO MODE is active - Real MP integration failed")
+                print(f"   🚨 This indicates a problem with MP configuration")
+            
+            # Test URL accessibility
+            init_point = response.get('init_point')
+            sandbox_init_point = response.get('sandbox_init_point')
+            
+            if init_point and init_point != 'N/A':
+                print(f"   🌐 Testing init_point URL accessibility...")
+                try:
+                    import requests
+                    url_test = requests.head(init_point, timeout=10)
+                    if url_test.status_code in [200, 302, 301]:
+                        print(f"   ✅ init_point URL is accessible (Status: {url_test.status_code})")
+                    else:
+                        print(f"   ❌ init_point URL returned status: {url_test.status_code}")
+                except Exception as e:
+                    print(f"   ❌ init_point URL test failed: {str(e)}")
+            
+            if sandbox_init_point and sandbox_init_point != 'N/A':
+                print(f"   🧪 Testing sandbox_init_point URL accessibility...")
+                try:
+                    import requests
+                    url_test = requests.head(sandbox_init_point, timeout=10)
+                    if url_test.status_code in [200, 302, 301]:
+                        print(f"   ✅ sandbox_init_point URL is accessible (Status: {url_test.status_code})")
+                    else:
+                        print(f"   ❌ sandbox_init_point URL returned status: {url_test.status_code}")
+                except Exception as e:
+                    print(f"   ❌ sandbox_init_point URL test failed: {str(e)}")
+            
             return response
         return None
 
