@@ -48,6 +48,7 @@ class TransactionType(str, Enum):
     WITHDRAWAL = "withdrawal"
     BET_DEBIT = "bet_debit"
     BET_CREDIT = "bet_credit"
+    PLATFORM_FEE = "platform_fee"
 
 class TransactionStatus(str, Enum):
     PENDING = "pending"
