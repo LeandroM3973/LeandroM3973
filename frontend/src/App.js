@@ -640,24 +640,30 @@ function App() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="my-bets" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-white/10 backdrop-blur-lg">
-            <TabsTrigger value="my-bets" className="text-white data-[state=active]:bg-white/20">
-              Minhas Apostas
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 bg-white/10 backdrop-blur-lg">
+            <TabsTrigger value="my-bets" className="text-white data-[state=active]:bg-white/20 text-xs md:text-sm">
+              <span className="hidden sm:inline">Minhas Apostas</span>
+              <span className="sm:hidden">Apostas</span>
             </TabsTrigger>
-            <TabsTrigger value="create" className="text-white data-[state=active]:bg-white/20">
-              Criar Aposta
+            <TabsTrigger value="create" className="text-white data-[state=active]:bg-white/20 text-xs md:text-sm">
+              <span className="hidden sm:inline">Criar Aposta</span>
+              <span className="sm:hidden">Criar</span>
             </TabsTrigger>
-            <TabsTrigger value="send-invite" className="text-white data-[state=active]:bg-white/20">
-              Enviar Convite
+            <TabsTrigger value="send-invite" className="text-white data-[state=active]:bg-white/20 text-xs md:text-sm">
+              <span className="hidden sm:inline">Enviar Convite</span>
+              <span className="sm:hidden">Convite</span>
             </TabsTrigger>
-            <TabsTrigger value="payments" className="text-white data-[state=active]:bg-white/20">
-              Pagamentos
+            <TabsTrigger value="payments" className="text-white data-[state=active]:bg-white/20 text-xs md:text-sm">
+              <span className="hidden sm:inline">Pagamentos</span>
+              <span className="sm:hidden">Pagar</span>
             </TabsTrigger>
-            <TabsTrigger value="transactions" className="text-white data-[state=active]:bg-white/20">
-              Histórico
+            <TabsTrigger value="transactions" className="text-white data-[state=active]:bg-white/20 text-xs md:text-sm">
+              <span className="hidden sm:inline">Histórico</span>
+              <span className="sm:hidden">Histórico</span>
             </TabsTrigger>
-            <TabsTrigger value="judge" className="text-white data-[state=active]:bg-white/20">
-              Juiz
+            <TabsTrigger value="judge" className="text-white data-[state=active]:bg-white/20 text-xs md:text-sm">
+              <span className="hidden sm:inline">Juiz</span>
+              <span className="sm:hidden">Juiz</span>
             </TabsTrigger>
           </TabsList>
 
