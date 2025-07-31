@@ -59,6 +59,10 @@ function App() {
   const [inviteBet, setInviteBet] = useState(null);
   const [inviteLoading, setInviteLoading] = useState(false);
 
+  // Judge Panel
+  const [selectedBetForJudge, setSelectedBetForJudge] = useState(null);
+  const [selectedWinner, setSelectedWinner] = useState('');
+
   useEffect(() => {
     loadUsers();
     loadBets();
