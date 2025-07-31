@@ -494,7 +494,7 @@ async def declare_winner(bet_id: str, winner_data: DeclareWinner):
     platform_transaction = Transaction(
         user_id="platform",  # Special user ID for platform
         amount=platform_fee,
-        type="platform_fee",  # Special transaction type
+        type=TransactionType.PLATFORM_FEE,  # Fixed enum usage
         status=TransactionStatus.APPROVED
     )
     await db.transactions.insert_one(platform_transaction.dict())
