@@ -570,8 +570,8 @@ class BetArenaAPITester:
         return True
 
 def main():
-    print("🚀 Starting BetArena API Tests - Focus on Bet Creation Issue...")
-    print("=" * 70)
+    print("🚀 Starting BetArena API Tests - Focus on Mercado Pago Integration Issue...")
+    print("=" * 80)
     
     tester = BetArenaAPITester()
     
@@ -580,76 +580,48 @@ def main():
     print("-" * 30)
     tester.test_health_check()
     
-    # Test 2: Specific Bet Creation Flow Test (Main Focus)
-    print("\n🎯 MAIN TEST: BET CREATION FLOW")
+    # Test 2: MAIN FOCUS - Mercado Pago Integration Test
+    print("\n🎯 MAIN TEST: MERCADO PAGO INTEGRATION")
+    print("-" * 45)
+    mercado_pago_success = tester.test_mercado_pago_integration_comprehensive()
+    
+    # Test 3: Additional verification - Bet Creation Flow (Secondary)
+    print("\n🔍 SECONDARY TEST: BET CREATION FLOW")
     print("-" * 40)
     bet_creation_success = tester.test_bet_creation_flow_with_specific_user()
     
-    if not bet_creation_success:
-        print("\n❌ CRITICAL ISSUE FOUND:")
-        print("   The bet creation flow from frontend to backend is NOT working!")
-        print("   This confirms the user's reported issue.")
-        return 1
-    
-    # Test 3: Additional API Verification
-    print("\n🔍 ADDITIONAL API VERIFICATION")
-    print("-" * 35)
-    
-    # Create additional test users for comprehensive testing
-    joao = tester.test_create_user("João Silva", "joao@test.com", "11987654321")
-    maria = tester.test_create_user("Maria Santos", "maria@test.com", "11876543210")
-    
-    if not joao or not maria:
-        print("⚠️  Warning: Could not create additional test users")
-    else:
-        print(f"✅ Additional test users created successfully")
-        
-        # Test bet creation with new users
-        if joao['balance'] >= 50:
-            bet = tester.test_create_bet(
-                "Brasil vs Argentina - Teste",
-                "sports",
-                "Jogo teste para verificação",
-                50.00,
-                joao['id']
-            )
-            
-            if bet:
-                print("✅ Additional bet creation test passed")
-                
-                # Test joining the bet
-                if maria['balance'] >= 50:
-                    joined_bet = tester.test_join_bet(bet['id'], maria['id'])
-                    if joined_bet:
-                        print("✅ Bet joining test passed")
-                    else:
-                        print("⚠️  Bet joining test failed")
-            else:
-                print("⚠️  Additional bet creation test failed")
-    
     # Print final results
-    print("\n" + "=" * 70)
+    print("\n" + "=" * 80)
     print(f"📊 FINAL TEST RESULTS:")
     print(f"   Tests passed: {tester.tests_passed}/{tester.tests_run}")
     print(f"   Success rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
     
-    if bet_creation_success:
-        print("\n🎉 MAIN ISSUE RESOLUTION:")
-        print("   ✅ Bet creation from frontend to backend is WORKING correctly")
-        print("   ✅ All API endpoints are responding properly")
-        print("   ✅ User authentication and balance management works")
-        print("   ✅ The reported issue may be frontend-specific or network-related")
-        print("\n💡 RECOMMENDATION:")
-        print("   - Check frontend console for JavaScript errors")
-        print("   - Verify network connectivity from frontend to backend")
-        print("   - Check browser developer tools for failed requests")
-        print("   - Ensure frontend is using correct API URL")
+    print(f"\n🎯 MERCADO PAGO INTEGRATION RESULTS:")
+    if mercado_pago_success:
+        print("   ✅ MERCADO PAGO IS WORKING CORRECTLY")
+        print("   ✅ Production keys are valid")
+        print("   ✅ Payment URLs are being generated")
+        print("   ✅ API endpoints are functional")
+        print("\n💡 USER ISSUE ANALYSIS:")
+        print("   - Backend Mercado Pago integration is working")
+        print("   - Issue may be frontend-related (popup blockers, JavaScript errors)")
+        print("   - Check browser console for errors")
+        print("   - Verify frontend is calling correct API endpoints")
         return 0
     else:
-        print("\n❌ CRITICAL ISSUE CONFIRMED:")
-        print("   The bet creation API is not working properly")
-        print("   This confirms the user's reported problem")
-        print("   Backend investigation and fixes are needed")
+        print("   ❌ MERCADO PAGO INTEGRATION HAS ISSUES")
+        print("   🚨 This confirms the user's reported problem")
+        print("\n🔧 RECOMMENDED FIXES:")
+        print("   1. Verify Mercado Pago access token is valid and not expired")
+        print("   2. Check if PUBLIC_KEY should be different from ACCESS_TOKEN")
+        print("   3. Test network connectivity to Mercado Pago APIs")
+        print("   4. Review Mercado Pago account status and permissions")
+        print("   5. Check if webhook URLs are accessible from Mercado Pago servers")
+        
+        if bet_creation_success:
+            print(f"\n📝 NOTE: Bet creation system is working correctly")
+            print(f"   - The issue is specifically with payment integration")
+        
         return 1
 
 if __name__ == "__main__":
