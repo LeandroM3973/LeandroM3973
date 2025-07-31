@@ -135,20 +135,17 @@ frontend:
           agent: "main"
           comment: "ISSUE RESOLVED: Backend generates invite_code automatically and correctly. Frontend displays invite links perfectly when bets exist. Problem was user creating bets without sufficient balance. After adding R$ 100 balance and creating bet directly via API, invite link appears correctly in both 'Enviar Convite' and 'Minhas Apostas' tabs with full functionality (copy, share, instructions)."
 
-  - task: "Mercado Pago payment integration issue"
-    implemented: true
-    working: true
+  - task: "Mobile deposit function not working"
+    implemented: false
+    working: false
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
         - working: false
           agent: "user"
-          comment: "User reported that Mercado Pago payment links integrated in the site are not working. Payment flow is not functioning properly."
-        - working: true
-          agent: "main"
-          comment: "ISSUE RESOLVED: Root cause was popup blocker preventing window.open() from opening Mercado Pago payment links. Implemented comprehensive solution with: 1) User confirmation dialog before payment, 2) Popup detection and fallback options, 3) Alternative methods (same-tab navigation, clipboard copy) when popups are blocked, 4) Clear user instructions for each scenario. Backend Mercado Pago integration was working perfectly - issue was frontend UX."
+          comment: "User reports that the 'depositar' (deposit) function is not working on mobile devices, only works on computers. Need all functions to work perfectly on both computer and mobile."
 
 backend:
   - task: "Bet creation API and invite code generation"
