@@ -245,89 +245,124 @@ async def get_all_users():
 # Payment Routes
 @api_router.post("/payments/create-preference")
 async def create_payment_preference(deposit_request: DepositRequest):
+    """Create payment preference - handles both test and production modes"""
+    
+    if not mp or not mp_valid:
+        # Return demo mode when MP is not properly configured
+        transaction = Transaction(
+            id=str(uuid.uuid4()),
+            user_id=deposit_request.user_id,
+            type=TransactionType.DEPOSIT,
+            amount=deposit_request.amount,
+            status=TransactionStatus.PENDING,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow()
+        )
+        
+        await db.transactions.insert_one(transaction.dict())
+        
+        return {
+            "demo_mode": True,
+            "transaction_id": transaction.id,
+            "message": "Demo mode - Mercado Pago not configured. Use 'OK' to simulate approval."
+        }
+    
+    # Get user details for payment
     user = await db.users.find_one({"id": deposit_request.user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
     # Create transaction record
     transaction = Transaction(
+        id=str(uuid.uuid4()),
         user_id=deposit_request.user_id,
-        amount=deposit_request.amount,
         type=TransactionType.DEPOSIT,
-        status=TransactionStatus.PENDING
+        amount=deposit_request.amount,
+        status=TransactionStatus.PENDING,
+        created_at=datetime.utcnow(),
+        updated_at=datetime.utcnow()
     )
+    
     await db.transactions.insert_one(transaction.dict())
     
-    # Try real Mercado Pago integration first
-    if mp:
-        try:
-            preference_data = {
-                "items": [
-                    {
-                        "title": f"Depósito BetArena - {user['name']}",
-                        "quantity": 1,
-                        "unit_price": deposit_request.amount,
-                        "currency_id": "BRL"
-                    }
-                ],
-                "payer": {
-                    "name": user["name"],
-                    "email": user["email"],
-                    "phone": {
-                        "number": user["phone"]
-                    }
-                },
-                "external_reference": transaction.id,
-                "notification_url": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/api/payments/webhook",
-                "back_urls": {
-                    "success": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success",
-                    "failure": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-failure",
-                    "pending": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-pending"
-                },
-                "auto_return": "approved",
-                "payment_methods": {
-                    "excluded_payment_types": [],
-                    "installments": 12
+    try:
+        # Determine if using test or production credentials
+        is_test_mode = mp_access_token.startswith('TEST-')
+        
+        # Create payment preference
+        preference_data = {
+            "items": [
+                {
+                    "id": "deposit",
+                    "title": f"Depósito - {user['name']}",
+                    "quantity": 1,
+                    "unit_price": float(deposit_request.amount),
+                    "currency_id": "BRL"
                 }
+            ],
+            "payer": {
+                "name": user["name"],
+                "email": user["email"],
+                "phone": {
+                    "number": user["phone"]
+                }
+            },
+            "external_reference": transaction.id,
+            "notification_url": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/api/payments/webhook",
+            "back_urls": {
+                "success": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success",
+                "failure": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-failure",
+                "pending": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-pending"
+            },
+            "auto_return": "approved",
+            "payment_methods": {
+                "excluded_payment_types": [],
+                "installments": 12
             }
+        }
+        
+        # Add test-specific configuration if in test mode
+        if is_test_mode:
+            preference_data["payment_methods"]["excluded_payment_methods"] = []
+        
+        preference_response = mp.preference().create(preference_data)
+        
+        if preference_response["status"] == 201:
+            # Update transaction with payment ID
+            await db.transactions.update_one(
+                {"id": transaction.id},
+                {"$set": {"payment_id": preference_response["response"]["id"]}}
+            )
             
-            preference_response = mp.preference().create(preference_data)
+            environment_msg = "TESTE (sandbox)" if is_test_mode else "PRODUÇÃO"
             
-            if preference_response["status"] == 201:
-                # Update transaction with payment ID
-                await db.transactions.update_one(
-                    {"id": transaction.id},
-                    {"$set": {"payment_id": preference_response["response"]["id"]}}
-                )
-                
-                return {
-                    "preference_id": preference_response["response"]["id"],
-                    "init_point": preference_response["response"]["init_point"],
-                    "sandbox_init_point": preference_response["response"]["sandbox_init_point"],
-                    "transaction_id": transaction.id,
-                    "real_mp": True,
-                    "message": "Pagamento via Mercado Pago configurado com sucesso!"
-                }
+            return {
+                "preference_id": preference_response["response"]["id"],
+                "init_point": preference_response["response"]["init_point"],
+                "sandbox_init_point": preference_response["response"]["sandbox_init_point"],
+                "transaction_id": transaction.id,
+                "real_mp": True,
+                "test_mode": is_test_mode,
+                "message": f"Pagamento via Mercado Pago configurado com sucesso! Ambiente: {environment_msg}"
+            }
+        else:
+            logging.error(f"MP Error: {preference_response}")
+            # Log the detailed error for debugging
+            error_detail = preference_response.get("response", {})
+            print(f"❌ Mercado Pago API Error: {error_detail}")
+            
+            # Return more specific error message
+            if preference_response["status"] == 401:
+                raise HTTPException(status_code=401, detail="Credenciais do Mercado Pago inválidas. Verifique ACCESS_TOKEN.")
+            elif preference_response["status"] == 400:
+                raise HTTPException(status_code=400, detail="Dados de pagamento inválidos. Verifique as informações do usuário.")
             else:
-                logging.error(f"MP Error: {preference_response}")
-                raise Exception("MP API Error")
-                
-        except Exception as e:
-            logging.error(f"Mercado Pago error: {str(e)}")
-            # Fall back to demo mode
-            pass
+                raise HTTPException(status_code=500, detail=f"Erro no Mercado Pago: {error_detail}")
     
-    # DEMO MODE: Return simulated payment preference
-    simulated_preference = {
-        "preference_id": f"demo-{transaction.id}",
-        "init_point": f"https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=demo-{transaction.id}",
-        "sandbox_init_point": f"https://demo-payment-simulator.com/pay?amount={deposit_request.amount}&transaction={transaction.id}",
-        "transaction_id": transaction.id,
-        "demo_mode": True,
-        "message": "MODO DEMONSTRAÇÃO: Use o botão 'Simular Pagamento Aprovado' para aprovar este depósito"
-    }
-    
-    return simulated_preference
+    except Exception as e:
+        logging.error(f"Payment preference creation error: {str(e)}")
+        print(f"❌ Payment Error Details: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Erro ao criar preferência de pagamento: {str(e)}")
 
 @api_router.post("/payments/simulate-approval/{transaction_id}")
 async def simulate_payment_approval(transaction_id: str):
