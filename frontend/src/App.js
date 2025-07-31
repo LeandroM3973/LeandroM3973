@@ -680,154 +680,167 @@ function App() {
             </div>
           </div>
 
-          {/* Join by Invite */}
-          <TabsContent value="join-invite">
+          {/* Send Invite */}
+          <TabsContent value="send-invite">
             <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-white">Aceitar Convite de Aposta</h2>
+              <h2 className="text-2xl font-bold text-white">Enviar Convite de Aposta</h2>
               
-              <Card className="bg-white/10 backdrop-blur-lg border-white/20">
-                <CardHeader>
-                  <CardTitle className="text-white flex items-center space-x-2">
-                    <Link className="w-6 h-6" />
-                    <span>Código de Convite</span>
-                  </CardTitle>
-                  <p className="text-gray-300 text-sm">
-                    Cole aqui o código de convite que você recebeu para participar de uma aposta
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex space-x-2">
-                    <Input
-                      placeholder="Ex: abc12345"
-                      value={inviteCode}
-                      onChange={(e) => setInviteCode(e.target.value)}
-                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                      onKeyPress={(e) => e.key === 'Enter' && checkInviteCode()}
-                    />
-                    <Button 
-                      onClick={checkInviteCode}
-                      disabled={inviteLoading || !inviteCode.trim()}
-                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                    >
-                      {inviteLoading ? 'Verificando...' : 'Verificar'}
-                    </Button>
+              <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-lg p-4 border border-green-500/30">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0">
+                    <div className="w-10 h-10 bg-green-500/30 rounded-full flex items-center justify-center">
+                      <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.031 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
                   </div>
-                  
-                  <div className="bg-blue-500/20 rounded-lg p-3 border border-blue-500/30">
-                    <p className="text-blue-200 text-sm">
-                      💡 <strong>Como funciona:</strong> Cole o código de 8 caracteres que você recebeu via WhatsApp, 
-                      Telegram ou outro meio. Exemplo: <code className="bg-white/20 px-1 rounded">abc12345</code>
+                  <div className="flex-1">
+                    <h3 className="text-white font-semibold">Garantia Total da BetArena</h3>
+                    <p className="text-gray-300 text-sm mt-1">
+                      Quando você cria uma aposta, <strong>seu dinheiro fica protegido e retido</strong> na plataforma até o resultado final. 
+                      A BetArena <strong>garante que a parte vencedora será paga corretamente</strong> após a decisão do juiz. 
+                      Zero risco de não receber!
                     </p>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Invite Bet Details */}
-              {inviteBet && (
-                <Card className="bg-white/10 backdrop-blur-lg border-white/20">
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-white">Detalhes da Aposta</CardTitle>
-                      <Badge className="bg-yellow-500 text-white">
-                        <Clock className="w-4 h-4 mr-1" />
-                        Aguardando
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-white">{inviteBet.event_title}</h3>
-                      <p className="text-gray-300 text-sm">{inviteBet.event_description}</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-3 bg-white/5 rounded">
-                        <Users className="w-6 h-6 text-blue-400 mx-auto mb-2" />
-                        <p className="text-gray-400 text-sm">Adversário</p>
-                        <p className="text-white font-semibold">{inviteBet.creator_name}</p>
-                      </div>
-                      
-                      <div className="text-center p-3 bg-white/5 rounded">
-                        <DollarSign className="w-6 h-6 text-green-400 mx-auto mb-2" />
-                        <p className="text-gray-400 text-sm">Valor para Depositar</p>
-                        <p className="text-white font-semibold text-lg">{formatCurrency(inviteBet.amount)}</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-orange-500/20 rounded-lg p-3 border border-orange-500/30">
-                      <p className="text-orange-200 text-sm text-center">
-                        ⏰ <strong>Tempo restante:</strong> {formatTimeRemaining(inviteBet.expires_at)}
-                      </p>
-                    </div>
-
-                    {/* Prize Information */}
-                    <div className="bg-green-500/20 rounded-lg p-4 border border-green-500/30">
-                      <h4 className="text-white font-semibold mb-2">💰 Informações do Prêmio</h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="text-gray-300">Valor total do pote:</span>
-                          <span className="text-white font-semibold">{formatCurrency(inviteBet.amount * 2)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-300">Taxa da plataforma (20%):</span>
-                          <span className="text-yellow-400">-{formatCurrency(inviteBet.amount * 2 * 0.20)}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-300">Prêmio para o vencedor:</span>
-                          <span className="text-green-400 font-semibold">{formatCurrency(inviteBet.amount * 2 * 0.80)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Badge variant="outline" className="border-white/20 text-white">
-                      {inviteBet.event_type}
-                    </Badge>
-
-                    {/* Action Buttons */}
-                    <div className="space-y-3">
-                      {currentUser.balance >= inviteBet.amount ? (
-                        <Button 
-                          onClick={joinBetByInvite}
-                          disabled={loading}
-                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-lg py-3"
-                        >
-                          {loading ? 'Entrando na Aposta...' : `Aceitar Convite - Depositar ${formatCurrency(inviteBet.amount)}`}
-                        </Button>
-                      ) : (
-                        <div className="space-y-2">
-                          <Button 
-                            disabled
-                            className="w-full bg-gray-600 text-lg py-3"
-                          >
-                            Saldo Insuficiente
-                          </Button>
-                          <p className="text-center text-red-400 text-sm">
-                            Você precisa de {formatCurrency(inviteBet.amount)} para aceitar este convite
-                          </p>
-                        </div>
-                      )}
-                      
-                      <Button 
-                        onClick={() => {
-                          setInviteCode('');
-                          setInviteBet(null);
-                        }}
-                        variant="outline"
-                        className="w-full border-white/20 text-white hover:bg-white/10"
-                      >
-                        Cancelar
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {!inviteBet && (
-                <div className="text-center py-12">
-                  <Link className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-300">Digite um código de convite para ver os detalhes da aposta</p>
                 </div>
-              )}
+              </div>
+
+              {/* Active Waiting Bets */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-white">Suas Apostas Aguardando Adversário</h3>
+                
+                {userBets.filter(bet => bet.status === 'waiting' && bet.creator_id === currentUser.id).length > 0 ? (
+                  <div className="grid gap-4">
+                    {userBets.filter(bet => bet.status === 'waiting' && bet.creator_id === currentUser.id).map((bet) => (
+                      <Card key={bet.id} className="bg-white/10 backdrop-blur-lg border-white/20">
+                        <CardHeader>
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <CardTitle className="text-white text-lg">{bet.event_title}</CardTitle>
+                              <p className="text-gray-300 text-sm mt-1">{bet.event_description}</p>
+                            </div>
+                            <Badge className="bg-yellow-500 text-white">
+                              <Clock className="w-4 h-4 mr-1" />
+                              Aguardando
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="text-center p-3 bg-white/5 rounded">
+                              <DollarSign className="w-6 h-6 text-green-400 mx-auto mb-2" />
+                              <p className="text-gray-400 text-sm">Valor Apostado</p>
+                              <p className="text-white font-semibold">{formatCurrency(bet.amount)}</p>
+                            </div>
+                            
+                            <div className="text-center p-3 bg-white/5 rounded">
+                              <Trophy className="w-6 h-6 text-yellow-400 mx-auto mb-2" />
+                              <p className="text-gray-400 text-sm">Prêmio para Vencedor</p>
+                              <p className="text-white font-semibold">{formatCurrency(bet.amount * 2 * 0.80)}</p>
+                            </div>
+                          </div>
+
+                          {/* Main Invite Link Section */}
+                          <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg p-4 border border-blue-500/30">
+                            <div className="text-center mb-4">
+                              <h4 className="text-white font-semibold text-lg flex items-center justify-center">
+                                🔗 Link de Convite Gerado
+                              </h4>
+                              <p className="text-blue-300 text-sm">Compartilhe este link com seu adversário</p>
+                            </div>
+                            
+                            <div className="bg-black/30 rounded-lg p-3 mb-4">
+                              <p className="text-white text-sm font-mono break-all text-center">
+                                {`${window.location.origin}/invite/${bet.invite_code}`}
+                              </p>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                              <Button
+                                onClick={() => copyInviteLink(bet.invite_code)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <Copy className="w-4 h-4 mr-2" />
+                                Copiar Link
+                              </Button>
+                              <Button
+                                onClick={() => shareInviteLink(bet.invite_code)}
+                                className="bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <Share2 className="w-4 h-4 mr-2" />
+                                Compartilhar
+                              </Button>
+                            </div>
+                            
+                            <div className="bg-yellow-500/20 rounded-lg p-3 border border-yellow-500/30">
+                              <h5 className="text-yellow-200 font-semibold text-sm mb-2">📱 Como Enviar o Convite:</h5>
+                              <ul className="text-yellow-200 text-xs space-y-1">
+                                <li>• <strong>WhatsApp:</strong> Cole o link na conversa</li>
+                                <li>• <strong>Telegram:</strong> Envie o link diretamente</li>
+                                <li>• <strong>SMS/Email:</strong> Compartilhe o link completo</li>
+                                <li>• <strong>Presencial:</strong> Mostre o QR Code (se disponível)</li>
+                              </ul>
+                            </div>
+                          </div>
+
+                          {/* Security and Time Info */}
+                          <div className="space-y-3">
+                            <div className="bg-green-500/20 rounded-lg p-3 border border-green-500/30">
+                              <p className="text-green-200 text-sm text-center">
+                                🔒 <strong>Seu dinheiro está protegido:</strong> Os {formatCurrency(bet.amount)} ficam retidos na plataforma até o resultado final
+                              </p>
+                            </div>
+                            
+                            {bet.expires_at && (
+                              <div className="bg-orange-500/20 rounded-lg p-3 border border-orange-500/30 text-center">
+                                <p className="text-orange-200 text-sm">
+                                  ⏰ <strong>Tempo restante:</strong> {formatTimeRemaining(bet.expires_at)}
+                                </p>
+                                <p className="text-orange-300 text-xs mt-1">
+                                  Se ninguém aceitar, o valor será devolvido automaticamente
+                                </p>
+                              </div>
+                            )}
+                          </div>
+
+                          <Badge variant="outline" className="border-white/20 text-white">
+                            {bet.event_type}
+                          </Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+                    <CardContent className="text-center py-12">
+                      <Link className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                      <h3 className="text-white font-semibold mb-2">Nenhuma Aposta Aguardando</h3>
+                      <p className="text-gray-300 mb-4">
+                        Você não possui apostas aguardando adversário no momento.
+                      </p>
+                      <Button
+                        onClick={() => document.querySelector('[data-state="inactive"][id*="create"]').click()}
+                        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                      >
+                        Criar Nova Aposta
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* Instructions */}
+              <div className="bg-blue-500/20 rounded-lg p-4 border border-blue-500/30">
+                <h4 className="text-white font-semibold mb-3">💡 Como Funciona o Sistema de Convites</h4>
+                <div className="space-y-2 text-blue-200 text-sm">
+                  <p><strong>1. Você cria a aposta</strong> → Sistema gera link único automaticamente</p>
+                  <p><strong>2. Compartilha o link</strong> → Adversário recebe todas as informações</p>
+                  <p><strong>3. Adversário aceita</strong> → Ambos depósitos ficam protegidos na plataforma</p>
+                  <p><strong>4. Vocês jogam/competem</strong> → Juiz assiste e declara o vencedor</p>
+                  <p><strong>5. Pagamento automático</strong> → Vencedor recebe o prêmio na conta</p>
+                </div>
+              </div>
             </div>
           </TabsContent>
 
