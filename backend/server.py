@@ -110,6 +110,7 @@ class Bet(BaseModel):
     status: BetStatus = BetStatus.WAITING
     created_at: datetime = Field(default_factory=datetime.utcnow)
     completed_at: Optional[datetime] = None
+    expires_at: datetime = Field(default_factory=lambda: datetime.utcnow() + timedelta(hours=24))  # 24h timeout
     # New fields for platform fee tracking
     platform_fee: Optional[float] = None
     winner_payout: Optional[float] = None
