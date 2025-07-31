@@ -124,14 +124,34 @@ class WithdrawRequest(BaseModel):
 # User Routes
 @api_router.post("/users", response_model=User)
 async def create_user(user_data: UserCreate):
-    # Check if user already exists by email
+    # Check if user already exists by email (PRIMARY LOGIN METHOD)
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
+        # User exists - return existing user data (AUTO LOGIN)
+        print(f"Existing user found for email: {user_data.email}")
         return User(**existing_user)
     
+    # New user - create account
     user = User(**user_data.dict())
     await db.users.insert_one(user.dict())
+    print(f"New user created for email: {user_data.email}")
     return user
+
+@api_router.post("/users/login")
+async def login_user(email: str):
+    """Login user by email only"""
+    user = await db.users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return User(**user)
+
+@api_router.get("/users/email/{email}", response_model=User)
+async def get_user_by_email(email: str):
+    """Get user by email address"""
+    user = await db.users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return User(**user)
 
 @api_router.get("/users/{user_id}", response_model=User)
 async def get_user(user_id: str):
