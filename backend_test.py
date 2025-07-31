@@ -216,43 +216,170 @@ class BetArenaAPITester:
             f"transactions/{user_id}",
             200
         )
-        return response if success else []
-        """Test edge cases and validations"""
-        print("\n🧪 Testing Edge Cases...")
-        
-        # Test creating bet with insufficient balance
-        if self.created_users:
-            user = self.created_users[0]
-            self.run_test(
-                "Create Bet with Insufficient Balance",
-                "POST",
-                "bets",
-                400,
-                data={
-                    "event_title": "Expensive Bet",
-                    "event_type": "custom",
-                    "event_description": "This bet costs more than user balance",
-                    "amount": 2000,  # More than 1000 starting balance
-                    "creator_id": user['id']
-                }
-            )
-
-        # Test joining non-existent bet
-        self.run_test(
-            "Join Non-existent Bet",
+    def test_login_user(self, email, password):
+        """Test user login"""
+        success, response = self.run_test(
+            f"Login User '{email}'",
             "POST",
-            "bets/fake-bet-id/join",
-            404,
-            data={"user_id": "fake-user-id"}
+            "users/login",
+            200,
+            data={
+                "email": email,
+                "password": password
+            }
         )
+        return response if success else None
 
-        # Test getting non-existent user
-        self.run_test(
-            "Get Non-existent User",
-            "GET",
-            "users/fake-user-id",
-            404
+    def test_bet_creation_flow_with_specific_user(self):
+        """Test the specific bet creation flow reported by user"""
+        print("\n🎯 TESTING SPECIFIC BET CREATION ISSUE...")
+        print("=" * 60)
+        
+        # Test with the specific user credentials provided
+        test_user_email = "test@mobile.com"
+        test_user_password = "password123"
+        
+        # First, try to login with the test user
+        print(f"\n1. Testing login with user: {test_user_email}")
+        login_response = self.test_login_user(test_user_email, test_user_password)
+        
+        if not login_response:
+            print("❌ Login failed - creating test user first...")
+            # Create the test user if login fails
+            test_user = self.test_create_user("Test Mobile User", test_user_email, "11999999999", test_user_password)
+            if not test_user:
+                print("❌ Failed to create test user")
+                return False
+            
+            # Add balance to user (simulate deposit)
+            print(f"\n2. Adding balance to test user...")
+            deposit_response = self.test_create_payment_preference(test_user['id'], 75.00)
+            if deposit_response and 'transaction_id' in deposit_response:
+                # Simulate payment approval
+                approval_response = self.run_test(
+                    "Simulate Payment Approval",
+                    "POST", 
+                    f"payments/simulate-approval/{deposit_response['transaction_id']}",
+                    200
+                )
+                if approval_response[0]:
+                    print("✅ Balance added successfully")
+                else:
+                    print("❌ Failed to add balance")
+                    return False
+            
+            # Get updated user data
+            updated_user = self.test_get_user(test_user['id'])
+            if not updated_user:
+                print("❌ Failed to get updated user data")
+                return False
+            
+            current_user = updated_user
+        else:
+            print("✅ Login successful")
+            current_user = login_response
+        
+        print(f"   User ID: {current_user['id']}")
+        print(f"   User Balance: R$ {current_user['balance']:.2f}")
+        
+        # Test bet creation with the exact same data structure as frontend
+        print(f"\n3. Testing bet creation (mimicking frontend request)...")
+        bet_data = {
+            "event_title": "Teste de Aposta Mobile",
+            "event_type": "custom", 
+            "event_description": "Teste para verificar se a criação de aposta funciona do frontend para backend",
+            "amount": 50.00,
+            "creator_id": current_user['id']
+        }
+        
+        print(f"   Bet Data: {json.dumps(bet_data, indent=2)}")
+        
+        # This should match exactly what the frontend sends
+        success, bet_response = self.run_test(
+            "Create Bet (Frontend Simulation)",
+            "POST",
+            "bets",
+            200,
+            data=bet_data
         )
+        
+        if not success:
+            print("❌ CRITICAL: Bet creation failed - this matches the user's reported issue!")
+            return False
+        
+        print("✅ Bet creation successful!")
+        print(f"   Bet ID: {bet_response['id']}")
+        print(f"   Invite Code: {bet_response['invite_code']}")
+        print(f"   Status: {bet_response['status']}")
+        
+        # Verify user balance was deducted
+        print(f"\n4. Verifying balance deduction...")
+        updated_user_after_bet = self.test_get_user(current_user['id'])
+        if updated_user_after_bet:
+            expected_balance = current_user['balance'] - bet_data['amount']
+            actual_balance = updated_user_after_bet['balance']
+            
+            if abs(actual_balance - expected_balance) < 0.01:  # Allow for floating point precision
+                print(f"✅ Balance correctly deducted: R$ {actual_balance:.2f}")
+            else:
+                print(f"❌ Balance deduction error: Expected R$ {expected_balance:.2f}, got R$ {actual_balance:.2f}")
+                return False
+        
+        # Test getting the bet by invite code (this is what frontend would do next)
+        print(f"\n5. Testing invite code retrieval...")
+        invite_success, invite_response = self.run_test(
+            "Get Bet by Invite Code",
+            "GET",
+            f"bets/invite/{bet_response['invite_code']}",
+            200
+        )
+        
+        if not invite_success:
+            print("❌ Failed to retrieve bet by invite code")
+            return False
+        
+        print("✅ Invite code retrieval successful!")
+        
+        # Test the complete flow that frontend expects
+        print(f"\n6. Testing complete frontend-to-backend flow...")
+        
+        # Get waiting bets (frontend calls this)
+        waiting_bets_success, waiting_bets = self.run_test(
+            "Get Waiting Bets",
+            "GET",
+            "bets/waiting",
+            200
+        )
+        
+        if waiting_bets_success and len(waiting_bets) > 0:
+            print(f"✅ Waiting bets retrieved: {len(waiting_bets)} bets found")
+        else:
+            print("❌ No waiting bets found or request failed")
+            return False
+        
+        # Get user bets (frontend calls this)
+        user_bets_success, user_bets = self.run_test(
+            "Get User Bets",
+            "GET", 
+            f"bets/user/{current_user['id']}",
+            200
+        )
+        
+        if user_bets_success and len(user_bets) > 0:
+            print(f"✅ User bets retrieved: {len(user_bets)} bets found")
+        else:
+            print("❌ No user bets found or request failed")
+            return False
+        
+        print(f"\n🎉 BET CREATION FLOW TEST COMPLETED SUCCESSFULLY!")
+        print("=" * 60)
+        print("✅ All frontend-to-backend communication is working correctly")
+        print("✅ Bet creation API endpoint is functional")
+        print("✅ User balance management is working")
+        print("✅ Invite code generation and retrieval works")
+        print("✅ All related API calls are responding properly")
+        
+        return True
 
 def main():
     print("🚀 Starting BetArena API Tests...")
