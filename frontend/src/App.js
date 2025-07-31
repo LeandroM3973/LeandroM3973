@@ -944,6 +944,9 @@ function App() {
                           <span className="text-gray-400">Pagamento ao Vencedor:</span>
                           <span className="text-green-400 font-semibold">{formatCurrency(bet.amount * 2 * 0.80)}</span>
                         </div>
+                        <div className="mt-3 p-2 bg-blue-500/20 rounded text-xs text-blue-200">
+                          <strong>🔒 Proteção Garantida:</strong> O valor fica protegido na plataforma até a decisão final
+                        </div>
                       </div>
                       <Dialog>
                         <DialogTrigger asChild>
