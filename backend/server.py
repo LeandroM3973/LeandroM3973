@@ -143,9 +143,6 @@ async def get_all_users():
 # Payment Routes
 @api_router.post("/payments/create-preference")
 async def create_payment_preference(deposit_request: DepositRequest):
-    if not mp:
-        raise HTTPException(status_code=500, detail="Mercado Pago not configured")
-    
     user = await db.users.find_one({"id": deposit_request.user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -159,59 +156,52 @@ async def create_payment_preference(deposit_request: DepositRequest):
     )
     await db.transactions.insert_one(transaction.dict())
     
-    # Create Mercado Pago preference
-    preference_data = {
-        "items": [
-            {
-                "title": f"Depósito BetArena - {user['name']}",
-                "quantity": 1,
-                "unit_price": deposit_request.amount,
-                "currency_id": "BRL"
-            }
-        ],
-        "payer": {
-            "name": user["name"],
-            "email": user["email"],
-            "phone": {
-                "number": user["phone"]
-            }
-        },
-        "external_reference": transaction.id,
-        "notification_url": f"{os.environ.get('BACKEND_URL', 'http://localhost:8001')}/api/payments/webhook",
-        "back_urls": {
-            "success": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-success",
-            "failure": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-failure",
-            "pending": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-pending"
-        },
-        "auto_return": "approved",
-        "payment_methods": {
-            "excluded_payment_types": [],
-            "installments": 12
-        }
+    # DEMO MODE: Return simulated payment preference
+    simulated_preference = {
+        "preference_id": f"demo-{transaction.id}",
+        "init_point": f"https://sandbox.mercadopago.com.br/checkout/v1/redirect?pref_id=demo-{transaction.id}",
+        "sandbox_init_point": f"https://demo-payment-simulator.com/pay?amount={deposit_request.amount}&transaction={transaction.id}",
+        "transaction_id": transaction.id,
+        "demo_mode": True,
+        "message": "MODO DEMONSTRAÇÃO: Use o botão 'Simular Pagamento Aprovado' para aprovar este depósito"
     }
     
-    try:
-        preference_response = mp.preference().create(preference_data)
-        
-        if preference_response["status"] == 201:
-            # Update transaction with payment ID
-            await db.transactions.update_one(
-                {"id": transaction.id},
-                {"$set": {"payment_id": preference_response["response"]["id"]}}
-            )
-            
-            return {
-                "preference_id": preference_response["response"]["id"],
-                "init_point": preference_response["response"]["init_point"],
-                "sandbox_init_point": preference_response["response"]["sandbox_init_point"],
-                "transaction_id": transaction.id
-            }
-        else:
-            raise HTTPException(status_code=400, detail="Failed to create payment preference")
+    return simulated_preference
+
+@api_router.post("/payments/simulate-approval/{transaction_id}")
+async def simulate_payment_approval(transaction_id: str):
+    """Simulate payment approval for demo purposes"""
+    transaction = await db.transactions.find_one({"id": transaction_id})
+    if not transaction:
+        raise HTTPException(status_code=404, detail="Transaction not found")
     
-    except Exception as e:
-        logging.error(f"Error creating payment preference: {str(e)}")
-        raise HTTPException(status_code=500, detail="Payment system error")
+    if transaction["status"] == TransactionStatus.APPROVED:
+        return {"message": "Payment already approved", "status": "approved"}
+    
+    # Update transaction status to approved
+    await db.transactions.update_one(
+        {"id": transaction_id},
+        {
+            "$set": {
+                "status": TransactionStatus.APPROVED,
+                "mp_payment_id": f"demo_payment_{transaction_id}",
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    # Add balance to user
+    await db.users.update_one(
+        {"id": transaction["user_id"]},
+        {"$inc": {"balance": transaction["amount"]}}
+    )
+    
+    return {
+        "message": "Payment simulated successfully!",
+        "status": "approved",
+        "amount": transaction["amount"],
+        "transaction_id": transaction_id
+    }
 
 @api_router.post("/payments/webhook")
 async def payment_webhook(request: Request):
