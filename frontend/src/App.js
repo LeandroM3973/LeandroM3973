@@ -16,7 +16,11 @@ const API = `${BACKEND_URL}/api`;
 const MP_PUBLIC_KEY = process.env.REACT_APP_MERCADO_PAGO_PUBLIC_KEY;
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    // Try to load user from localStorage on app start
+    const savedUser = localStorage.getItem('betarena_user');
+    return savedUser ? JSON.parse(savedUser) : null;
+  });
   const [users, setUsers] = useState([]);
   const [bets, setBets] = useState([]);
   const [waitingBets, setWaitingBets] = useState([]);
@@ -24,12 +28,15 @@ function App() {
   const [userTransactions, setUserTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // User form
+  // User form - simplified to just email for returning users
   const [userForm, setUserForm] = useState({
     name: '',
     email: '',
     phone: ''
   });
+
+  // Check if user is returning (has email but missing name/phone)
+  const [isReturningUser, setIsReturningUser] = useState(false);
 
   // Create Bet Form
   const [newBet, setNewBet] = useState({
