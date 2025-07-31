@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException
+from fastapi import FastAPI, APIRouter, HTTPException, Request
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -10,6 +10,8 @@ from typing import List, Optional
 import uuid
 from datetime import datetime
 from enum import Enum
+import mercadopago
+import json
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -18,6 +20,10 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# Mercado Pago setup
+mp_access_token = os.environ.get('MERCADO_PAGO_ACCESS_TOKEN')
+mp = mercadopago.SDK(mp_access_token) if mp_access_token else None
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -37,22 +43,48 @@ class EventType(str, Enum):
     STOCKS = "stocks"
     CUSTOM = "custom"
 
+class TransactionType(str, Enum):
+    DEPOSIT = "deposit"
+    WITHDRAWAL = "withdrawal"
+    BET_DEBIT = "bet_debit"
+    BET_CREDIT = "bet_credit"
+
+class TransactionStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
 # Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    balance: int = 1000  # Starting with 1000 points
+    email: str
+    phone: str
+    balance: float = 0.0  # Changed to real currency (BRL)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class UserCreate(BaseModel):
     name: str
+    email: str
+    phone: str
+
+class Transaction(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    amount: float
+    type: TransactionType
+    status: TransactionStatus
+    payment_id: Optional[str] = None
+    mp_payment_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 class Bet(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     event_title: str
     event_type: EventType
     event_description: str
-    amount: int
+    amount: float  # Changed to float for real currency
     creator_id: str
     creator_name: str
     opponent_id: Optional[str] = None
@@ -67,7 +99,7 @@ class BetCreate(BaseModel):
     event_title: str
     event_type: EventType
     event_description: str
-    amount: int
+    amount: float
     creator_id: str
 
 class JoinBet(BaseModel):
@@ -76,11 +108,19 @@ class JoinBet(BaseModel):
 class DeclareWinner(BaseModel):
     winner_id: str
 
+class DepositRequest(BaseModel):
+    user_id: str
+    amount: float
+
+class WithdrawRequest(BaseModel):
+    user_id: str
+    amount: float
+
 # User Routes
 @api_router.post("/users", response_model=User)
 async def create_user(user_data: UserCreate):
-    # Check if user already exists
-    existing_user = await db.users.find_one({"name": user_data.name})
+    # Check if user already exists by email
+    existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
         return User(**existing_user)
     
@@ -100,7 +140,181 @@ async def get_all_users():
     users = await db.users.find().to_list(1000)
     return [User(**user) for user in users]
 
-# Bet Routes
+# Payment Routes
+@api_router.post("/payments/create-preference")
+async def create_payment_preference(deposit_request: DepositRequest):
+    if not mp:
+        raise HTTPException(status_code=500, detail="Mercado Pago not configured")
+    
+    user = await db.users.find_one({"id": deposit_request.user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Create transaction record
+    transaction = Transaction(
+        user_id=deposit_request.user_id,
+        amount=deposit_request.amount,
+        type=TransactionType.DEPOSIT,
+        status=TransactionStatus.PENDING
+    )
+    await db.transactions.insert_one(transaction.dict())
+    
+    # Create Mercado Pago preference
+    preference_data = {
+        "items": [
+            {
+                "title": f"Depósito BetArena - {user['name']}",
+                "quantity": 1,
+                "unit_price": deposit_request.amount,
+                "currency_id": "BRL"
+            }
+        ],
+        "payer": {
+            "name": user["name"],
+            "email": user["email"],
+            "phone": {
+                "number": user["phone"]
+            }
+        },
+        "external_reference": transaction.id,
+        "notification_url": f"{os.environ.get('BACKEND_URL', 'http://localhost:8001')}/api/payments/webhook",
+        "back_urls": {
+            "success": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-success",
+            "failure": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-failure",
+            "pending": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-pending"
+        },
+        "auto_return": "approved",
+        "payment_methods": {
+            "excluded_payment_types": [],
+            "installments": 12
+        }
+    }
+    
+    try:
+        preference_response = mp.preference().create(preference_data)
+        
+        if preference_response["status"] == 201:
+            # Update transaction with payment ID
+            await db.transactions.update_one(
+                {"id": transaction.id},
+                {"$set": {"payment_id": preference_response["response"]["id"]}}
+            )
+            
+            return {
+                "preference_id": preference_response["response"]["id"],
+                "init_point": preference_response["response"]["init_point"],
+                "sandbox_init_point": preference_response["response"]["sandbox_init_point"],
+                "transaction_id": transaction.id
+            }
+        else:
+            raise HTTPException(status_code=400, detail="Failed to create payment preference")
+    
+    except Exception as e:
+        logging.error(f"Error creating payment preference: {str(e)}")
+        raise HTTPException(status_code=500, detail="Payment system error")
+
+@api_router.post("/payments/webhook")
+async def payment_webhook(request: Request):
+    try:
+        body = await request.body()
+        data = json.loads(body)
+        
+        if data.get("type") == "payment":
+            payment_id = data["data"]["id"]
+            
+            # Get payment details from Mercado Pago
+            payment_info = mp.payment().get(payment_id)
+            
+            if payment_info["status"] == 200:
+                payment = payment_info["response"]
+                external_reference = payment.get("external_reference")
+                
+                if external_reference:
+                    # Find transaction
+                    transaction = await db.transactions.find_one({"id": external_reference})
+                    
+                    if transaction:
+                        if payment["status"] == "approved":
+                            # Update transaction status
+                            await db.transactions.update_one(
+                                {"id": external_reference},
+                                {
+                                    "$set": {
+                                        "status": TransactionStatus.APPROVED,
+                                        "mp_payment_id": payment_id,
+                                        "updated_at": datetime.utcnow()
+                                    }
+                                }
+                            )
+                            
+                            # Add balance to user
+                            await db.users.update_one(
+                                {"id": transaction["user_id"]},
+                                {"$inc": {"balance": transaction["amount"]}}
+                            )
+                            
+                        elif payment["status"] in ["rejected", "cancelled"]:
+                            await db.transactions.update_one(
+                                {"id": external_reference},
+                                {
+                                    "$set": {
+                                        "status": TransactionStatus.REJECTED,
+                                        "mp_payment_id": payment_id,
+                                        "updated_at": datetime.utcnow()
+                                    }
+                                }
+                            )
+        
+        return {"status": "ok"}
+    
+    except Exception as e:
+        logging.error(f"Webhook error: {str(e)}")
+        return {"status": "error"}
+
+@api_router.post("/payments/withdraw")
+async def withdraw_funds(withdraw_request: WithdrawRequest):
+    user = await db.users.find_one({"id": withdraw_request.user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if user["balance"] < withdraw_request.amount:
+        raise HTTPException(status_code=400, detail="Insufficient balance")
+    
+    # Create withdrawal transaction
+    transaction = Transaction(
+        user_id=withdraw_request.user_id,
+        amount=withdraw_request.amount,
+        type=TransactionType.WITHDRAWAL,
+        status=TransactionStatus.PENDING
+    )
+    await db.transactions.insert_one(transaction.dict())
+    
+    # Deduct from user balance
+    await db.users.update_one(
+        {"id": withdraw_request.user_id},
+        {"$inc": {"balance": -withdraw_request.amount}}
+    )
+    
+    # In a real implementation, you would integrate with a transfer API
+    # For now, we'll mark it as approved immediately
+    await db.transactions.update_one(
+        {"id": transaction.id},
+        {
+            "$set": {
+                "status": TransactionStatus.APPROVED,
+                "updated_at": datetime.utcnow()
+            }
+        }
+    )
+    
+    return {"message": "Withdrawal request processed", "transaction_id": transaction.id}
+
+@api_router.get("/transactions/{user_id}")
+async def get_user_transactions(user_id: str):
+    transactions = await db.transactions.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
+    return [Transaction(**tx) for tx in transactions]
+
+# Bet Routes (Modified for real currency)
 @api_router.post("/bets", response_model=Bet)
 async def create_bet(bet_data: BetCreate):
     # Check if user exists and has enough balance
@@ -116,6 +330,15 @@ async def create_bet(bet_data: BetCreate):
         {"id": bet_data.creator_id},
         {"$inc": {"balance": -bet_data.amount}}
     )
+    
+    # Create bet debit transaction
+    transaction = Transaction(
+        user_id=bet_data.creator_id,
+        amount=bet_data.amount,
+        type=TransactionType.BET_DEBIT,
+        status=TransactionStatus.APPROVED
+    )
+    await db.transactions.insert_one(transaction.dict())
     
     bet_dict = bet_data.dict()
     bet_dict["creator_name"] = user["name"]
@@ -149,6 +372,15 @@ async def join_bet(bet_id: str, join_data: JoinBet):
         {"id": join_data.user_id},
         {"$inc": {"balance": -bet["amount"]}}
     )
+    
+    # Create bet debit transaction for opponent
+    transaction = Transaction(
+        user_id=join_data.user_id,
+        amount=bet["amount"],
+        type=TransactionType.BET_DEBIT,
+        status=TransactionStatus.APPROVED
+    )
+    await db.transactions.insert_one(transaction.dict())
     
     # Update bet with opponent info
     await db.bets.update_one(
@@ -191,6 +423,15 @@ async def declare_winner(bet_id: str, winner_data: DeclareWinner):
         {"$inc": {"balance": total_winnings}}
     )
     
+    # Create bet credit transaction for winner
+    transaction = Transaction(
+        user_id=winner_data.winner_id,
+        amount=total_winnings,
+        type=TransactionType.BET_CREDIT,
+        status=TransactionStatus.APPROVED
+    )
+    await db.transactions.insert_one(transaction.dict())
+    
     # Update bet status
     await db.bets.update_one(
         {"id": bet_id},
@@ -230,7 +471,7 @@ async def get_user_bets(user_id: str):
 # Health Check
 @api_router.get("/")
 async def root():
-    return {"message": "Betting Platform API is running"}
+    return {"message": "BetArena API with Payment System is running"}
 
 # Include the router in the main app
 app.include_router(api_router)

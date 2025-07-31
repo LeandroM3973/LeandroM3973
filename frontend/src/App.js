@@ -7,12 +7,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from './components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './components/ui/select';
 import { Textarea } from './components/ui/textarea';
-import { Trophy, Users, Target, DollarSign, Clock, CheckCircle } from 'lucide-react';
+import { Trophy, Users, Target, DollarSign, Clock, CheckCircle, CreditCard, Wallet, ArrowUpCircle, ArrowDownCircle, History } from 'lucide-react';
 import axios from 'axios';
 import './App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+const MP_PUBLIC_KEY = process.env.REACT_APP_MERCADO_PAGO_PUBLIC_KEY;
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);
@@ -20,16 +21,27 @@ function App() {
   const [bets, setBets] = useState([]);
   const [waitingBets, setWaitingBets] = useState([]);
   const [userBets, setUserBets] = useState([]);
-  const [userName, setUserName] = useState('');
+  const [userTransactions, setUserTransactions] = useState([]);
   const [loading, setLoading] = useState(false);
+
+  // User form
+  const [userForm, setUserForm] = useState({
+    name: '',
+    email: '',
+    phone: ''
+  });
 
   // Create Bet Form
   const [newBet, setNewBet] = useState({
     event_title: '',
     event_type: 'sports',
     event_description: '',
-    amount: 100
+    amount: 50.00
   });
+
+  // Payment forms
+  const [depositAmount, setDepositAmount] = useState(100.00);
+  const [withdrawAmount, setWithdrawAmount] = useState(50.00);
 
   // Judge Panel
   const [selectedBetForJudge, setSelectedBetForJudge] = useState(null);
@@ -44,6 +56,7 @@ function App() {
   useEffect(() => {
     if (currentUser) {
       loadUserBets();
+      loadUserTransactions();
     }
   }, [currentUser]);
 
@@ -84,13 +97,23 @@ function App() {
     }
   };
 
+  const loadUserTransactions = async () => {
+    if (!currentUser) return;
+    try {
+      const response = await axios.get(`${API}/transactions/${currentUser.id}`);
+      setUserTransactions(response.data);
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+    }
+  };
+
   const createUser = async () => {
-    if (!userName.trim()) return;
+    if (!userForm.name.trim() || !userForm.email.trim() || !userForm.phone.trim()) return;
     setLoading(true);
     try {
-      const response = await axios.post(`${API}/users`, { name: userName });
+      const response = await axios.post(`${API}/users`, userForm);
       setCurrentUser(response.data);
-      setUserName('');
+      setUserForm({ name: '', email: '', phone: '' });
       await loadUsers();
     } catch (error) {
       console.error('Error creating user:', error);
@@ -111,9 +134,9 @@ function App() {
         event_title: '',
         event_type: 'sports',
         event_description: '',
-        amount: 100
+        amount: 50.00
       });
-      await Promise.all([loadBets(), loadWaitingBets(), loadUserBets()]);
+      await Promise.all([loadBets(), loadWaitingBets(), loadUserBets(), loadUserTransactions()]);
       // Refresh current user balance
       const userResponse = await axios.get(`${API}/users/${currentUser.id}`);
       setCurrentUser(userResponse.data);
@@ -129,7 +152,7 @@ function App() {
     setLoading(true);
     try {
       await axios.post(`${API}/bets/${betId}/join`, { user_id: currentUser.id });
-      await Promise.all([loadBets(), loadWaitingBets(), loadUserBets()]);
+      await Promise.all([loadBets(), loadWaitingBets(), loadUserBets(), loadUserTransactions()]);
       // Refresh current user balance
       const userResponse = await axios.get(`${API}/users/${currentUser.id}`);
       setCurrentUser(userResponse.data);
@@ -157,11 +180,56 @@ function App() {
     setLoading(false);
   };
 
+  const handleDeposit = async () => {
+    if (!currentUser || depositAmount < 10) return;
+    setLoading(true);
+    try {
+      const response = await axios.post(`${API}/payments/create-preference`, {
+        user_id: currentUser.id,
+        amount: depositAmount
+      });
+      
+      // Redirect to Mercado Pago payment page
+      window.open(response.data.sandbox_init_point, '_blank');
+      
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      alert('Erro ao criar pagamento');
+    }
+    setLoading(false);
+  };
+
+  const handleWithdraw = async () => {
+    if (!currentUser || withdrawAmount <= 0 || withdrawAmount > currentUser.balance) return;
+    setLoading(true);
+    try {
+      await axios.post(`${API}/payments/withdraw`, {
+        user_id: currentUser.id,
+        amount: withdrawAmount
+      });
+      
+      alert('Solicitação de saque enviada! O valor será transferido para sua conta em até 24h.');
+      
+      // Refresh user data
+      const userResponse = await axios.get(`${API}/users/${currentUser.id}`);
+      setCurrentUser(userResponse.data);
+      await loadUserTransactions();
+      
+    } catch (error) {
+      console.error('Error processing withdrawal:', error);
+      alert(error.response?.data?.detail || 'Erro ao processar saque');
+    }
+    setLoading(false);
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'waiting': return 'bg-yellow-500';
       case 'active': return 'bg-blue-500';
       case 'completed': return 'bg-green-500';
+      case 'approved': return 'bg-green-500';
+      case 'pending': return 'bg-yellow-500';
+      case 'rejected': return 'bg-red-500';
       default: return 'bg-gray-500';
     }
   };
@@ -171,8 +239,27 @@ function App() {
       case 'waiting': return <Clock className="w-4 h-4" />;
       case 'active': return <Target className="w-4 h-4" />;
       case 'completed': return <CheckCircle className="w-4 h-4" />;
+      case 'approved': return <CheckCircle className="w-4 h-4" />;
+      case 'pending': return <Clock className="w-4 h-4" />;
       default: return null;
     }
+  };
+
+  const getTransactionIcon = (type) => {
+    switch (type) {
+      case 'deposit': return <ArrowDownCircle className="w-4 h-4 text-green-500" />;
+      case 'withdrawal': return <ArrowUpCircle className="w-4 h-4 text-blue-500" />;
+      case 'bet_debit': return <Target className="w-4 h-4 text-red-500" />;
+      case 'bet_credit': return <Trophy className="w-4 h-4 text-green-500" />;
+      default: return <History className="w-4 h-4" />;
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: 'BRL'
+    }).format(amount);
   };
 
   if (!currentUser) {
@@ -184,21 +271,37 @@ function App() {
               <Trophy className="w-8 h-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold text-white">BetArena</CardTitle>
-            <p className="text-gray-300">Plataforma de Apostas com Eventos Externos</p>
+            <p className="text-gray-300">Plataforma de Apostas com Pagamento Real</p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Input
-                placeholder="Digite seu nome"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Nome completo"
+                value={userForm.name}
+                onChange={(e) => setUserForm({...userForm, name: e.target.value})}
                 className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-                onKeyPress={(e) => e.key === 'Enter' && createUser()}
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="Email"
+                type="email"
+                value={userForm.email}
+                onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+              />
+            </div>
+            <div>
+              <Input
+                placeholder="Telefone (11999999999)"
+                value={userForm.phone}
+                onChange={(e) => setUserForm({...userForm, phone: e.target.value})}
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
               />
             </div>
             <Button 
               onClick={createUser} 
-              disabled={loading || !userName.trim()}
+              disabled={loading || !userForm.name.trim() || !userForm.email.trim() || !userForm.phone.trim()}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
               {loading ? 'Criando...' : 'Entrar na Plataforma'}
@@ -226,7 +329,7 @@ function App() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-4 py-2">
               <DollarSign className="w-5 h-5 text-green-400" />
-              <span className="text-white font-semibold">{currentUser.balance} pontos</span>
+              <span className="text-white font-semibold">{formatCurrency(currentUser.balance)}</span>
             </div>
             <Button 
               variant="outline" 
@@ -241,9 +344,9 @@ function App() {
 
       <div className="container mx-auto px-4 py-8">
         <Tabs defaultValue="bets" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-white/10 backdrop-blur-lg">
+          <TabsList className="grid w-full grid-cols-6 bg-white/10 backdrop-blur-lg">
             <TabsTrigger value="bets" className="text-white data-[state=active]:bg-white/20">
-              Apostas Disponíveis
+              Apostas
             </TabsTrigger>
             <TabsTrigger value="create" className="text-white data-[state=active]:bg-white/20">
               Criar Aposta
@@ -251,8 +354,14 @@ function App() {
             <TabsTrigger value="my-bets" className="text-white data-[state=active]:bg-white/20">
               Minhas Apostas
             </TabsTrigger>
+            <TabsTrigger value="payments" className="text-white data-[state=active]:bg-white/20">
+              Pagamentos
+            </TabsTrigger>
+            <TabsTrigger value="transactions" className="text-white data-[state=active]:bg-white/20">
+              Histórico
+            </TabsTrigger>
             <TabsTrigger value="judge" className="text-white data-[state=active]:bg-white/20">
-              Painel do Juiz
+              Juiz
             </TabsTrigger>
           </TabsList>
 
@@ -288,7 +397,7 @@ function App() {
                         </div>
                         <div className="flex items-center space-x-2">
                           <DollarSign className="w-4 h-4 text-green-400" />
-                          <span className="text-white font-semibold">{bet.amount} pontos</span>
+                          <span className="text-white font-semibold">{formatCurrency(bet.amount)}</span>
                         </div>
                       </div>
                       <Badge variant="outline" className="border-white/20 text-white">
@@ -300,7 +409,7 @@ function App() {
                           disabled={loading || currentUser.balance < bet.amount}
                           className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                         >
-                          {loading ? 'Entrando...' : `Apostar ${bet.amount} pontos`}
+                          {loading ? 'Entrando...' : `Apostar ${formatCurrency(bet.amount)}`}
                         </Button>
                       )}
                     </CardContent>
@@ -358,19 +467,21 @@ function App() {
                   />
                 </div>
                 <div>
-                  <label className="text-white text-sm font-medium">Valor da Aposta (pontos)</label>
+                  <label className="text-white text-sm font-medium">Valor da Aposta</label>
                   <Input
                     type="number"
+                    step="0.01"
                     value={newBet.amount}
-                    onChange={(e) => setNewBet({...newBet, amount: parseInt(e.target.value) || 0})}
-                    min="1"
+                    onChange={(e) => setNewBet({...newBet, amount: parseFloat(e.target.value) || 0})}
+                    min="10"
                     max={currentUser.balance}
                     className="bg-white/10 border-white/20 text-white"
                   />
+                  <p className="text-sm text-gray-400 mt-1">Mínimo: R$ 10,00 | Saldo: {formatCurrency(currentUser.balance)}</p>
                 </div>
                 <Button 
                   onClick={createBet}
-                  disabled={loading || !newBet.event_title.trim() || !newBet.event_description.trim() || newBet.amount > currentUser.balance}
+                  disabled={loading || !newBet.event_title.trim() || !newBet.event_description.trim() || newBet.amount > currentUser.balance || newBet.amount < 10}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
                   {loading ? 'Criando...' : 'Criar Aposta'}
@@ -412,7 +523,7 @@ function App() {
                         )}
                         <div className="flex justify-between">
                           <span className="text-gray-400 text-sm">Valor:</span>
-                          <span className="text-white text-sm font-semibold">{bet.amount} pontos</span>
+                          <span className="text-white text-sm font-semibold">{formatCurrency(bet.amount)}</span>
                         </div>
                         {bet.winner_name && (
                           <div className="flex justify-between">
@@ -432,6 +543,145 @@ function App() {
                 <div className="text-center py-12">
                   <Trophy className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-300">Nenhuma aposta encontrada</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Payments */}
+          <TabsContent value="payments">
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Deposit */}
+              <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <ArrowDownCircle className="w-6 h-6 text-green-400" />
+                    <span>Depositar</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-white text-sm font-medium">Valor do Depósito</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(parseFloat(e.target.value) || 0)}
+                      min="10"
+                      className="bg-white/10 border-white/20 text-white"
+                    />
+                    <p className="text-sm text-gray-400 mt-1">Mínimo: R$ 10,00</p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="text-white font-medium mb-2">Métodos de Pagamento:</h4>
+                    <div className="space-y-2 text-sm text-gray-300">
+                      <div className="flex items-center space-x-2">
+                        <CreditCard className="w-4 h-4" />
+                        <span>PIX (Instantâneo)</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CreditCard className="w-4 h-4" />
+                        <span>Cartão de Crédito/Débito</span>
+                      </div>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleDeposit}
+                    disabled={loading || depositAmount < 10}
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  >
+                    {loading ? 'Processando...' : `Depositar ${formatCurrency(depositAmount)}`}
+                  </Button>
+                </CardContent>
+              </Card>
+
+              {/* Withdraw */}
+              <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <ArrowUpCircle className="w-6 h-6 text-blue-400" />
+                    <span>Sacar</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <label className="text-white text-sm font-medium">Valor do Saque</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(parseFloat(e.target.value) || 0)}
+                      min="10"
+                      max={currentUser.balance}
+                      className="bg-white/10 border-white/20 text-white"
+                    />
+                    <p className="text-sm text-gray-400 mt-1">
+                      Disponível: {formatCurrency(currentUser.balance)}
+                    </p>
+                  </div>
+                  <div className="bg-white/5 rounded-lg p-4">
+                    <h4 className="text-white font-medium mb-2">Informações:</h4>
+                    <div className="space-y-1 text-sm text-gray-300">
+                      <p>• Transferência via PIX</p>
+                      <p>• Processamento em até 24h</p>
+                      <p>• Sem taxas de saque</p>
+                    </div>
+                  </div>
+                  <Button 
+                    onClick={handleWithdraw}
+                    disabled={loading || withdrawAmount <= 0 || withdrawAmount > currentUser.balance}
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  >
+                    {loading ? 'Processando...' : `Sacar ${formatCurrency(withdrawAmount)}`}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Transactions */}
+          <TabsContent value="transactions">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-white">Histórico de Transações</h2>
+              <div className="space-y-3">
+                {userTransactions.map((tx) => (
+                  <Card key={tx.id} className="bg-white/10 backdrop-blur-lg border-white/20">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          {getTransactionIcon(tx.type)}
+                          <div>
+                            <p className="text-white font-medium">
+                              {tx.type === 'deposit' && 'Depósito'}
+                              {tx.type === 'withdrawal' && 'Saque'}
+                              {tx.type === 'bet_debit' && 'Aposta Criada/Entrada'}
+                              {tx.type === 'bet_credit' && 'Vitória em Aposta'}
+                            </p>
+                            <p className="text-gray-400 text-sm">
+                              {new Date(tx.created_at).toLocaleString('pt-BR')}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`font-semibold ${
+                            tx.type === 'deposit' || tx.type === 'bet_credit' ? 'text-green-400' : 'text-red-400'
+                          }`}>
+                            {tx.type === 'deposit' || tx.type === 'bet_credit' ? '+' : '-'}
+                            {formatCurrency(tx.amount)}
+                          </p>
+                          <Badge className={`${getStatusColor(tx.status)} text-white text-xs`}>
+                            {tx.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+              {userTransactions.length === 0 && (
+                <div className="text-center py-12">
+                  <History className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-300">Nenhuma transação encontrada</p>
                 </div>
               )}
             </div>
@@ -463,7 +713,7 @@ function App() {
                         </div>
                         <div className="flex justify-between">
                           <span className="text-gray-400">Valor Total:</span>
-                          <span className="text-green-400 font-semibold">{bet.amount * 2} pontos</span>
+                          <span className="text-green-400 font-semibold">{formatCurrency(bet.amount * 2)}</span>
                         </div>
                       </div>
                       <Dialog>
