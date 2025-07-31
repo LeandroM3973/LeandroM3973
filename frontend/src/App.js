@@ -673,7 +673,156 @@ function App() {
             </div>
           </div>
 
-          {/* Available Bets - REMOVED */}
+          {/* Join by Invite */}
+          <TabsContent value="join-invite">
+            <div className="space-y-6">
+              <h2 className="text-2xl font-bold text-white">Aceitar Convite de Aposta</h2>
+              
+              <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+                <CardHeader>
+                  <CardTitle className="text-white flex items-center space-x-2">
+                    <Link className="w-6 h-6" />
+                    <span>Código de Convite</span>
+                  </CardTitle>
+                  <p className="text-gray-300 text-sm">
+                    Cole aqui o código de convite que você recebeu para participar de uma aposta
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex space-x-2">
+                    <Input
+                      placeholder="Ex: abc12345"
+                      value={inviteCode}
+                      onChange={(e) => setInviteCode(e.target.value)}
+                      className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                      onKeyPress={(e) => e.key === 'Enter' && checkInviteCode()}
+                    />
+                    <Button 
+                      onClick={checkInviteCode}
+                      disabled={inviteLoading || !inviteCode.trim()}
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    >
+                      {inviteLoading ? 'Verificando...' : 'Verificar'}
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-blue-500/20 rounded-lg p-3 border border-blue-500/30">
+                    <p className="text-blue-200 text-sm">
+                      💡 <strong>Como funciona:</strong> Cole o código de 8 caracteres que você recebeu via WhatsApp, 
+                      Telegram ou outro meio. Exemplo: <code className="bg-white/20 px-1 rounded">abc12345</code>
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Invite Bet Details */}
+              {inviteBet && (
+                <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-white">Detalhes da Aposta</CardTitle>
+                      <Badge className="bg-yellow-500 text-white">
+                        <Clock className="w-4 h-4 mr-1" />
+                        Aguardando
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-white">{inviteBet.event_title}</h3>
+                      <p className="text-gray-300 text-sm">{inviteBet.event_description}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-3 bg-white/5 rounded">
+                        <Users className="w-6 h-6 text-blue-400 mx-auto mb-2" />
+                        <p className="text-gray-400 text-sm">Adversário</p>
+                        <p className="text-white font-semibold">{inviteBet.creator_name}</p>
+                      </div>
+                      
+                      <div className="text-center p-3 bg-white/5 rounded">
+                        <DollarSign className="w-6 h-6 text-green-400 mx-auto mb-2" />
+                        <p className="text-gray-400 text-sm">Valor para Depositar</p>
+                        <p className="text-white font-semibold text-lg">{formatCurrency(inviteBet.amount)}</p>
+                      </div>
+                    </div>
+
+                    <div className="bg-orange-500/20 rounded-lg p-3 border border-orange-500/30">
+                      <p className="text-orange-200 text-sm text-center">
+                        ⏰ <strong>Tempo restante:</strong> {formatTimeRemaining(inviteBet.expires_at)}
+                      </p>
+                    </div>
+
+                    {/* Prize Information */}
+                    <div className="bg-green-500/20 rounded-lg p-4 border border-green-500/30">
+                      <h4 className="text-white font-semibold mb-2">💰 Informações do Prêmio</h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Valor total do pote:</span>
+                          <span className="text-white font-semibold">{formatCurrency(inviteBet.amount * 2)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Taxa da plataforma (20%):</span>
+                          <span className="text-yellow-400">-{formatCurrency(inviteBet.amount * 2 * 0.20)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-300">Prêmio para o vencedor:</span>
+                          <span className="text-green-400 font-semibold">{formatCurrency(inviteBet.amount * 2 * 0.80)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Badge variant="outline" className="border-white/20 text-white">
+                      {inviteBet.event_type}
+                    </Badge>
+
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                      {currentUser.balance >= inviteBet.amount ? (
+                        <Button 
+                          onClick={joinBetByInvite}
+                          disabled={loading}
+                          className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-lg py-3"
+                        >
+                          {loading ? 'Entrando na Aposta...' : `Aceitar Convite - Depositar ${formatCurrency(inviteBet.amount)}`}
+                        </Button>
+                      ) : (
+                        <div className="space-y-2">
+                          <Button 
+                            disabled
+                            className="w-full bg-gray-600 text-lg py-3"
+                          >
+                            Saldo Insuficiente
+                          </Button>
+                          <p className="text-center text-red-400 text-sm">
+                            Você precisa de {formatCurrency(inviteBet.amount)} para aceitar este convite
+                          </p>
+                        </div>
+                      )}
+                      
+                      <Button 
+                        onClick={() => {
+                          setInviteCode('');
+                          setInviteBet(null);
+                        }}
+                        variant="outline"
+                        className="w-full border-white/20 text-white hover:bg-white/10"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {!inviteBet && (
+                <div className="text-center py-12">
+                  <Link className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-300">Digite um código de convite para ver os detalhes da aposta</p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
           {/* Create Bet */}
           <TabsContent value="create">
