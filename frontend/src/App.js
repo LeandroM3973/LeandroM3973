@@ -353,6 +353,7 @@ function App() {
       case 'approved': return 'bg-green-500';
       case 'pending': return 'bg-yellow-500';
       case 'rejected': return 'bg-red-500';
+      case 'expired': return 'bg-gray-500';
       default: return 'bg-gray-500';
     }
   };
@@ -364,6 +365,7 @@ function App() {
       case 'completed': return <CheckCircle className="w-4 h-4" />;
       case 'approved': return <CheckCircle className="w-4 h-4" />;
       case 'pending': return <Clock className="w-4 h-4" />;
+      case 'expired': return <Clock className="w-4 h-4" />;
       default: return null;
     }
   };
