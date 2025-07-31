@@ -101,3 +101,40 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "o painel de opções no dispositivo movél está com um bug, uma escrita sobrepondo a outra"
+
+frontend:
+  - task: "Fix mobile navigation tabs text overlap"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported mobile navigation tabs have overlapping text that is unreadable"
+        - working: true
+          agent: "main"
+          comment: "Fixed by changing TabsList from grid-cols-6 to grid-cols-3 md:grid-cols-6, added responsive text sizing (text-xs md:text-sm), and implemented shorter text labels for mobile using sm:hidden and hidden sm:inline classes. Mobile now shows 3 columns with 2 rows of tabs, all text is clearly readable."
+
+backend:
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Fix mobile navigation tabs text overlap"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+    - agent: "main"
+      message: "Successfully fixed mobile navigation tabs text overlap issue. Changed layout from 6 columns to 3 columns on mobile with responsive text sizing and shorter labels. Navigation is now fully readable on mobile devices."
