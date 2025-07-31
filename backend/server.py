@@ -64,6 +64,7 @@ class User(BaseModel):
     email: str
     phone: str
     password_hash: str  # Added password hash field
+    is_admin: bool = False  # Added admin flag
     balance: float = 0.0  # Changed to real currency (BRL)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
