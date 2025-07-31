@@ -156,6 +156,65 @@ async def create_payment_preference(deposit_request: DepositRequest):
     )
     await db.transactions.insert_one(transaction.dict())
     
+    # Try real Mercado Pago integration first
+    if mp:
+        try:
+            preference_data = {
+                "items": [
+                    {
+                        "title": f"Depósito BetArena - {user['name']}",
+                        "quantity": 1,
+                        "unit_price": deposit_request.amount,
+                        "currency_id": "BRL"
+                    }
+                ],
+                "payer": {
+                    "name": user["name"],
+                    "email": user["email"],
+                    "phone": {
+                        "number": user["phone"]
+                    }
+                },
+                "external_reference": transaction.id,
+                "notification_url": f"{os.environ.get('BACKEND_URL', 'http://localhost:8001')}/api/payments/webhook",
+                "back_urls": {
+                    "success": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-success",
+                    "failure": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-failure",
+                    "pending": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-pending"
+                },
+                "auto_return": "approved",
+                "payment_methods": {
+                    "excluded_payment_types": [],
+                    "installments": 12
+                }
+            }
+            
+            preference_response = mp.preference().create(preference_data)
+            
+            if preference_response["status"] == 201:
+                # Update transaction with payment ID
+                await db.transactions.update_one(
+                    {"id": transaction.id},
+                    {"$set": {"payment_id": preference_response["response"]["id"]}}
+                )
+                
+                return {
+                    "preference_id": preference_response["response"]["id"],
+                    "init_point": preference_response["response"]["init_point"],
+                    "sandbox_init_point": preference_response["response"]["sandbox_init_point"],
+                    "transaction_id": transaction.id,
+                    "real_mp": True,
+                    "message": "Pagamento via Mercado Pago configurado com sucesso!"
+                }
+            else:
+                logging.error(f"MP Error: {preference_response}")
+                raise Exception("MP API Error")
+                
+        except Exception as e:
+            logging.error(f"Mercado Pago error: {str(e)}")
+            # Fall back to demo mode
+            pass
+    
     # DEMO MODE: Return simulated payment preference
     simulated_preference = {
         "preference_id": f"demo-{transaction.id}",
