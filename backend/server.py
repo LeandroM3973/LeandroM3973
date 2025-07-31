@@ -601,15 +601,15 @@ async def get_user_bets(user_id: str):
     }).sort("created_at", -1).to_list(1000)
     return [Bet(**bet) for bet in bets]
 
-# Include the router in the main app
-app.include_router(api_router)
-
 # Health Check
 @api_router.get("/")
 async def root():
     return {"message": "BetArena API with Payment System is running"}
 
-@api_router.post("/bets/process-expired")
+# Include the router in the main app
+app.include_router(api_router)
+
+@app.post("/api/bets/process-expired")
 async def process_expired_bets():
     """Process and cancel expired bets, refunding money to creators"""
     current_time = datetime.utcnow()
@@ -656,7 +656,7 @@ async def process_expired_bets():
         "refunded_bets": refunded_count
     }
 
-@api_router.get("/bets/check-expiry/{bet_id}")
+@app.get("/api/bets/check-expiry/{bet_id}")
 async def check_bet_expiry(bet_id: str):
     """Check if a specific bet has expired"""
     bet = await db.bets.find_one({"id": bet_id})
