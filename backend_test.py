@@ -61,7 +61,7 @@ class BetArenaAPITester:
         """Test API health check"""
         return self.run_test("Health Check", "GET", "", 200)
 
-    def test_create_user(self, name, email, phone):
+    def test_create_user(self, name, email, phone, password="password123"):
         """Test user creation with payment system fields"""
         success, response = self.run_test(
             f"Create User '{name}'",
@@ -71,7 +71,8 @@ class BetArenaAPITester:
             data={
                 "name": name,
                 "email": email,
-                "phone": phone
+                "phone": phone,
+                "password": password
             }
         )
         if success and 'id' in response:
