@@ -198,3 +198,5 @@ agent_communication:
       message: "Backend testing completed successfully. All API endpoints functional including POST /api/bets, user authentication, balance management, and invite code system. Frontend-to-backend communication working correctly. Issue was not with backend functionality."
     - agent: "main"
       message: "NEW ISSUE REPORTED: User reports Mercado Pago payment integration is not working. Payment links integrated in the site are not functioning. Need to investigate API configuration, keys, and payment flow to identify and fix the error."
+    - agent: "testing"
+      message: "MERCADO PAGO TESTING COMPLETED: Backend integration is WORKING PERFECTLY. ✅ Real Mercado Pago integration active with production keys, ✅ Payment preferences created successfully for all amounts, ✅ Valid MP URLs generated, ✅ Webhook endpoint functional, ✅ Transaction system working. The issue is NOT backend-related. Problem is likely frontend implementation: popup blockers preventing window.open(), JavaScript errors, or incorrect API calls. Backend returns real_mp: true and valid payment URLs consistently."
