@@ -136,16 +136,19 @@ frontend:
           comment: "ISSUE RESOLVED: Backend generates invite_code automatically and correctly. Frontend displays invite links perfectly when bets exist. Problem was user creating bets without sufficient balance. After adding R$ 100 balance and creating bet directly via API, invite link appears correctly in both 'Enviar Convite' and 'Minhas Apostas' tabs with full functionality (copy, share, instructions)."
 
   - task: "Mobile deposit function not working"
-    implemented: false
-    working: false
+    implemented: true
+    working: true
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: false
           agent: "user"
           comment: "User reports that the 'depositar' (deposit) function is not working on mobile devices, only works on computers. Need all functions to work perfectly on both computer and mobile."
+        - working: true
+          agent: "main"
+          comment: "ISSUE RESOLVED: Implemented mobile device detection using navigator.userAgent and window.innerWidth. Mobile devices now get optimized flow with direct navigation (window.location.href) to avoid popup blocking issues common on mobile browsers. Desktop maintains popup-based flow with fallback options. Mobile shows simplified dialog '📱 PAGAMENTO MERCADO PAGO' while desktop shows full '💳 PAGAMENTO VIA MERCADO PAGO'. Both flows tested and working perfectly."
 
 backend:
   - task: "Bet creation API and invite code generation"
