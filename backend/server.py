@@ -137,48 +137,74 @@ class WithdrawRequest(BaseModel):
     amount: float
 
 # User Routes
-@api_router.post("/users", response_model=User)
+# Password hashing utilities
+def hash_password(password: str) -> str:
+    """Hash a password using bcrypt"""
+    salt = bcrypt.gensalt()
+    return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
+
+def verify_password(password: str, hashed: str) -> bool:
+    """Verify a password against its hash"""
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+# User Routes
+@api_router.post("/users", response_model=UserResponse)
 async def create_user(user_data: UserCreate):
-    # Check if user already exists by email (PRIMARY LOGIN METHOD)
+    # Check if user already exists by email
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
-        # User exists - return existing user data (AUTO LOGIN)
-        print(f"Existing user found for email: {user_data.email}")
-        return User(**existing_user)
+        raise HTTPException(status_code=400, detail="User with this email already exists")
     
-    # New user - create account
-    user = User(**user_data.dict())
+    # Validate password strength
+    if len(user_data.password) < 6:
+        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+    
+    # Hash the password
+    password_hash = hash_password(user_data.password)
+    
+    # Create user with hashed password
+    user_dict = user_data.dict()
+    user_dict.pop('password')  # Remove plain password
+    user_dict['password_hash'] = password_hash
+    
+    user = User(**user_dict)
     await db.users.insert_one(user.dict())
     print(f"New user created for email: {user_data.email}")
-    return user
+    
+    # Return user data without password hash
+    return UserResponse(**user.dict())
 
-@api_router.post("/users/login")
-async def login_user(email: str):
-    """Login user by email only"""
-    user = await db.users.find_one({"email": email})
+@api_router.post("/users/login", response_model=UserResponse)
+async def login_user(login_data: UserLogin):
+    """Login user with email and password"""
+    user = await db.users.find_one({"email": login_data.email})
     if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return User(**user)
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Verify password
+    if not verify_password(login_data.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    print(f"User logged in: {login_data.email}")
+    return UserResponse(**user)
 
-@api_router.get("/users/email/{email}", response_model=User)
-async def get_user_by_email(email: str):
-    """Get user by email address"""
+@api_router.post("/users/check-email")
+async def check_email_exists(email: str):
+    """Check if email exists in system"""
     user = await db.users.find_one({"email": email})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return User(**user)
+    return {"exists": user is not None}
 
-@api_router.get("/users/{user_id}", response_model=User)
+@api_router.get("/users/{user_id}", response_model=UserResponse)
 async def get_user(user_id: str):
     user = await db.users.find_one({"id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return User(**user)
+    return UserResponse(**user)
 
-@api_router.get("/users", response_model=List[User])
+@api_router.get("/users", response_model=List[UserResponse])
 async def get_all_users():
     users = await db.users.find().to_list(1000)
-    return [User(**user) for user in users]
+    return [UserResponse(**user) for user in users]
 
 # Payment Routes
 @api_router.post("/payments/create-preference")
