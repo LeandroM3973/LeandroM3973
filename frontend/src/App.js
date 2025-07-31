@@ -463,9 +463,16 @@ function App() {
   const copyInviteLink = (inviteCode) => {
     const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
     navigator.clipboard.writeText(inviteUrl).then(() => {
-      alert('Link de convite copiado para a área de transferência!');
+      alert('🔗 Link de convite copiado!\n\nCompartilhe este link com seu adversário:\n' + inviteUrl);
     }).catch(() => {
-      alert(`Link de convite: ${inviteUrl}`);
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = inviteUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      alert('🔗 Link de convite copiado!\n\nCompartilhe este link com seu adversário:\n' + inviteUrl);
     });
   };
 
@@ -474,7 +481,7 @@ function App() {
     if (navigator.share) {
       navigator.share({
         title: 'Convite para Aposta - BetArena',
-        text: 'Você foi convidado para uma aposta na BetArena!',
+        text: `Você foi convidado para uma aposta! Valor: ${formatCurrency(userBets.find(bet => bet.invite_code === inviteCode)?.amount || 0)}`,
         url: inviteUrl,
       });
     } else {
