@@ -465,23 +465,36 @@ async def declare_winner(bet_id: str, winner_data: DeclareWinner):
     if not winner:
         raise HTTPException(status_code=404, detail="Winner not found")
     
-    # Transfer winnings (bet amount x 2) to winner
-    total_winnings = bet["amount"] * 2
+    # Calculate platform fee (20% of total pot)
+    total_pot = bet["amount"] * 2
+    platform_fee = total_pot * 0.20  # 20% platform fee
+    winner_payout = total_pot - platform_fee  # 80% to winner
+    
+    # Transfer winnings to winner (total pot minus 20% platform fee)
     await db.users.update_one(
         {"id": winner_data.winner_id},
-        {"$inc": {"balance": total_winnings}}
+        {"$inc": {"balance": winner_payout}}
     )
     
-    # Create bet credit transaction for winner
-    transaction = Transaction(
+    # Create bet credit transaction for winner (showing net amount received)
+    winner_transaction = Transaction(
         user_id=winner_data.winner_id,
-        amount=total_winnings,
+        amount=winner_payout,
         type=TransactionType.BET_CREDIT,
         status=TransactionStatus.APPROVED
     )
-    await db.transactions.insert_one(transaction.dict())
+    await db.transactions.insert_one(winner_transaction.dict())
     
-    # Update bet status
+    # Create platform fee transaction for tracking
+    platform_transaction = Transaction(
+        user_id="platform",  # Special user ID for platform
+        amount=platform_fee,
+        type="platform_fee",  # Special transaction type
+        status=TransactionStatus.APPROVED
+    )
+    await db.transactions.insert_one(platform_transaction.dict())
+    
+    # Update bet status with platform fee information
     await db.bets.update_one(
         {"id": bet_id},
         {
@@ -489,7 +502,10 @@ async def declare_winner(bet_id: str, winner_data: DeclareWinner):
                 "winner_id": winner_data.winner_id,
                 "winner_name": winner["name"],
                 "status": BetStatus.COMPLETED,
-                "completed_at": datetime.utcnow()
+                "completed_at": datetime.utcnow(),
+                "platform_fee": platform_fee,
+                "winner_payout": winner_payout,
+                "total_pot": total_pot
             }
         }
     )
