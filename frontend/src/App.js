@@ -395,7 +395,7 @@ function App() {
             </div>
             <CardTitle className="text-2xl font-bold text-white">BetArena</CardTitle>
             <p className="text-gray-300">
-              {isReturningUser ? 'Bem-vindo de volta!' : 'Plataforma de Apostas com Pagamento Real'}
+              {isLogin ? 'Entre na sua conta' : 'Crie sua conta'}
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -403,33 +403,65 @@ function App() {
               <Input
                 placeholder="Seu email"
                 type="email"
-                value={userForm.email}
+                value={authForm.email}
                 onChange={(e) => handleEmailChange(e.target.value)}
                 className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                 disabled={loading}
               />
-              {isReturningUser && (
+              {emailExists && (
                 <p className="text-green-400 text-sm mt-1">
-                  ✓ Usuário encontrado! Clique para continuar.
+                  ✓ Email encontrado - faça login
+                </p>
+              )}
+              {authForm.email && !emailExists && !isLogin && (
+                <p className="text-blue-400 text-sm mt-1">
+                  ✓ Email disponível - criar nova conta
                 </p>
               )}
             </div>
             
-            {!isReturningUser && userForm.email && userForm.email.includes('@') && (
+            <div className="relative">
+              <Input
+                placeholder="Sua senha"
+                type={showPassword ? "text" : "password"}
+                value={authForm.password}
+                onChange={(e) => setAuthForm({...authForm, password: e.target.value})}
+                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400 pr-10"
+                disabled={loading}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
+            
+            {!isLogin && (
               <>
                 <div>
                   <Input
+                    placeholder="Confirme sua senha"
+                    type={showPassword ? "text" : "password"}
+                    value={authForm.confirmPassword}
+                    onChange={(e) => setAuthForm({...authForm, confirmPassword: e.target.value})}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  />
+                </div>
+                <div>
+                  <Input
                     placeholder="Nome completo"
-                    value={userForm.name}
-                    onChange={(e) => setUserForm({...userForm, name: e.target.value})}
+                    value={authForm.name}
+                    onChange={(e) => setAuthForm({...authForm, name: e.target.value})}
                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                 </div>
                 <div>
                   <Input
                     placeholder="Telefone (11999999999)"
-                    value={userForm.phone}
-                    onChange={(e) => setUserForm({...userForm, phone: e.target.value})}
+                    value={authForm.phone}
+                    onChange={(e) => setAuthForm({...authForm, phone: e.target.value})}
                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                 </div>
@@ -437,16 +469,28 @@ function App() {
             )}
             
             <Button 
-              onClick={createUser} 
-              disabled={loading || !userForm.email.trim() || (!isReturningUser && (!userForm.name.trim() || !userForm.phone.trim()))}
+              onClick={handleAuth} 
+              disabled={loading || !authForm.email.trim() || !authForm.password.trim() || (!isLogin && (!authForm.name.trim() || !authForm.phone.trim() || authForm.password !== authForm.confirmPassword))}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              {loading ? 'Carregando...' : isReturningUser ? 'Continuar' : 'Criar Conta'}
+              {loading ? 'Carregando...' : isLogin ? 'Entrar' : 'Criar Conta'}
             </Button>
             
-            {!userForm.email && (
+            <div className="text-center">
+              <button
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setAuthForm({ name: '', email: authForm.email, phone: '', password: '', confirmPassword: '' });
+                }}
+                className="text-sm text-gray-300 hover:text-white underline"
+              >
+                {isLogin ? 'Não tem conta? Criar nova conta' : 'Já tem conta? Fazer login'}
+              </button>
+            </div>
+            
+            {!authForm.email && (
               <p className="text-gray-400 text-sm text-center">
-                Digite seu email para fazer login ou criar uma conta
+                Digite seu email para começar
               </p>
             )}
           </CardContent>
