@@ -125,18 +125,72 @@ function App() {
     }
   };
 
+  const checkUserByEmail = async (email) => {
+    if (!email.trim()) return;
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API}/users/email/${encodeURIComponent(email)}`);
+      // User exists - auto login
+      setCurrentUser(response.data);
+      setIsReturningUser(true);
+      console.log('Existing user logged in:', response.data.name);
+    } catch (error) {
+      if (error.response?.status === 404) {
+        // New user - show full registration form
+        setIsReturningUser(false);
+        console.log('New user - registration required');
+      } else {
+        console.error('Error checking user:', error);
+      }
+    }
+    setLoading(false);
+  };
+
   const createUser = async () => {
-    if (!userForm.name.trim() || !userForm.email.trim() || !userForm.phone.trim()) return;
+    if (!userForm.email.trim()) {
+      alert('Por favor, insira seu email');
+      return;
+    }
+    
+    // If returning user, just need email
+    if (isReturningUser) {
+      await checkUserByEmail(userForm.email);
+      return;
+    }
+    
+    // New user - need all fields
+    if (!userForm.name.trim() || !userForm.phone.trim()) {
+      alert('Por favor, preencha todos os campos');
+      return;
+    }
+    
     setLoading(true);
     try {
       const response = await axios.post(`${API}/users`, userForm);
       setCurrentUser(response.data);
       setUserForm({ name: '', email: '', phone: '' });
       await loadUsers();
+      console.log('New user created:', response.data.name);
     } catch (error) {
       console.error('Error creating user:', error);
+      alert('Erro ao criar usuário');
     }
     setLoading(false);
+  };
+
+  const handleEmailChange = async (email) => {
+    setUserForm({...userForm, email: email});
+    
+    // Check if user exists when email is complete (basic email validation)
+    if (email.includes('@') && email.includes('.')) {
+      await checkUserByEmail(email);
+    }
+  };
+
+  const logout = () => {
+    setCurrentUser(null);
+    setUserForm({ name: '', email: '', phone: '' });
+    setIsReturningUser(false);
   };
 
   const createBet = async () => {
