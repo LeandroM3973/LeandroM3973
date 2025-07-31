@@ -966,37 +966,56 @@ function App() {
                       
                       {/* Invite Link Section for Waiting Bets */}
                       {bet.status === 'waiting' && bet.creator_id === currentUser.id && (
-                        <div className="space-y-2">
-                          <div className="bg-blue-500/20 rounded-lg p-3 border border-blue-500/30">
-                            <div className="flex items-center justify-between">
+                        <div className="space-y-3">
+                          <div className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-lg p-4 border border-blue-500/30">
+                            <div className="flex items-center justify-between mb-3">
                               <div>
-                                <p className="text-blue-200 text-sm font-medium">🔗 Link de Convite</p>
+                                <p className="text-blue-200 font-semibold flex items-center">
+                                  🔗 Link de Convite Gerado
+                                </p>
                                 <p className="text-blue-300 text-xs">Compartilhe com seu adversário</p>
                               </div>
-                              <div className="flex space-x-2">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => copyInviteLink(bet.invite_code)}
-                                  className="border-blue-400/30 text-blue-200 hover:bg-blue-500/20"
-                                >
-                                  <Copy className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => shareInviteLink(bet.invite_code)}
-                                  className="border-blue-400/30 text-blue-200 hover:bg-blue-500/20"
-                                >
-                                  <Share2 className="w-4 h-4" />
-                                </Button>
-                              </div>
+                            </div>
+                            
+                            <div className="bg-white/10 rounded-lg p-3 mb-3">
+                              <p className="text-white text-sm font-mono break-all">
+                                {`${window.location.origin}/invite/${bet.invite_code}`}
+                              </p>
+                            </div>
+                            
+                            <div className="flex space-x-2">
+                              <Button
+                                size="sm"
+                                onClick={() => copyInviteLink(bet.invite_code)}
+                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+                              >
+                                <Copy className="w-4 h-4 mr-2" />
+                                Copiar Link
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => shareInviteLink(bet.invite_code)}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                              >
+                                <Share2 className="w-4 h-4 mr-2" />
+                                Compartilhar
+                              </Button>
+                            </div>
+                            
+                            <div className="mt-3 p-2 bg-yellow-500/20 rounded text-xs text-yellow-200">
+                              💡 <strong>Como usar:</strong> Envie este link por WhatsApp, Telegram ou qualquer mensageiro. 
+                              Seu adversário clicará no link e verá todos os detalhes da aposta antes de aceitar.
                             </div>
                           </div>
                           
                           {bet.expires_at && (
-                            <div className="bg-orange-500/20 rounded p-2 text-xs text-orange-200 text-center">
-                              ⏰ {formatTimeRemaining(bet.expires_at)}
+                            <div className="bg-orange-500/20 rounded p-3 text-center border border-orange-500/30">
+                              <p className="text-orange-200 text-sm">
+                                ⏰ <strong>Tempo restante:</strong> {formatTimeRemaining(bet.expires_at)}
+                              </p>
+                              <p className="text-orange-300 text-xs mt-1">
+                                Se ninguém aceitar o convite, o valor será devolvido automaticamente
+                              </p>
                             </div>
                           )}
                         </div>
