@@ -748,6 +748,44 @@ function App() {
                       <Badge variant="outline" className="border-white/20 text-white">
                         {bet.event_type}
                       </Badge>
+                      
+                      {/* Invite Link Section for Waiting Bets */}
+                      {bet.status === 'waiting' && bet.creator_id === currentUser.id && (
+                        <div className="space-y-2">
+                          <div className="bg-blue-500/20 rounded-lg p-3 border border-blue-500/30">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-blue-200 text-sm font-medium">🔗 Link de Convite</p>
+                                <p className="text-blue-300 text-xs">Compartilhe com seu adversário</p>
+                              </div>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => copyInviteLink(bet.invite_code)}
+                                  className="border-blue-400/30 text-blue-200 hover:bg-blue-500/20"
+                                >
+                                  <Copy className="w-4 h-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => shareInviteLink(bet.invite_code)}
+                                  className="border-blue-400/30 text-blue-200 hover:bg-blue-500/20"
+                                >
+                                  <Share2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {bet.expires_at && (
+                            <div className="bg-orange-500/20 rounded p-2 text-xs text-orange-200 text-center">
+                              ⏰ {formatTimeRemaining(bet.expires_at)}
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 ))}
