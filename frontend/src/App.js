@@ -394,13 +394,35 @@ function App() {
     
     if (diff <= 0) return "Expirada";
     
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const minutes = Math.floor(diff / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
-    if (hours > 0) {
-      return `${hours}h ${minutes}m restantes`;
+    if (minutes > 0) {
+      return `${minutes}m ${seconds}s restantes`;
     } else {
-      return `${minutes}m restantes`;
+      return `${seconds}s restantes`;
+    }
+  };
+
+  const copyInviteLink = (inviteCode) => {
+    const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
+    navigator.clipboard.writeText(inviteUrl).then(() => {
+      alert('Link de convite copiado para a área de transferência!');
+    }).catch(() => {
+      alert(`Link de convite: ${inviteUrl}`);
+    });
+  };
+
+  const shareInviteLink = (inviteCode) => {
+    const inviteUrl = `${window.location.origin}/invite/${inviteCode}`;
+    if (navigator.share) {
+      navigator.share({
+        title: 'Convite para Aposta - BetArena',
+        text: 'Você foi convidado para uma aposta na BetArena!',
+        url: inviteUrl,
+      });
+    } else {
+      copyInviteLink(inviteCode);
     }
   };
 
