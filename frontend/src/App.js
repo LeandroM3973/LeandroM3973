@@ -555,6 +555,22 @@ function App() {
                             <span className="text-green-400 text-sm font-semibold">{bet.winner_name}</span>
                           </div>
                         )}
+                        {bet.platform_fee && (
+                          <>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400 text-sm">Valor Total:</span>
+                              <span className="text-white text-sm">{formatCurrency(bet.total_pot)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400 text-sm">Taxa Plataforma (20%):</span>
+                              <span className="text-yellow-400 text-sm">-{formatCurrency(bet.platform_fee)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-400 text-sm">Pagamento ao Vencedor:</span>
+                              <span className="text-green-400 text-sm font-semibold">{formatCurrency(bet.winner_payout)}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                       <Badge variant="outline" className="border-white/20 text-white">
                         {bet.event_type}
