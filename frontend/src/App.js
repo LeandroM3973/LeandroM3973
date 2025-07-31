@@ -367,41 +367,61 @@ function App() {
               <Trophy className="w-8 h-8 text-white" />
             </div>
             <CardTitle className="text-2xl font-bold text-white">BetArena</CardTitle>
-            <p className="text-gray-300">Plataforma de Apostas com Pagamento Real</p>
+            <p className="text-gray-300">
+              {isReturningUser ? 'Bem-vindo de volta!' : 'Plataforma de Apostas com Pagamento Real'}
+            </p>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <Input
-                placeholder="Nome completo"
-                value={userForm.name}
-                onChange={(e) => setUserForm({...userForm, name: e.target.value})}
-                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-              />
-            </div>
-            <div>
-              <Input
-                placeholder="Email"
+                placeholder="Seu email"
                 type="email"
                 value={userForm.email}
-                onChange={(e) => setUserForm({...userForm, email: e.target.value})}
+                onChange={(e) => handleEmailChange(e.target.value)}
                 className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                disabled={loading}
               />
+              {isReturningUser && (
+                <p className="text-green-400 text-sm mt-1">
+                  ✓ Usuário encontrado! Clique para continuar.
+                </p>
+              )}
             </div>
-            <div>
-              <Input
-                placeholder="Telefone (11999999999)"
-                value={userForm.phone}
-                onChange={(e) => setUserForm({...userForm, phone: e.target.value})}
-                className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
-              />
-            </div>
+            
+            {!isReturningUser && userForm.email && userForm.email.includes('@') && (
+              <>
+                <div>
+                  <Input
+                    placeholder="Nome completo"
+                    value={userForm.name}
+                    onChange={(e) => setUserForm({...userForm, name: e.target.value})}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  />
+                </div>
+                <div>
+                  <Input
+                    placeholder="Telefone (11999999999)"
+                    value={userForm.phone}
+                    onChange={(e) => setUserForm({...userForm, phone: e.target.value})}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  />
+                </div>
+              </>
+            )}
+            
             <Button 
               onClick={createUser} 
-              disabled={loading || !userForm.name.trim() || !userForm.email.trim() || !userForm.phone.trim()}
+              disabled={loading || !userForm.email.trim() || (!isReturningUser && (!userForm.name.trim() || !userForm.phone.trim()))}
               className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              {loading ? 'Criando...' : 'Entrar na Plataforma'}
+              {loading ? 'Carregando...' : isReturningUser ? 'Continuar' : 'Criar Conta'}
             </Button>
+            
+            {!userForm.email && (
+              <p className="text-gray-400 text-sm text-center">
+                Digite seu email para fazer login ou criar uma conta
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
