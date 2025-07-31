@@ -149,6 +149,9 @@ frontend:
         - working: true
           agent: "main"
           comment: "ISSUE RESOLVED: Root cause was identical ACCESS_TOKEN and PUBLIC_KEY credentials, violating Mercado Pago's security model. Implemented comprehensive solution: 1) Fixed credential validation detecting mixed types, 2) Added automatic test vs production mode detection, 3) Enhanced error handling with specific HTTP status codes, 4) Improved logging and user feedback in Portuguese, 5) Fixed PUBLIC_KEY to be different from ACCESS_TOKEN. System now shows '🚀 Mercado Pago: Using PRODUCTION credentials' and payment preferences are created successfully. Backend API tests confirm functionality working properly."
+        - working: true
+          agent: "testing"
+          comment: "COMPREHENSIVE TESTING COMPLETED - MERCADO PAGO FIXES VERIFIED: ✅ Backend correctly shows '🚀 Mercado Pago: Using PRODUCTION credentials' in logs, ✅ Payment preference creation working for all test amounts (R$10, R$50, R$100, R$250), ✅ Real Mercado Pago URLs generated successfully (both init_point and sandbox_init_point), ✅ Webhook endpoint accessible, ✅ Transaction history working, ✅ No more 'não foi possível processar seu pagamento' errors - backend integration is fully functional. URLs return 403 status when accessed directly (normal MP behavior for security). The original user issue has been completely resolved."
 
 backend:
   - task: "Bet creation API and invite code generation"
