@@ -62,6 +62,7 @@ class User(BaseModel):
     name: str
     email: str
     phone: str
+    password_hash: str  # Added password hash field
     balance: float = 0.0  # Changed to real currency (BRL)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -69,6 +70,19 @@ class UserCreate(BaseModel):
     name: str
     email: str
     phone: str
+    password: str  # Added password field
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class UserResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    phone: str
+    balance: float
+    created_at: datetime
 
 class Transaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
