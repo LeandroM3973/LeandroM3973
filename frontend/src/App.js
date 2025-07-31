@@ -218,11 +218,55 @@ function App() {
     return () => clearTimeout(timeoutId);
   };
 
-  const logout = () => {
-    setCurrentUser(null);
-    setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
-    setIsLogin(true);
-    setEmailExists(false);
+  const checkInviteCode = async () => {
+    if (!inviteCode.trim()) {
+      alert('Por favor, insira um código de convite');
+      return;
+    }
+    
+    setInviteLoading(true);
+    try {
+      const response = await axios.get(`${API}/bets/invite/${inviteCode.trim()}`);
+      setInviteBet(response.data);
+    } catch (error) {
+      console.error('Error checking invite:', error);
+      if (error.response?.status === 410) {
+        alert('Este convite expirou');
+      } else if (error.response?.status === 404) {
+        alert('Código de convite não encontrado');
+      } else if (error.response?.status === 400) {
+        alert('Esta aposta não está mais disponível');
+      } else {
+        alert('Erro ao verificar convite');
+      }
+      setInviteBet(null);
+    }
+    setInviteLoading(false);
+  };
+
+  const joinBetByInvite = async () => {
+    if (!inviteBet) return;
+    
+    setLoading(true);
+    try {
+      await axios.post(`${API}/bets/join-by-invite/${inviteCode.trim()}`, {
+        user_id: currentUser.id
+      });
+      
+      alert('Você entrou na aposta com sucesso!');
+      setInviteCode('');
+      setInviteBet(null);
+      
+      // Refresh data
+      await Promise.all([loadUserBets(), loadUserTransactions()]);
+      const userResponse = await axios.get(`${API}/users/${currentUser.id}`);
+      setCurrentUser(userResponse.data);
+      
+    } catch (error) {
+      console.error('Error joining bet by invite:', error);
+      alert(error.response?.data?.detail || 'Erro ao entrar na aposta');
+    }
+    setLoading(false);
   };
 
   const createBet = async () => {
