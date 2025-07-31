@@ -697,6 +697,12 @@ function App() {
                 >
                   {loading ? 'Criando...' : 'Criar Aposta'}
                 </Button>
+                
+                <div className="bg-yellow-500/20 rounded-lg p-3 border border-yellow-500/30">
+                  <p className="text-yellow-200 text-sm">
+                    ⏰ <strong>Tempo Limite:</strong> Após criar a aposta, você tem <strong>24 horas</strong> para que um adversário entre. Caso ninguém participe, o valor será <strong>automaticamente devolvido</strong> para sua conta.
+                  </p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
