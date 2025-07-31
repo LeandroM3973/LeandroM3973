@@ -752,8 +752,16 @@ function App() {
                           </div>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-gray-400">Valor Total:</span>
+                          <span className="text-gray-400">Valor Total do Prêmio:</span>
                           <span className="text-green-400 font-semibold">{formatCurrency(bet.amount * 2)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-500">Taxa da plataforma (20%):</span>
+                          <span className="text-yellow-400">-{formatCurrency(bet.amount * 2 * 0.20)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-400">Pagamento ao Vencedor:</span>
+                          <span className="text-green-400 font-semibold">{formatCurrency(bet.amount * 2 * 0.80)}</span>
                         </div>
                       </div>
                       <Dialog>
