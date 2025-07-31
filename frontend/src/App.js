@@ -368,7 +368,39 @@ function App() {
         }
       } else {
         // Redirect to real Mercado Pago (when using real keys)
-        window.open(response.data.sandbox_init_point, '_blank');
+        // Try window.open first, if blocked, provide fallback
+        const paymentWindow = window.open(response.data.sandbox_init_point, '_blank');
+        
+        // Check if popup was blocked
+        if (!paymentWindow || paymentWindow.closed || typeof paymentWindow.closed == 'undefined') {
+          // Popup was blocked - show fallback options
+          const paymentUrl = response.data.sandbox_init_point;
+          const confirmed = window.confirm(
+            `🔒 POPUP BLOQUEADO PELO NAVEGADOR\n\n` +
+            `Para continuar com o pagamento no Mercado Pago:\n\n` +
+            `1. Clique OK para abrir em uma nova aba\n` +
+            `2. Ou clique Cancelar e permita popups para este site\n\n` +
+            `Link do pagamento será copiado para facilitar o acesso.`
+          );
+          
+          if (confirmed) {
+            // Copy payment URL to clipboard
+            navigator.clipboard.writeText(paymentUrl).then(() => {
+              alert(`🔗 LINK DE PAGAMENTO COPIADO!\n\n${paymentUrl}\n\n✅ Cole este link em uma nova aba para completar o pagamento no Mercado Pago.`);
+            }).catch(() => {
+              // Fallback for browsers that don't support clipboard API
+              alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📋 Copie este link e cole em uma nova aba para completar o pagamento no Mercado Pago.`);
+            });
+            
+            // Also try to navigate directly
+            window.location.href = paymentUrl;
+          } else {
+            alert(`💡 Para usar o Mercado Pago:\n\n1. Permita popups para ${window.location.origin}\n2. Tente fazer o depósito novamente\n\nOu acesse: ${paymentUrl}`);
+          }
+        } else {
+          // Popup opened successfully
+          alert('🔗 Redirecionando para o Mercado Pago...\n\nComplete o pagamento na nova janela que foi aberta.');
+        }
       }
       
     } catch (error) {
