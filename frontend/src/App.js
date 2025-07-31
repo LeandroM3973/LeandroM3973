@@ -633,6 +633,13 @@ function App() {
                       <Badge variant="outline" className="border-white/20 text-white">
                         {bet.event_type}
                       </Badge>
+                      
+                      {bet.expires_at && bet.status === 'waiting' && (
+                        <div className="bg-orange-500/20 rounded p-2 text-xs text-orange-200">
+                          ⏰ {formatTimeRemaining(bet.expires_at)}
+                        </div>
+                      )}
+                      
                       {bet.creator_id !== currentUser.id && (
                         <Button 
                           onClick={() => joinBet(bet.id)}
