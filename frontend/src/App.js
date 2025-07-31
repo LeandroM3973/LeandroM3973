@@ -129,72 +129,95 @@ function App() {
     }
   };
 
-  const checkUserByEmail = async (email) => {
-    if (!email.trim()) return;
-    setLoading(true);
+  const checkEmailExists = async (email) => {
+    if (!email.trim() || !email.includes('@')) return;
+    
     try {
-      const response = await axios.get(`${API}/users/email/${encodeURIComponent(email)}`);
-      // User exists - auto login
-      setCurrentUser(response.data);
-      setIsReturningUser(true);
-      console.log('Existing user logged in:', response.data.name);
+      const response = await axios.post(`${API}/users/check-email`, null, {
+        params: { email: email }
+      });
+      setEmailExists(response.data.exists);
+      setIsLogin(response.data.exists);
     } catch (error) {
-      if (error.response?.status === 404) {
-        // New user - show full registration form
-        setIsReturningUser(false);
-        console.log('New user - registration required');
-      } else {
-        console.error('Error checking user:', error);
+      console.error('Error checking email:', error);
+      setEmailExists(false);
+      setIsLogin(false);
+    }
+  };
+
+  const handleAuth = async () => {
+    if (!authForm.email.trim() || !authForm.password.trim()) {
+      alert('Por favor, preencha email e senha');
+      return;
+    }
+    
+    if (isLogin) {
+      // Login
+      setLoading(true);
+      try {
+        const response = await axios.post(`${API}/users/login`, {
+          email: authForm.email,
+          password: authForm.password
+        });
+        setCurrentUser(response.data);
+        setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+        console.log('User logged in:', response.data.name);
+      } catch (error) {
+        console.error('Error logging in:', error);
+        alert(error.response?.data?.detail || 'Email ou senha incorretos');
       }
+      setLoading(false);
+    } else {
+      // Register
+      if (!authForm.name.trim() || !authForm.phone.trim()) {
+        alert('Por favor, preencha todos os campos');
+        return;
+      }
+      
+      if (authForm.password !== authForm.confirmPassword) {
+        alert('As senhas não coincidem');
+        return;
+      }
+      
+      if (authForm.password.length < 6) {
+        alert('A senha deve ter pelo menos 6 caracteres');
+        return;
+      }
+      
+      setLoading(true);
+      try {
+        const response = await axios.post(`${API}/users`, {
+          name: authForm.name,
+          email: authForm.email,
+          phone: authForm.phone,
+          password: authForm.password
+        });
+        setCurrentUser(response.data);
+        setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+        await loadUsers();
+        console.log('New user created:', response.data.name);
+      } catch (error) {
+        console.error('Error creating user:', error);
+        alert(error.response?.data?.detail || 'Erro ao criar usuário');
+      }
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  const createUser = async () => {
-    if (!userForm.email.trim()) {
-      alert('Por favor, insira seu email');
-      return;
-    }
-    
-    // If returning user, just need email
-    if (isReturningUser) {
-      await checkUserByEmail(userForm.email);
-      return;
-    }
-    
-    // New user - need all fields
-    if (!userForm.name.trim() || !userForm.phone.trim()) {
-      alert('Por favor, preencha todos os campos');
-      return;
-    }
-    
-    setLoading(true);
-    try {
-      const response = await axios.post(`${API}/users`, userForm);
-      setCurrentUser(response.data);
-      setUserForm({ name: '', email: '', phone: '' });
-      await loadUsers();
-      console.log('New user created:', response.data.name);
-    } catch (error) {
-      console.error('Error creating user:', error);
-      alert('Erro ao criar usuário');
-    }
-    setLoading(false);
-  };
-
-  const handleEmailChange = async (email) => {
-    setUserForm({...userForm, email: email});
-    
-    // Check if user exists when email is complete (basic email validation)
-    if (email.includes('@') && email.includes('.')) {
-      await checkUserByEmail(email);
-    }
+  const handleEmailChange = (email) => {
+    setAuthForm({...authForm, email: email});
+    // Check if email exists after user stops typing
+    const timeoutId = setTimeout(() => {
+      checkEmailExists(email);
+    }, 500);
+    return () => clearTimeout(timeoutId);
   };
 
   const logout = () => {
     setCurrentUser(null);
-    setUserForm({ name: '', email: '', phone: '' });
-    setIsReturningUser(false);
+    setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+    setIsLogin(true);
+    setEmailExists(false);
   };
 
   const createBet = async () => {
