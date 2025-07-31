@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "o painel de opções no dispositivo movél está com um bug, uma escrita sobrepondo a outra"
+user_problem_statement: "o mercado pago não está funcionando o link de pagamento que foi integrado no site, indetifique o erro e me ajude a corrigir, por favor"
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
@@ -125,7 +125,7 @@ frontend:
     working: true
     file: "/app/frontend/src/App.js"
     stuck_count: 0
-    priority: "high"
+    priority: "medium"
     needs_retesting: false
     status_history:
         - working: false
@@ -135,31 +135,56 @@ frontend:
           agent: "main"
           comment: "ISSUE RESOLVED: Backend generates invite_code automatically and correctly. Frontend displays invite links perfectly when bets exist. Problem was user creating bets without sufficient balance. After adding R$ 100 balance and creating bet directly via API, invite link appears correctly in both 'Enviar Convite' and 'Minhas Apostas' tabs with full functionality (copy, share, instructions)."
 
+  - task: "Mercado Pago payment integration issue"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reported that Mercado Pago payment links integrated in the site are not working. Payment flow is not functioning properly."
+
 backend:
   - task: "Bet creation API and invite code generation"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
-    priority: "high"
+    priority: "medium"
     needs_retesting: false
     status_history:
         - working: true
           agent: "testing"
           comment: "Backend testing confirms all APIs working correctly. POST /api/bets endpoint functional, invite_code auto-generation working, balance management correct, all related endpoints responding properly. Created test bet successfully with invite_code '31562126'. User authentication, balance deduction, and transaction recording all working perfectly."
 
+  - task: "Mercado Pago API integration"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reports Mercado Pago payment links are not working. Need to investigate API keys, configuration, and payment flow."
+
 metadata:
   created_by: "main_agent"
-  version: "1.1"
-  test_sequence: 2
+  version: "1.2"
+  test_sequence: 3
   run_ui: false
 
 test_plan:
   current_focus:
-    - "Verify complete bet creation flow works end-to-end"
+    - "Mercado Pago payment integration issue"
+    - "Mercado Pago API integration"
   stuck_tasks: []
   test_all: false
-  test_priority: "completed"
+  test_priority: "high_first"
 
 agent_communication:
     - agent: "main"
@@ -168,3 +193,5 @@ agent_communication:
       message: "INVITE LINK ISSUE RESOLVED: Comprehensive investigation revealed the backend works perfectly (auto-generates invite_code, processes bets correctly). Frontend displays invite links properly when bets exist. Created test bet via API - link appears correctly in both 'Enviar Convite' and 'Minhas Apostas' tabs with full functionality."
     - agent: "testing"
       message: "Backend testing completed successfully. All API endpoints functional including POST /api/bets, user authentication, balance management, and invite code system. Frontend-to-backend communication working correctly. Issue was not with backend functionality."
+    - agent: "main"
+      message: "NEW ISSUE REPORTED: User reports Mercado Pago payment integration is not working. Payment links integrated in the site are not functioning. Need to investigate API configuration, keys, and payment flow to identify and fix the error."
