@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class BetArenaPaymentTester:
-    def __init__(self, base_url="https://0ac7c639-df83-47f0-8ae3-29a1c25d3a76.preview.emergentagent.com"):
+    def __init__(self, base_url="https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0

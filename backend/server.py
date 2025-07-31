@@ -246,11 +246,11 @@ async def create_payment_preference(deposit_request: DepositRequest):
                     }
                 },
                 "external_reference": transaction.id,
-                "notification_url": f"https://0ac7c639-df83-47f0-8ae3-29a1c25d3a76.preview.emergentagent.com/api/payments/webhook",
+                "notification_url": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/api/payments/webhook",
                 "back_urls": {
-                    "success": f"https://0ac7c639-df83-47f0-8ae3-29a1c25d3a76.preview.emergentagent.com/payment-success",
-                    "failure": f"https://0ac7c639-df83-47f0-8ae3-29a1c25d3a76.preview.emergentagent.com/payment-failure",
-                    "pending": f"https://0ac7c639-df83-47f0-8ae3-29a1c25d3a76.preview.emergentagent.com/payment-pending"
+                    "success": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success",
+                    "failure": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-failure",
+                    "pending": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-pending"
                 },
                 "auto_return": "approved",
                 "payment_methods": {
