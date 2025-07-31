@@ -24,7 +24,39 @@ db = client[os.environ['DB_NAME']]
 
 # Mercado Pago setup
 mp_access_token = os.environ.get('MERCADO_PAGO_ACCESS_TOKEN')
-mp = mercadopago.SDK(mp_access_token) if mp_access_token else None
+mp_public_key = os.environ.get('MERCADO_PAGO_PUBLIC_KEY')
+
+# Validate Mercado Pago configuration
+def validate_mp_credentials():
+    if not mp_access_token or not mp_public_key:
+        print("⚠️  WARNING: Mercado Pago credentials not configured")
+        return False
+    
+    if mp_access_token == mp_public_key:
+        print("❌ ERROR: ACCESS_TOKEN and PUBLIC_KEY cannot be identical")
+        return False
+    
+    # Detect credential type
+    is_test_access = mp_access_token.startswith('TEST-')
+    is_test_public = mp_public_key.startswith('TEST-')
+    is_prod_access = mp_access_token.startswith('APP_USR-')
+    is_prod_public = mp_public_key.startswith('APP_USR-')
+    
+    if is_test_access and is_test_public:
+        print("🧪 Mercado Pago: Using TEST credentials (sandbox mode)")
+        return True
+    elif is_prod_access and is_prod_public:
+        print("🚀 Mercado Pago: Using PRODUCTION credentials")
+        return True
+    else:
+        print("❌ ERROR: Mixed credential types detected")
+        print(f"   ACCESS_TOKEN: {'TEST' if is_test_access else 'PROD' if is_prod_access else 'UNKNOWN'}")
+        print(f"   PUBLIC_KEY: {'TEST' if is_test_public else 'PROD' if is_prod_public else 'UNKNOWN'}")
+        return False
+
+# Initialize Mercado Pago with validation
+mp_valid = validate_mp_credentials()
+mp = mercadopago.SDK(mp_access_token) if mp_access_token and mp_valid else None
 
 # Create the main app without a prefix
 app = FastAPI()
