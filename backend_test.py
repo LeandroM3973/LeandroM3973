@@ -254,6 +254,156 @@ class BetArenaAPITester:
             f"transactions/{user_id}",
             200
         )
+        return response if success else []
+
+    def test_mercado_pago_integration_comprehensive(self):
+        """Comprehensive test for Mercado Pago integration issue"""
+        print("\n🎯 COMPREHENSIVE MERCADO PAGO INTEGRATION TEST...")
+        print("=" * 70)
+        
+        # Test with the specific user from the issue report
+        test_user_email = "test@mobile.com"
+        test_user_id = "3cccefee-d410-4931-9d96-1ae945dfa689"
+        
+        print(f"\n1. Testing with reported user: {test_user_email}")
+        print(f"   User ID: {test_user_id}")
+        
+        # First verify user exists
+        user_data = self.test_get_user(test_user_id)
+        if not user_data:
+            print("❌ Test user not found - creating user for testing...")
+            user_data = self.test_create_user("Test Mobile User", test_user_email, "11999999999", "password123")
+            if not user_data:
+                print("❌ Failed to create test user")
+                return False
+            test_user_id = user_data['id']
+        
+        print(f"✅ User found/created - Balance: R$ {user_data['balance']:.2f}")
+        
+        # Test different payment amounts
+        test_amounts = [10.00, 50.00, 100.00, 250.00]
+        
+        for amount in test_amounts:
+            print(f"\n2. Testing payment preference creation for R$ {amount}...")
+            print("-" * 50)
+            
+            payment_response = self.test_create_payment_preference(test_user_id, amount)
+            
+            if not payment_response:
+                print(f"❌ CRITICAL: Payment preference creation failed for R$ {amount}")
+                return False
+            
+            # Analyze the response in detail
+            print(f"\n   📊 DETAILED RESPONSE ANALYSIS:")
+            print(f"   - Preference ID: {payment_response.get('preference_id', 'MISSING')}")
+            print(f"   - Transaction ID: {payment_response.get('transaction_id', 'MISSING')}")
+            print(f"   - Real MP Active: {payment_response.get('real_mp', False)}")
+            print(f"   - Demo Mode: {payment_response.get('demo_mode', False)}")
+            print(f"   - Message: {payment_response.get('message', 'No message')}")
+            
+            # Check if we're getting real Mercado Pago URLs or demo URLs
+            init_point = payment_response.get('init_point')
+            sandbox_init_point = payment_response.get('sandbox_init_point')
+            
+            if init_point:
+                if 'mercadopago' in init_point.lower():
+                    print(f"   ✅ Real Mercado Pago URL detected in init_point")
+                else:
+                    print(f"   ⚠️  Non-Mercado Pago URL in init_point: {init_point}")
+            
+            if sandbox_init_point:
+                if 'mercadopago' in sandbox_init_point.lower():
+                    print(f"   ✅ Real Mercado Pago URL detected in sandbox_init_point")
+                else:
+                    print(f"   ⚠️  Non-Mercado Pago URL in sandbox_init_point: {sandbox_init_point}")
+            
+            # Test webhook endpoint
+            print(f"\n   🔗 Testing webhook endpoint accessibility...")
+            webhook_success, webhook_response = self.run_test(
+                "Test Webhook Endpoint",
+                "POST",
+                "payments/webhook",
+                200,
+                data={"test": "webhook_test"}
+            )
+            
+            if webhook_success:
+                print(f"   ✅ Webhook endpoint is accessible")
+            else:
+                print(f"   ❌ Webhook endpoint failed")
+            
+            # Test payment simulation (for demo mode)
+            if payment_response.get('demo_mode') and payment_response.get('transaction_id'):
+                print(f"\n   🧪 Testing payment simulation...")
+                simulation_success, simulation_response = self.run_test(
+                    "Simulate Payment Approval",
+                    "POST",
+                    f"payments/simulate-approval/{payment_response['transaction_id']}",
+                    200
+                )
+                
+                if simulation_success:
+                    print(f"   ✅ Payment simulation works")
+                    
+                    # Check if balance was updated
+                    updated_user = self.test_get_user(test_user_id)
+                    if updated_user and updated_user['balance'] > user_data['balance']:
+                        print(f"   ✅ User balance updated correctly: R$ {updated_user['balance']:.2f}")
+                        user_data = updated_user  # Update for next iteration
+                    else:
+                        print(f"   ❌ User balance not updated properly")
+                else:
+                    print(f"   ❌ Payment simulation failed")
+            
+            print(f"\n   ✅ Payment preference test completed for R$ {amount}")
+        
+        # Test transaction history
+        print(f"\n3. Testing transaction history...")
+        print("-" * 30)
+        
+        transactions = self.test_get_user_transactions(test_user_id)
+        if transactions:
+            print(f"   ✅ Transaction history retrieved: {len(transactions)} transactions")
+            for i, tx in enumerate(transactions[:3]):  # Show first 3 transactions
+                print(f"   - Transaction {i+1}: {tx.get('type', 'unknown')} - R$ {tx.get('amount', 0):.2f}")
+        else:
+            print(f"   ⚠️  No transactions found or retrieval failed")
+        
+        # Final assessment
+        print(f"\n4. FINAL MERCADO PAGO INTEGRATION ASSESSMENT:")
+        print("=" * 50)
+        
+        # Check if any payment preference was created successfully
+        if len(self.created_transactions) > 0:
+            real_mp_count = sum(1 for tx in self.created_transactions if tx.get('real_mp'))
+            demo_count = sum(1 for tx in self.created_transactions if tx.get('demo_mode'))
+            
+            print(f"   📊 Payment Preferences Created: {len(self.created_transactions)}")
+            print(f"   🔑 Real Mercado Pago: {real_mp_count}")
+            print(f"   🧪 Demo Mode: {demo_count}")
+            
+            if real_mp_count > 0:
+                print(f"   ✅ MERCADO PAGO INTEGRATION IS WORKING")
+                print(f"   ✅ Production keys are valid and functional")
+                print(f"   ✅ Payment URLs are being generated correctly")
+                return True
+            elif demo_count > 0:
+                print(f"   ⚠️  MERCADO PAGO IS IN DEMO MODE")
+                print(f"   🚨 This indicates an issue with the production configuration")
+                print(f"   💡 Possible causes:")
+                print(f"      - Invalid or expired access token")
+                print(f"      - Network connectivity issues")
+                print(f"      - Mercado Pago API service issues")
+                print(f"      - Incorrect API endpoint configuration")
+                return False
+            else:
+                print(f"   ❌ MERCADO PAGO INTEGRATION FAILED")
+                print(f"   🚨 Neither real MP nor demo mode is working")
+                return False
+        else:
+            print(f"   ❌ NO PAYMENT PREFERENCES CREATED")
+            print(f"   🚨 Complete failure of payment system")
+            return False
     def test_login_user(self, email, password):
         """Test user login"""
         success, response = self.run_test(
