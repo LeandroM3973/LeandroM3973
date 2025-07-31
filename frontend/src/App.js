@@ -647,8 +647,8 @@ function App() {
             <TabsTrigger value="create" className="text-white data-[state=active]:bg-white/20">
               Criar Aposta
             </TabsTrigger>
-            <TabsTrigger value="join-invite" className="text-white data-[state=active]:bg-white/20">
-              Aceitar Convite
+            <TabsTrigger value="send-invite" className="text-white data-[state=active]:bg-white/20">
+              Enviar Convite
             </TabsTrigger>
             <TabsTrigger value="payments" className="text-white data-[state=active]:bg-white/20">
               Pagamentos
