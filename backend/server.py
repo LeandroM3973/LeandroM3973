@@ -178,9 +178,9 @@ async def create_payment_preference(deposit_request: DepositRequest):
                 "external_reference": transaction.id,
                 "notification_url": f"{os.environ.get('BACKEND_URL', 'http://localhost:8001')}/api/payments/webhook",
                 "back_urls": {
-                    "success": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-success",
-                    "failure": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-failure",
-                    "pending": f"{os.environ.get('FRONTEND_URL', 'http://localhost:3000')}/payment-pending"
+                    "success": f"https://0ac7c639-df83-47f0-8ae3-29a1c25d3a76.preview.emergentagent.com/payment-success",
+                    "failure": f"https://0ac7c639-df83-47f0-8ae3-29a1c25d3a76.preview.emergentagent.com/payment-failure",
+                    "pending": f"https://0ac7c639-df83-47f0-8ae3-29a1c25d3a76.preview.emergentagent.com/payment-pending"
                 },
                 "auto_return": "approved",
                 "payment_methods": {
