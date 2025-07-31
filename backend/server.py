@@ -592,79 +592,15 @@ async def get_waiting_bets():
     bets = await db.bets.find({"status": BetStatus.WAITING}).sort("created_at", -1).to_list(1000)
     return [Bet(**bet) for bet in bets]
 
-@api_router.get("/bets/invite/{invite_code}", response_model=Bet)
-async def get_bet_by_invite(invite_code: str):
-    """Get bet details by invite code"""
-    bet = await db.bets.find_one({"invite_code": invite_code})
-    if not bet:
-        raise HTTPException(status_code=404, detail="Convite não encontrado")
-    
-    # Check if bet is still valid (not expired)
-    current_time = datetime.utcnow()
-    if bet["expires_at"] < current_time and bet["status"] == BetStatus.WAITING:
-        raise HTTPException(status_code=410, detail="Este convite expirou")
-    
-    if bet["status"] != BetStatus.WAITING:
-        raise HTTPException(status_code=400, detail="Esta aposta não está mais disponível")
-    
-    return Bet(**bet)
-
-@api_router.post("/bets/join-by-invite/{invite_code}", response_model=Bet)
-async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
-    """Join bet using invite code"""
-    # Get the bet by invite code
-    bet = await db.bets.find_one({"invite_code": invite_code})
-    if not bet:
-        raise HTTPException(status_code=404, detail="Convite não encontrado")
-    
-    # Check if bet is still valid
-    current_time = datetime.utcnow()
-    if bet["expires_at"] < current_time and bet["status"] == BetStatus.WAITING:
-        raise HTTPException(status_code=410, detail="Este convite expirou")
-    
-    if bet["status"] != BetStatus.WAITING:
-        raise HTTPException(status_code=400, detail="Esta aposta não está mais disponível")
-    
-    if bet["creator_id"] == join_data.user_id:
-        raise HTTPException(status_code=400, detail="Você não pode participar da sua própria aposta")
-    
-    # Check if user exists and has enough balance
-    user = await db.users.find_one({"id": join_data.user_id})
-    if not user:
-        raise HTTPException(status_code=404, detail="Usuário não encontrado")
-    
-    if user["balance"] < bet["amount"]:
-        raise HTTPException(status_code=400, detail="Saldo insuficiente")
-    
-    # Deduct amount from opponent's balance
-    await db.users.update_one(
-        {"id": join_data.user_id},
-        {"$inc": {"balance": -bet["amount"]}}
-    )
-    
-    # Create bet debit transaction for opponent
-    transaction = Transaction(
-        user_id=join_data.user_id,
-        amount=bet["amount"],
-        type=TransactionType.BET_DEBIT,
-        status=TransactionStatus.APPROVED
-    )
-    await db.transactions.insert_one(transaction.dict())
-    
-    # Update bet with opponent info
-    await db.bets.update_one(
-        {"invite_code": invite_code},
-        {
-            "$set": {
-                "opponent_id": join_data.user_id,
-                "opponent_name": user["name"],
-                "status": BetStatus.ACTIVE
-            }
-        }
-    )
-    
-    updated_bet = await db.bets.find_one({"invite_code": invite_code})
-    return Bet(**updated_bet)
+@api_router.get("/bets/user/{user_id}", response_model=List[Bet])
+async def get_user_bets(user_id: str):
+    bets = await db.bets.find({
+        "$or": [
+            {"creator_id": user_id},
+            {"opponent_id": user_id}
+        ]
+    }).sort("created_at", -1).to_list(1000)
+    return [Bet(**bet) for bet in bets]
 
 # Health Check
 @api_router.get("/")
