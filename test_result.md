@@ -121,6 +121,44 @@ frontend:
           comment: "Fixed by changing TabsList from grid-cols-6 to grid-cols-3 md:grid-cols-6, added responsive text sizing (text-xs md:text-sm), and implemented shorter text labels for mobile using sm:hidden and hidden sm:inline classes. Mobile now shows 3 columns with 2 rows of tabs, all text is clearly readable."
 
 backend:
+  - task: "Bet creation API endpoint functionality"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "testing"
+          comment: "Initial testing required for bet creation functionality reported by user"
+        - working: true
+          agent: "testing"
+          comment: "COMPREHENSIVE TESTING COMPLETED: Bet creation API endpoint is fully functional. Tested with exact user credentials (test@mobile.com, R$ 75.00 balance). Successfully created bet with R$ 50.00 amount, verified balance deduction (R$ 75.00 -> R$ 25.00), confirmed invite code generation (b922c2e1), and validated all related API calls (GET /bets/waiting, GET /bets/user/{id}, GET /bets/invite/{code}). Backend is working correctly - issue is likely frontend-specific or network-related."
+
+  - task: "User authentication and balance management"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "User login with test@mobile.com successful. Balance management working correctly - R$ 50.00 properly deducted from R$ 75.00 balance when bet created. User data retrieval and updates functioning properly."
+
+  - task: "Invite code system for bet sharing"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+        - working: true
+          agent: "testing"
+          comment: "Invite code generation and retrieval working perfectly. Generated code 'b922c2e1' for test bet, successfully retrieved bet details via GET /bets/invite/{code} endpoint. System properly validates invite codes and returns appropriate error messages for invalid/expired codes."
 
 metadata:
   created_by: "main_agent"
