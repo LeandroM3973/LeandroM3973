@@ -614,72 +614,7 @@ function App() {
             </div>
           </div>
 
-          {/* Available Bets */}
-          <TabsContent value="bets">
-            <div className="grid gap-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-white">Apostas Aguardando Adversário</h2>
-                <Badge variant="outline" className="border-white/20 text-white">
-                  {waitingBets.length} disponíveis
-                </Badge>
-              </div>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {waitingBets.map((bet) => (
-                  <Card key={bet.id} className="bg-white/10 backdrop-blur-lg border-white/20">
-                    <CardHeader>
-                      <div className="flex justify-between items-start">
-                        <CardTitle className="text-white">{bet.event_title}</CardTitle>
-                        <Badge className={`${getStatusColor(bet.status)} text-white`}>
-                          <div className="flex items-center space-x-1">
-                            {getStatusIcon(bet.status)}
-                            <span>{bet.status}</span>
-                          </div>
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-gray-300 text-sm">{bet.event_description}</p>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-300 text-sm">vs {bet.creator_name}</span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <DollarSign className="w-4 h-4 text-green-400" />
-                          <span className="text-white font-semibold">{formatCurrency(bet.amount)}</span>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="border-white/20 text-white">
-                        {bet.event_type}
-                      </Badge>
-                      
-                      {bet.expires_at && bet.status === 'waiting' && (
-                        <div className="bg-orange-500/20 rounded p-2 text-xs text-orange-200">
-                          ⏰ {formatTimeRemaining(bet.expires_at)}
-                        </div>
-                      )}
-                      
-                      {bet.creator_id !== currentUser.id && (
-                        <Button 
-                          onClick={() => joinBet(bet.id)}
-                          disabled={loading || currentUser.balance < bet.amount}
-                          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                        >
-                          {loading ? 'Entrando...' : `Apostar ${formatCurrency(bet.amount)}`}
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              {waitingBets.length === 0 && (
-                <div className="text-center py-12">
-                  <Target className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-300">Nenhuma aposta disponível no momento</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
+          {/* Available Bets - REMOVED */}
 
           {/* Create Bet */}
           <TabsContent value="create">
