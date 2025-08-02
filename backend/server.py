@@ -935,7 +935,7 @@ async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
             result = await db.transactions.update_one(
                 {
                     "id": transaction["id"],
-                    "status": "PENDING"  # Only update if still pending
+                    "status": TransactionStatus.PENDING  # Only update if still pending
                 },
                 {"$set": {
                     "status": TransactionStatus.APPROVED,
