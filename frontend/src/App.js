@@ -590,10 +590,15 @@ function App() {
         // AbacatePay payment flow with enhanced frontend integration
         const paymentUrl = response.data.payment_url || response.data.init_point;
         const billId = response.data.preference_id;
+        const transactionId = response.data.transaction_id;
+        
+        // Save transaction ID for later status checking
+        setLastPaymentTransactionId(transactionId);
         
         console.log('🥑 AbacatePay Payment Data:', {
           billId,
           paymentUrl,
+          transactionId,
           amount: response.data.amount,
           fee: response.data.fee
         });
