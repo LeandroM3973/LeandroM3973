@@ -564,18 +564,26 @@ async def simulate_payment_approval(transaction_id: str):
 async def webhook_abacatepay(request: Request):
     """AbacatePay webhook endpoint"""
     try:
+        # Get client IP for logging
+        client_ip = request.client.host if request.client else "unknown"
+        print(f"🥑 AbacatePay Webhook received from IP: {client_ip}")
+        
         # Validate webhook secret from query parameters
         webhook_secret = request.query_params.get('webhookSecret')
-        if not webhook_secret or webhook_secret != abacate_webhook_secret:
-            print(f"❌ Invalid AbacatePay webhook secret")
-            raise HTTPException(status_code=401, detail="Invalid webhook secret")
+        print(f"🔐 Webhook secret provided: {'Yes' if webhook_secret else 'No'}")
         
+        if not webhook_secret or webhook_secret != abacate_webhook_secret:
+            print(f"❌ Invalid AbacatePay webhook secret. Expected: {abacate_webhook_secret[:10]}...")
+            print(f"❌ Received: {webhook_secret[:10] + '...' if webhook_secret else 'None'}")
+            raise HTTPException(status_code=401, detail="Invalid webhook secret")
+
         # Parse webhook payload
         webhook_data = await request.json()
         event_type = webhook_data.get('event')
         
         print(f"🥑 AbacatePay Webhook received: {event_type}")
-        
+        print(f"🥑 Full webhook payload: {json.dumps(webhook_data, indent=2)}")
+
         if event_type == 'billing.paid':
             await process_abacatepay_payment_success(webhook_data)
         elif event_type == 'billing.failed':
@@ -584,13 +592,17 @@ async def webhook_abacatepay(request: Request):
             await process_abacatepay_payment_cancellation(webhook_data)
         else:
             print(f"⚠️ Unknown AbacatePay webhook event: {event_type}")
+
+        return {"received": True, 
+                "message": f"Webhook processed successfully: {event_type}"}
         
-        return {"received": True, "event": event_type}
-        
-    except HTTPException:
-        raise
+    except HTTPException as he:
+        # Re-raise HTTP exceptions
+        raise he
     except Exception as e:
         print(f"❌ AbacatePay Webhook Error: {str(e)}")
+        import traceback
+        print(f"❌ Full traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=400, detail=f"Webhook processing error: {str(e)}")
 
 async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
