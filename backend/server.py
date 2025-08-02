@@ -723,12 +723,14 @@ async def simulate_payment_approval(transaction_id: str):
 @api_router.get("/payments/webhook-test")
 async def test_webhook_endpoint():
     """Test webhook endpoint accessibility"""
+    secure_webhook_url = generate_webhook_url(frontend_url, abacate_webhook_secret)
     return {
         "status": "webhook_accessible",
         "message": "Webhook endpoint is accessible",
-        "expected_url": f"{frontend_url}/api/payments/webhook?webhookSecret={abacate_webhook_secret}",
+        "expected_url": secure_webhook_url,
         "webhook_secret": abacate_webhook_secret,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
+        "https_enforced": True
     }
 
 @api_router.post("/payments/webhook")
