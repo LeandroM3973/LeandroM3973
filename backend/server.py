@@ -30,7 +30,11 @@ abacate_webhook_secret = os.environ.get('ABACATEPAY_WEBHOOK_SECRET')
 # Validate AbacatePay configuration
 def validate_abacatepay_credentials():
     if not abacate_api_token or not abacate_webhook_secret:
-        print("⚠️  WARNING: AbacatePay credentials not configured")
+        print("⚠️  WARNING: AbacatePay credentials not configured - using demo mode")
+        return False
+    
+    if abacate_api_token == "your_abacatepay_api_token_here":
+        print("⚠️  WARNING: Using placeholder AbacatePay credentials - demo mode enabled")
         return False
     
     if len(abacate_api_token) < 10:
