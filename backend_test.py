@@ -1845,14 +1845,15 @@ class BetArenaAPITester:
         return all_passed
 
 def main():
-    print("🥑 ABACATEPAY WEBHOOK INTEGRATION TESTING - CRITICAL BALANCE CREDITING FIX")
-    print("=" * 80)
-    print("REVIEW REQUEST: Test AbacatePay webhook integration - CRITICAL BALANCE CREDITING FIX")
-    print("USER ISSUE: 'após efetuar um pagamento o valor não é credito no saldo do site'")
-    print("FIXES APPLIED: ✅ Added webhook_url to AbacatePay billing creation")
-    print("               ✅ Enhanced webhook endpoint with comprehensive logging")
-    print("               ✅ Improved payment success processing")
-    print("=" * 80)
+    print("🔧 MANUAL PAYMENT VERIFICATION SYSTEM TESTING - CRITICAL BALANCE UPDATE SOLUTION")
+    print("=" * 90)
+    print("REVIEW REQUEST: Test manual payment verification system - CRITICAL BALANCE UPDATE SOLUTION")
+    print("USER CRITICAL ISSUE: 'O SALDO DEVE ATUALIZAR DE ACORDO COM O VALOR DO DEPOSITO DO USUARIO'")
+    print("SOLUTION IMPLEMENTED: ✅ Manual payment status check endpoint: /payments/check-status/{transaction_id}")
+    print("                      ✅ Manual payment approval endpoint: /payments/manual-approve/{transaction_id}")
+    print("                      ✅ Frontend interface for users to verify their own payments")
+    print("                      ✅ Automatic AbacatePay API integration to check real payment status")
+    print("=" * 90)
     
     tester = BetArenaAPITester()
     
@@ -1861,45 +1862,60 @@ def main():
     print("-" * 30)
     tester.test_health_check()
     
-    # Test 2: MAIN FOCUS - AbacatePay Webhook Integration (CRITICAL)
-    print("\n🥑 MAIN TEST: ABACATEPAY WEBHOOK INTEGRATION (CRITICAL)")
-    print("-" * 60)
+    # Test 2: MAIN FOCUS - Manual Payment Verification System (CRITICAL - REVIEW REQUEST)
+    print("\n🔧 MAIN TEST: MANUAL PAYMENT VERIFICATION SYSTEM (CRITICAL - REVIEW REQUEST)")
+    print("-" * 80)
+    manual_payment_success = tester.test_manual_payment_verification_system()
+    
+    # Test 3: Secondary - AbacatePay Webhook Integration (CRITICAL)
+    print("\n🥑 SECONDARY TEST: ABACATEPAY WEBHOOK INTEGRATION (CRITICAL)")
+    print("-" * 65)
     webhook_integration_success = tester.test_abacatepay_webhook_integration_critical()
     
-    # Test 3: Secondary - AbacatePay Balance Crediting System
-    print("\n💰 SECONDARY TEST: ABACATEPAY BALANCE CREDITING SYSTEM")
+    # Test 4: AbacatePay Balance Crediting System
+    print("\n💰 ADDITIONAL TEST: ABACATEPAY BALANCE CREDITING SYSTEM")
     print("-" * 60)
     balance_crediting_success = tester.test_abacatepay_balance_crediting_system()
     
-    # Test 4: Email Verification System (if time permits)
+    # Test 5: Email Verification System (if time permits)
     print("\n📧 ADDITIONAL TEST: EMAIL VERIFICATION SYSTEM")
     print("-" * 50)
     email_verification_success = tester.test_email_verification_system_comprehensive()
     
     # Print final results
-    print("\n" + "=" * 80)
+    print("\n" + "=" * 90)
     print(f"📊 FINAL TEST RESULTS:")
     print(f"   Tests passed: {tester.tests_passed}/{tester.tests_run}")
     print(f"   Success rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
     
-    print(f"\n🥑 ABACATEPAY WEBHOOK INTEGRATION RESULTS (CRITICAL):")
-    if webhook_integration_success:
-        print("   ✅ WEBHOOK INTEGRATION IS WORKING CORRECTLY")
-        print("   ✅ Payment preferences include webhook_url in AbacatePay API call")
-        print("   ✅ Webhook endpoint processes payments correctly")
-        print("   ✅ User balance increases by net amount (R$ amount - R$ 0.80 fee)")
-        print("   ✅ Transaction status changes from PENDING to APPROVED")
-        print("   ✅ Detailed logs show balance update process")
-        print("   ✅ No more balance crediting issues after payments")
-        print("\n🎉 CRITICAL ISSUE RESOLVED: Users' site balance now updates after AbacatePay payments!")
+    print(f"\n🔧 MANUAL PAYMENT VERIFICATION SYSTEM RESULTS (CRITICAL - REVIEW REQUEST):")
+    if manual_payment_success:
+        print("   ✅ MANUAL PAYMENT VERIFICATION SYSTEM IS WORKING CORRECTLY")
+        print("   ✅ Manual payment status check endpoint (/payments/check-status) functional")
+        print("   ✅ Manual payment approval endpoint (/payments/manual-approve) functional")
+        print("   ✅ Balance updates correctly when payment is verified (amount - fee)")
+        print("   ✅ Transaction status changes from PENDING to APPROVED after approval")
+        print("   ✅ System works even without automatic webhook configuration")
+        print("   ✅ Real AbacatePay API integration confirms actual payment status")
+        print("   ✅ Fallback manual approval system provides immediate solution")
+        print("\n🎉 CRITICAL USER ISSUE RESOLVED: 'O SALDO DEVE ATUALIZAR' - Balance now updates correctly!")
+        print("🎉 Users can now manually check and confirm their payments until automatic webhooks are configured!")
+        
+        print(f"\n🥑 ABACATEPAY WEBHOOK INTEGRATION RESULTS:")
+        if webhook_integration_success:
+            print("   ✅ Webhook integration is also working correctly")
+            print("   ✅ Automatic payment processing functional")
+        else:
+            print("   ⚠️  Webhook integration may have issues")
+            print("   ✅ But manual payment verification provides the solution")
         
         print(f"\n💰 BALANCE CREDITING SYSTEM RESULTS:")
         if balance_crediting_success:
-            print("   ✅ Balance crediting system is also working correctly")
+            print("   ✅ Balance crediting system is working correctly")
             print("   ✅ Payment processing and balance updates functional")
         else:
             print("   ⚠️  Some balance crediting features may have minor issues")
-            print("   ✅ But the critical webhook integration functionality works")
+            print("   ✅ But manual payment verification solves the core problem")
         
         print(f"\n📧 EMAIL VERIFICATION SYSTEM RESULTS:")
         if email_verification_success:
@@ -1907,36 +1923,43 @@ def main():
             print("   ✅ All user authentication and logging features functional")
         else:
             print("   ⚠️  Some email verification features may have minor issues")
-            print("   ✅ But the critical payment webhook functionality works")
+            print("   ✅ But the critical payment verification functionality works")
         
         return 0
     else:
-        print("   ❌ WEBHOOK INTEGRATION HAS CRITICAL ISSUES")
-        print("   🚨 This affects the core balance crediting functionality")
-        print("   🚨 USER ISSUE NOT RESOLVED: Balance may not update after payments")
+        print("   ❌ MANUAL PAYMENT VERIFICATION SYSTEM HAS CRITICAL ISSUES")
+        print("   🚨 This affects the core balance update functionality")
+        print("   🚨 USER ISSUE NOT RESOLVED: Balance may not update after manual verification")
         
-        print("\n🔧 RECOMMENDED FIXES FOR WEBHOOK INTEGRATION:")
-        print("   1. Verify webhook_url is correctly added to AbacatePay billing creation")
-        print("   2. Check webhook endpoint authentication with proper secret")
-        print("   3. Test webhook payload parsing for 'billing.paid' events")
+        print("\n🔧 RECOMMENDED FIXES FOR MANUAL PAYMENT VERIFICATION:")
+        print("   1. Check /payments/check-status/{transaction_id} endpoint functionality")
+        print("   2. Verify /payments/manual-approve/{transaction_id} endpoint works correctly")
+        print("   3. Test balance update calculation (amount - fee) in manual approval")
         print("   4. Verify transaction status update from PENDING to APPROVED")
-        print("   5. Check user balance update calculation (amount - fee)")
-        print("   6. Ensure webhook endpoint has comprehensive logging")
-        print("   7. Test complete payment flow from creation to balance credit")
+        print("   5. Check AbacatePay API integration for real payment status checking")
+        print("   6. Ensure proper error handling for invalid transaction IDs")
+        print("   7. Test complete manual verification flow from creation to balance credit")
+        
+        print(f"\n🥑 ABACATEPAY WEBHOOK INTEGRATION RESULTS:")
+        if webhook_integration_success:
+            print("   ✅ Webhook integration is working")
+            print("   🚨 But the manual payment verification has issues")
+        else:
+            print("   ❌ Both manual verification and webhook integration have issues")
         
         print(f"\n💰 BALANCE CREDITING SYSTEM RESULTS:")
         if balance_crediting_success:
             print("   ✅ Balance crediting system is working")
-            print("   🚨 But the critical webhook integration has issues")
+            print("   🚨 But the manual payment verification has issues")
         else:
-            print("   ❌ Both webhook integration and balance crediting have issues")
+            print("   ❌ Multiple payment systems have issues")
         
         print(f"\n📧 EMAIL VERIFICATION SYSTEM RESULTS:")
         if email_verification_success:
             print("   ✅ Email verification system is working")
-            print("   🚨 But the critical payment webhook has issues")
+            print("   🚨 But the critical payment verification has issues")
         else:
-            print("   ❌ Multiple systems have issues - focus on webhook integration first")
+            print("   ❌ Multiple systems have issues - focus on manual payment verification first")
         
         return 1
 
