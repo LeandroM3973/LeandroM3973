@@ -330,12 +330,6 @@ function App() {
         console.error('❌ Registration error:', error);
         alert(error.response?.data?.detail || 'Erro ao criar conta');
       }
-        await loadUsers();
-        console.log('New user created:', response.data.name);
-      } catch (error) {
-        console.error('Error creating user:', error);
-        alert(error.response?.data?.detail || 'Erro ao criar usuário');
-      }
       setLoading(false);
     }
   };
