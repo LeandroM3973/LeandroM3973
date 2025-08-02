@@ -313,8 +313,23 @@ function App() {
           phone: authForm.phone,
           password: authForm.password
         });
-        setCurrentUser(response.data);
-        setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
+        
+        // Don't auto-login after registration - require email verification
+        alert(`📧 CONTA CRIADA COM SUCESSO!\n\n` +
+              `✅ Usuário: ${response.data.name}\n` +
+              `📧 Email: ${authForm.email}\n\n` +
+              `⚠️ IMPORTANTE: Seu email precisa ser verificado antes do primeiro login.\n\n` +
+              `🔧 Use a verificação manual temporária abaixo para ativar sua conta.`);
+        
+        setEmailVerificationRequired(true);
+        setVerificationEmail(authForm.email);
+        setIsLogin(true); // Switch to login mode
+        setAuthForm({ name: '', email: authForm.email, phone: '', password: '', confirmPassword: '' });
+        console.log('📧 New user created (email verification required):', response.data.name);
+      } catch (error) {
+        console.error('❌ Registration error:', error);
+        alert(error.response?.data?.detail || 'Erro ao criar conta');
+      }
         await loadUsers();
         console.log('New user created:', response.data.name);
       } catch (error) {
