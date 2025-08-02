@@ -10,7 +10,8 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timedelta, timedelta
 from enum import Enum
-import mercadopago
+from abacatepay import AbacatePay
+from abacatepay.resources import Product
 import json
 import bcrypt
 
@@ -56,7 +57,7 @@ def validate_mp_credentials():
 
 # Initialize Mercado Pago with validation
 mp_valid = validate_mp_credentials()
-mp = mercadopago.SDK(mp_access_token) if mp_access_token and mp_valid else None
+mp = None  # Placeholder for now - will be replaced with AbacatePay integration
 
 # Create the main app without a prefix
 app = FastAPI()
