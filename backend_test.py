@@ -453,9 +453,8 @@ class BetArenaAPITester:
         success, response = self.run_test(
             f"Manual Verify Email '{email}'",
             "POST",
-            "users/manual-verify",
-            200,
-            params={"email": email}
+            f"users/manual-verify?email={email}",
+            200
         )
         return response if success else None
 
