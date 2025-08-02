@@ -299,14 +299,19 @@ async def create_payment_preference(request: CreatePaymentRequest):
         )
         
         # Create billing with AbacatePay using new API
+        # Ensure email is valid format for AbacatePay
+        user_email = user.get("email", "")
+        if not user_email or "@" not in user_email:
+            user_email = f"user_{transaction.id}@betarena.com"
+        
         billing_response = abacatepay_client.billing.create(
             products=[product],
             return_url=f"{frontend_url}/payment-success",
             completion_url=f"{frontend_url}/payment-success",
             customer={
                 "name": user["name"],
-                "email": user["email"],
-                "cellphone": user["phone"],
+                "email": user_email,
+                "cellphone": user.get("phone", "11999999999"),
                 "taxId": "11144477735"  # Valid test CPF for AbacatePay
             }
         )
