@@ -421,6 +421,74 @@ function App() {
     }
   };
 
+  // Check payment status function
+  const checkPaymentStatus = async (transactionId) => {
+    if (!transactionId) {
+      alert('ID da transação não disponível');
+      return;
+    }
+
+    setPaymentCheckLoading(true);
+    try {
+      console.log(`🔍 Verificando status do pagamento: ${transactionId}`);
+      const response = await axios.post(`${API}/payments/check-status/${transactionId}`);
+      
+      const result = response.data;
+      console.log('💳 Status do pagamento:', result);
+
+      if (result.balance_updated) {
+        // Refresh user data to show updated balance
+        await refreshCurrentUser();
+        
+        alert(`✅ PAGAMENTO CONFIRMADO!\n\n` +
+              `💰 Status: ${result.status}\n` +
+              `✅ ${result.message}\n\n` +
+              `Seu saldo foi atualizado automaticamente!`);
+      } else {
+        alert(`⏳ PAGAMENTO PENDENTE\n\n` +
+              `📋 Status: ${result.status}\n` +
+              `💬 ${result.message}\n\n` +
+              `Continue verificando até o pagamento ser confirmado.`);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar pagamento:', error);
+      alert(error.response?.data?.detail || 'Erro ao verificar status do pagamento');
+    } finally {
+      setPaymentCheckLoading(false);
+    }
+  };
+
+  // Manual payment approval function (for testing)
+  const manualApprovePayment = async (transactionId, amount) => {
+    if (!transactionId || !amount) {
+      alert('Dados do pagamento não disponíveis');
+      return;
+    }
+
+    if (window.confirm(`🔧 APROVAÇÃO MANUAL\n\nDeseja aprovar manualmente o pagamento?\n\nTransação: ${transactionId}\nValor: R$ ${amount.toFixed(2)}\n\n⚠️ Use apenas para testes!`)) {
+      try {
+        console.log(`🔧 Aprovação manual: ${transactionId}, R$ ${amount}`);
+        const response = await axios.post(`${API}/payments/manual-approve/${transactionId}?amount=${amount}`);
+        
+        const result = response.data;
+        console.log('✅ Pagamento aprovado manualmente:', result);
+
+        // Refresh user data
+        await refreshCurrentUser();
+        
+        alert(`✅ PAGAMENTO APROVADO MANUALMENTE!\n\n` +
+              `💰 Valor: R$ ${result.amount}\n` +
+              `💸 Taxa: R$ ${result.fee}\n` +
+              `💎 Valor líquido: R$ ${result.net_amount}\n\n` +
+              `${result.message}`);
+              
+      } catch (error) {
+        console.error('❌ Erro na aprovação manual:', error);
+        alert(error.response?.data?.detail || 'Erro na aprovação manual');
+      }
+    }
+  };
+
   const logout = () => {
     setCurrentUser(null);
     setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
