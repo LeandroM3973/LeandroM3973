@@ -394,27 +394,68 @@ function App() {
           fee: response.data.fee
         });
         
-        // Detect if user is on mobile device
+        // Detect if user is on mobile device (improved detection)
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
-                         window.innerWidth <= 768;
+                         window.innerWidth <= 768 ||
+                         'ontouchstart' in window ||
+                         navigator.maxTouchPoints > 0;
+        
+        console.log(`📱 Device detection: isMobile=${isMobile}, userAgent=${navigator.userAgent}, width=${window.innerWidth}`);
         
         if (isMobile) {
-          // Mobile-optimized flow
-          const userChoice = window.confirm(
-            `🥑 PAGAMENTO ABACATEPAY\n\n` +
-            `Valor: ${formatCurrency(depositAmount)}\n` +
-            `Taxa: R$ 0,80\n` +
-            `Valor líquido: ${formatCurrency(depositAmount - 0.80)}\n\n` +
-            `ID: ${billId}\n\n` +
-            `Você será redirecionado para completar o pagamento PIX.\n\n` +
-            `✅ OK - Continuar com pagamento\n` +
-            `❌ Cancelar - Voltar`
-          );
-          
-          if (userChoice) {
-            // For mobile, navigate directly to avoid popup issues
-            alert('🚀 Redirecionando para o AbacatePay...\n\nVocê será levado para a página de pagamento PIX segura.');
-            window.location.href = paymentUrl;
+          // Mobile-optimized flow with improved user experience
+          try {
+            const userChoice = window.confirm(
+              `🥑 PAGAMENTO ABACATEPAY - MOBILE\n\n` +
+              `Valor: ${formatCurrency(depositAmount)}\n` +
+              `Taxa: R$ 0,80\n` +
+              `Valor líquido: ${formatCurrency(depositAmount - 0.80)}\n\n` +
+              `ID: ${billId}\n\n` +
+              `📱 IMPORTANTE: Clique OK para abrir o pagamento PIX no seu celular.\n\n` +
+              `✅ OK - Continuar com pagamento\n` +
+              `❌ Cancelar - Voltar`
+            );
+            
+            if (userChoice) {
+              // Mobile-specific handling with multiple fallbacks
+              console.log('📱 User confirmed mobile payment, redirecting...');
+              
+              // Try multiple mobile-friendly approaches
+              try {
+                // Method 1: Direct navigation (best for mobile)
+                console.log('📱 Attempting direct navigation to:', paymentUrl);
+                window.location.href = paymentUrl;
+              } catch (redirectError) {
+                console.error('❌ Direct navigation failed:', redirectError);
+                
+                // Method 2: Fallback with user copy-paste option
+                const fallbackChoice = window.confirm(
+                  `🔗 ABRIR PAGAMENTO PIX\n\n` +
+                  `Não foi possível abrir automaticamente.\n\n` +
+                  `✅ Clique OK para copiar o link e abrir manualmente\n` +
+                  `❌ Clique Cancelar para tentar novamente`
+                );
+                
+                if (fallbackChoice) {
+                  // Copy to clipboard and show instructions
+                  if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(paymentUrl).then(() => {
+                      alert(`📋 LINK COPIADO!\n\n${paymentUrl}\n\n📱 Cole este link no seu navegador para pagar.\n\nID: ${billId}`);
+                    }).catch(() => {
+                      // Show link for manual copy
+                      alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📱 Copie e cole este link no seu navegador.\n\nID: ${billId}`);
+                    });
+                  } else {
+                    alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📱 Copie e cole este link no seu navegador.\n\nID: ${billId}`);
+                  }
+                }
+              }
+            } else {
+              console.log('📱 User cancelled mobile payment');
+            }
+          } catch (mobileError) {
+            console.error('❌ Mobile payment error:', mobileError);
+            alert(`❌ Erro no pagamento mobile: ${mobileError.message}\n\nTente novamente ou use um navegador diferente.`);
           }
         } else {
           // Desktop flow with popup handling
