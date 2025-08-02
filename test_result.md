@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "CRÍTICO: após o pagamento gera uma notificação atrás da outra, parece um bug - problema de duplicação de webhooks causando múltiplas notificações/processamentos do mesmo pagamento"
+user_problem_statement: "implementar controle de acesso para aba Juiz - somente o administrador deve ter acesso à aba juiz para decidir quem venceu as apostas. Usuários normais só podem entrar no site, depositar valor e esperar o administrador decidir o resultado."
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
