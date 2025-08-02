@@ -1182,6 +1182,54 @@ async def check_admin_status(user_id: str):
         "is_admin": user.get("is_admin", False)
     }
 
+async def find_matching_bet(event_id: str, side: str, amount: float) -> Optional[Dict]:
+    """Find a matching bet for automatic pairing"""
+    # Look for opposite side bet with same event_id and amount
+    opposite_side = "B" if side == "A" else "A"
+    
+    matching_bet = await db.bets.find_one({
+        "event_id": event_id,
+        "side": opposite_side,
+        "amount": amount,
+        "status": BetStatus.WAITING,
+        "opponent_id": None  # Still looking for opponent
+    })
+    
+    if matching_bet:
+        print(f"🎯 Found matching bet for event {event_id}: {matching_bet['id']}")
+        print(f"   Original side: {side}, Matching side: {opposite_side}")
+    
+    return matching_bet
+
+async def connect_bets(bet1_id: str, bet2_id: str, user2_id: str, user2_name: str):
+    """Connect two matching bets"""
+    try:
+        # Update the original bet with opponent info
+        await db.bets.update_one(
+            {"id": bet1_id},
+            {"$set": {
+                "opponent_id": user2_id,
+                "opponent_name": user2_name,
+                "status": BetStatus.ACTIVE
+            }}
+        )
+        
+        # Mark the second bet as connected (we'll keep both for reference)
+        await db.bets.update_one(
+            {"id": bet2_id},
+            {"$set": {
+                "opponent_id": "MATCHED",  # Special marker
+                "status": BetStatus.ACTIVE
+            }}
+        )
+        
+        print(f"✅ Connected bets: {bet1_id} ↔ {bet2_id}")
+        
+        return True
+    except Exception as e:
+        print(f"❌ Error connecting bets: {str(e)}")
+        return False
+
 # Bet Routes (Modified for real currency)
 @api_router.post("/bets", response_model=Bet)
 async def create_bet(bet_data: BetCreate):
