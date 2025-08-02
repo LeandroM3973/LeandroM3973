@@ -1088,10 +1088,13 @@ function App() {
               <span className="hidden sm:inline">Histórico</span>
               <span className="sm:hidden">Histórico</span>
             </TabsTrigger>
-            <TabsTrigger value="judge" className="text-white data-[state=active]:bg-white/20 text-xs md:text-sm">
-              <span className="hidden sm:inline">Juiz</span>
-              <span className="sm:hidden">Juiz</span>
-            </TabsTrigger>
+            {/* Judge tab - ADMIN ONLY */}
+            {currentUser?.is_admin && (
+              <TabsTrigger value="judge" className="text-white data-[state=active]:bg-white/20 text-xs md:text-sm">
+                <span className="hidden sm:inline">🔒 Juiz</span>
+                <span className="sm:hidden">🔒 Juiz</span>
+              </TabsTrigger>
+            )}
           </TabsList>
 
           {/* Security Notice */}
