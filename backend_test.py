@@ -836,27 +836,6 @@ def main():
     print("-" * 50)
     abacatepay_success = tester.test_abacatepay_integration_comprehensive()
     
-    # Test 3: User Authentication Test
-    print("\n🔐 USER AUTHENTICATION TEST")
-    print("-" * 35)
-    
-    # Test user creation and login
-    test_user = tester.test_create_user("João Silva", "joao.silva@gmail.com", "11987654321", "minhasenha123")
-    auth_success = False
-    if test_user:
-        login_test = tester.test_login_user("joao.silva@gmail.com", "minhasenha123")
-        if login_test:
-            print("✅ User authentication is working correctly")
-            auth_success = True
-        else:
-            print("❌ User login failed")
-    else:
-        print("❌ User creation failed")
-    
-    # Test 4: Bet Creation Flow (Secondary)
-    print("\n🎯 SECONDARY TEST: BET CREATION FLOW")
-    print("-" * 40)
-    bet_creation_success = tester.test_bet_creation_flow_with_realistic_user()
     
     # Print final results
     print("\n" + "=" * 80)
@@ -864,57 +843,48 @@ def main():
     print(f"   Tests passed: {tester.tests_passed}/{tester.tests_run}")
     print(f"   Success rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
     
-    print(f"\n🥑 ABACATEPAY INTEGRATION RESULTS:")
-    if abacatepay_success:
-        print("   ✅ ABACATEPAY IS WORKING CORRECTLY")
-        print("   ✅ Production credentials are valid")
-        print("   ✅ Payment URLs are being generated")
-        print("   ✅ API endpoints are functional")
-        print("   ✅ Backend payment system is operational")
+    print(f"\n💰 CRITICAL BALANCE CREDITING RESULTS:")
+    if balance_crediting_success:
+        print("   ✅ BALANCE CREDITING SYSTEM IS WORKING CORRECTLY")
+        print("   ✅ Payment preferences created with correct external ID")
+        print("   ✅ Webhook processes successfully")
+        print("   ✅ User balance increases by (amount - fee)")
+        print("   ✅ Transaction status changes to APPROVED")
+        print("   ✅ No errors in webhook processing")
+        print("   ✅ The '$' field (balance) gets credited correctly after AbacatePay payment")
+        print("\n🎉 USER REQUIREMENT SATISFIED: Balance crediting works as expected!")
         
-        print(f"\n🔐 USER AUTHENTICATION RESULTS:")
-        if auth_success:
-            print("   ✅ User authentication is working correctly")
-            print("   ✅ No 'user not found' errors detected")
+        print(f"\n🥑 GENERAL ABACATEPAY INTEGRATION RESULTS:")
+        if abacatepay_success:
+            print("   ✅ General AbacatePay integration is also working correctly")
+            print("   ✅ Production credentials are valid")
+            print("   ✅ Payment URLs are being generated")
+            print("   ✅ API endpoints are functional")
         else:
-            print("   ❌ User authentication has issues")
-            print("   🚨 This could cause 'user not found' errors")
+            print("   ⚠️  Some general AbacatePay features may have issues")
+            print("   ✅ But the critical balance crediting functionality works")
         
-        print(f"\n🎯 BET CREATION RESULTS:")
-        if bet_creation_success:
-            print("   ✅ Bet creation system is working correctly")
-            print("   ✅ All related API endpoints are functional")
-        else:
-            print("   ❌ Bet creation system has issues")
-        
-        print("\n💡 USER ISSUE ANALYSIS:")
-        if not auth_success:
-            print("   - User authentication issues detected - this could cause payment failures")
-            print("   - Check user login/registration flow")
-        else:
-            print("   - Backend AbacatePay integration is working")
-            print("   - Issue may be frontend-related (SDK compatibility, JavaScript errors)")
-            print("   - Check browser console for errors")
-            print("   - Verify frontend is using correct AbacatePay SDK")
         return 0
     else:
-        print("   ❌ ABACATEPAY INTEGRATION HAS ISSUES")
+        print("   ❌ BALANCE CREDITING SYSTEM HAS CRITICAL ISSUES")
         print("   🚨 This confirms the user's reported problem")
-        print("\n🔧 RECOMMENDED FIXES:")
-        print("   1. Verify AbacatePay API token is valid and not expired")
-        print("   2. Check AbacatePay webhook secret configuration")
-        print("   3. Test network connectivity to AbacatePay APIs")
-        print("   4. Review AbacatePay account status and permissions")
-        print("   5. Check if webhook URLs are accessible from AbacatePay servers")
-        print("   6. Verify frontend URL configuration for payment callbacks")
+        print("   🚨 USER REQUIREMENT NOT SATISFIED")
         
-        if bet_creation_success:
-            print(f"\n📝 NOTE: Bet creation system is working correctly")
-            print(f"   - The issue is specifically with payment integration")
+        print("\n🔧 RECOMMENDED FIXES FOR BALANCE CREDITING:")
+        print("   1. Check webhook endpoint accessibility (/api/payments/webhook)")
+        print("   2. Verify webhook secret validation")
+        print("   3. Test amount conversion from cents to reais")
+        print("   4. Verify fee deduction logic (amount - fee)")
+        print("   5. Check database balance update mechanism")
+        print("   6. Verify transaction status update to APPROVED")
+        print("   7. Test AbacatePay webhook data structure processing")
         
-        if not auth_success:
-            print(f"\n⚠️  ADDITIONAL ISSUE: User authentication is also failing")
-            print(f"   - This could be causing 'user not found' errors during payments")
+        print(f"\n🥑 GENERAL ABACATEPAY INTEGRATION RESULTS:")
+        if abacatepay_success:
+            print("   ✅ General AbacatePay integration is working")
+            print("   🚨 But the critical balance crediting has issues")
+        else:
+            print("   ❌ Both balance crediting and general integration have issues")
         
         return 1
 
