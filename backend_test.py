@@ -12,6 +12,7 @@ class BetArenaAPITester:
         self.created_users = []
         self.created_bets = []
         self.created_transactions = []
+        self.abacatepay_working = False
 
     def run_test(self, name, method, endpoint, expected_status, data=None, params=None):
         """Run a single API test"""
