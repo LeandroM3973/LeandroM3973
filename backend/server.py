@@ -24,10 +24,30 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# AbacatePay Configuration
+# AbacatePay Configuration with HTTPS validation
 abacate_api_token = os.environ.get('ABACATEPAY_API_TOKEN')
 abacate_webhook_secret = os.environ.get('ABACATEPAY_WEBHOOK_SECRET')
-frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
+
+# HTTPS validation for webhook security
+def ensure_https_url(url: str) -> str:
+    """Ensure URL uses HTTPS for webhook security"""
+    if not url:
+        return "https://localhost:3000"
+    
+    if url.startswith('http://'):
+        # Convert HTTP to HTTPS for webhook security
+        url = url.replace('http://', 'https://')
+        print(f"⚠️ WARNING: Converted HTTP to HTTPS for webhook security: {url}")
+    elif not url.startswith('https://'):
+        # Add HTTPS if no protocol specified
+        url = f"https://{url}"
+        print(f"⚠️ WARNING: Added HTTPS protocol for webhook security: {url}")
+    
+    return url
+
+# Ensure frontend URL is always HTTPS for webhook security
+frontend_url = ensure_https_url(os.environ.get('FRONTEND_URL', 'https://localhost:3000'))
+print(f"🔒 Frontend URL (HTTPS enforced): {frontend_url}")
 
 # Validate AbacatePay configuration
 def validate_abacatepay_credentials():
