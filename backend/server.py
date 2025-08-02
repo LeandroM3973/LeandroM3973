@@ -272,6 +272,11 @@ class Bet(BaseModel):
     platform_fee: Optional[float] = None
     winner_payout: Optional[float] = None
     total_pot: Optional[float] = None
+    
+    # New fields for automatic matching system
+    side: str  # "A" or "B" (e.g., "Brasil" or "Argentina")  
+    event_id: str  # Common event ID for matching (e.g., "brasil_vs_argentina")
+    side_name: str = ""  # Human readable side name (e.g., "Brasil", "Argentina")
 
 class BetCreate(BaseModel):
     event_title: str
