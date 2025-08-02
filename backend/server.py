@@ -26,6 +26,7 @@ db = client[os.environ['DB_NAME']]
 # AbacatePay Configuration
 abacate_api_token = os.environ.get('ABACATEPAY_API_TOKEN')
 abacate_webhook_secret = os.environ.get('ABACATEPAY_WEBHOOK_SECRET')
+frontend_url = os.environ.get('FRONTEND_URL', 'http://localhost:3000')
 
 # Validate AbacatePay configuration
 def validate_abacatepay_credentials():
@@ -41,7 +42,8 @@ def validate_abacatepay_credentials():
         print("❌ ERROR: Invalid AbacatePay API token format")
         return False
     
-    print("🥑 AbacatePay: Configuration validated successfully")
+    print(f"🥑 AbacatePay: Configuration validated successfully")
+    print(f"🌐 Frontend URL: {frontend_url}")
     return True
 
 # Initialize AbacatePay with validation
