@@ -292,7 +292,7 @@ async def create_payment_preference(request: CreatePaymentRequest):
         }
         
         # Create billing with AbacatePay
-        billing_response = abacatepay_client.create_billing(
+        billing_response = abacatepay_client.billing.create(
             products=[product],
             returnURL=f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success",
             completionUrl=f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success", 
