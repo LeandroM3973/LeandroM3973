@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "o sistema de pagamento funciona perfeitamente no computador, mas em dispositivos móveis (celulares) não está funcionando. Usuário solicita correção para mobile."
+user_problem_statement: "sistema de pagamento mobile corrigido, mas agora precisa verificar se quando o valor é depositado via AbacatePay, o saldo é creditado corretamente no site no campo '$' (saldo do usuário)"
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
