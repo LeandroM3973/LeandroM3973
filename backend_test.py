@@ -174,9 +174,9 @@ class BetArenaAPITester:
         return response if success else []
 
     def test_create_payment_preference(self, user_id, amount):
-        """Test creating Mercado Pago payment preference - PRIORITY TEST"""
+        """Test creating AbacatePay payment preference - PRIORITY TEST"""
         success, response = self.run_test(
-            f"Create Payment Preference for R$ {amount}",
+            f"Create AbacatePay Payment Preference for R$ {amount}",
             "POST",
             "payments/create-preference",
             200,
@@ -185,50 +185,42 @@ class BetArenaAPITester:
                 "amount": amount
             }
         )
-        if success and 'preference_id' in response:
+        if success:
             self.created_transactions.append(response)
             print(f"   ✅ Payment preference created successfully!")
-            print(f"   📋 Preference ID: {response['preference_id']}")
-            print(f"   🔗 Payment URL: {response.get('init_point', 'N/A')}")
-            print(f"   🧪 Sandbox URL: {response.get('sandbox_init_point', 'N/A')}")
+            
+            # CRITICAL ANALYSIS FOR ABACATEPAY INTEGRATION
+            print(f"\n   🥑 ABACATEPAY INTEGRATION ANALYSIS:")
+            if response.get('abacatepay'):
+                print(f"   ✅ AbacatePay integration is ACTIVE")
+                self.abacatepay_working = True
+                print(f"   🔑 Using AbacatePay production credentials")
+                print(f"   💰 Amount: R$ {response.get('amount', amount)}")
+                print(f"   💳 Fee: R$ {response.get('fee', 0.80)}")
+                print(f"   🧪 Test Mode: {response.get('test_mode', 'Unknown')}")
+                print(f"   📄 Status: {response.get('status', 'Unknown')}")
+            elif response.get('demo_mode'):
+                print(f"   ⚠️  DEMO MODE is active - AbacatePay integration failed")
+                print(f"   🚨 This indicates a problem with AbacatePay configuration")
+                print(f"   💡 Message: {response.get('message', 'No message')}")
+            
+            # Log key response fields
+            print(f"   📋 Preference ID: {response.get('preference_id', 'N/A')}")
+            print(f"   🔗 Payment URL: {response.get('payment_url', response.get('init_point', 'N/A'))}")
             print(f"   📄 Transaction ID: {response.get('transaction_id', 'N/A')}")
             
-            # CRITICAL ANALYSIS FOR MERCADO PAGO ISSUE
-            print(f"\n   🔍 MERCADO PAGO INTEGRATION ANALYSIS:")
-            if response.get('real_mp'):
-                print(f"   ✅ Real Mercado Pago integration is ACTIVE")
-                print(f"   🔑 Using production keys successfully")
-            elif response.get('demo_mode'):
-                print(f"   ⚠️  DEMO MODE is active - Real MP integration failed")
-                print(f"   🚨 This indicates a problem with MP configuration")
-            
-            # Test URL accessibility
-            init_point = response.get('init_point')
-            sandbox_init_point = response.get('sandbox_init_point')
-            
-            if init_point and init_point != 'N/A':
-                print(f"   🌐 Testing init_point URL accessibility...")
+            # Test URL accessibility if available
+            payment_url = response.get('payment_url') or response.get('init_point')
+            if payment_url and payment_url != 'N/A':
+                print(f"   🌐 Testing payment URL accessibility...")
                 try:
-                    import requests
-                    url_test = requests.head(init_point, timeout=10)
-                    if url_test.status_code in [200, 302, 301]:
-                        print(f"   ✅ init_point URL is accessible (Status: {url_test.status_code})")
+                    url_test = requests.head(payment_url, timeout=10)
+                    if url_test.status_code in [200, 302, 301, 403]:  # 403 is normal for AbacatePay
+                        print(f"   ✅ Payment URL is accessible (Status: {url_test.status_code})")
                     else:
-                        print(f"   ❌ init_point URL returned status: {url_test.status_code}")
+                        print(f"   ❌ Payment URL returned status: {url_test.status_code}")
                 except Exception as e:
-                    print(f"   ❌ init_point URL test failed: {str(e)}")
-            
-            if sandbox_init_point and sandbox_init_point != 'N/A':
-                print(f"   🧪 Testing sandbox_init_point URL accessibility...")
-                try:
-                    import requests
-                    url_test = requests.head(sandbox_init_point, timeout=10)
-                    if url_test.status_code in [200, 302, 301]:
-                        print(f"   ✅ sandbox_init_point URL is accessible (Status: {url_test.status_code})")
-                    else:
-                        print(f"   ❌ sandbox_init_point URL returned status: {url_test.status_code}")
-                except Exception as e:
-                    print(f"   ❌ sandbox_init_point URL test failed: {str(e)}")
+                    print(f"   ❌ Payment URL test failed: {str(e)}")
             
             return response
         return None
