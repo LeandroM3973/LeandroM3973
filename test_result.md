@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "o site está dando erro ao tentar efetuar um pagamento, a mensagem do erro é '' user not found ''"
+user_problem_statement: "o usuário está reportando que o sistema de pagamento ainda não está funcionando - 'minha forma de pagamento ainda não funciona, resolva isso, por favor'. Anteriormente havia erro 'user not found' no pagamento."
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
