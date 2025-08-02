@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "após efetuar um pagamento o valor não é credito no saldo do site. O saldo do site deve atualizar conforme o usuário fizer o depósito do pagamento pelo AbacatePay - problema crítico no webhook/processamento de pagamentos"
+user_problem_statement: "CRÍTICO: O SALDO DEVE ATUALIZAR DE ACORDO COM O VALOR DO DEPÓSITO DO USUÁRIO, E NÃO ESTÁ ACONTECENDO ISSO. Testes simulados funcionaram mas pagamentos reais via AbacatePay não estão creditando saldo automaticamente."
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
