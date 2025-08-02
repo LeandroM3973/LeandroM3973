@@ -307,8 +307,8 @@ async def create_payment_preference(request: CreatePaymentRequest):
         # Create billing data dictionary
         billing_data = {
             "products": [product],
-            "returnURL": f"{frontend_url}/payment-success",
-            "completionUrl": f"{frontend_url}/payment-success",
+            "return_url": f"{frontend_url}/payment-success",
+            "completion_url": f"{frontend_url}/payment-success",
             "customer": {
                 "name": user["name"],
                 "email": user_email,
