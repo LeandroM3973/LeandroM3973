@@ -1115,7 +1115,7 @@ class BetArenaAPITester:
         # Step 2: Verify login is blocked
         print(f"   Step 2: Verify login blocked...")
         blocked_flow_login = self.test_login_user(flow_test_email, flow_test_password, expected_status=401)
-        if blocked_flow_login is not None:
+        if not blocked_flow_login:
             print("❌ Flow test failed: Login should be blocked")
             return False
         
