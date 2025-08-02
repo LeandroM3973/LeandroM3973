@@ -1233,6 +1233,9 @@ async def connect_bets(bet1_id: str, bet2_id: str, user2_id: str, user2_name: st
 # Bet Routes (Modified for real currency)
 @api_router.post("/bets", response_model=Bet)
 async def create_bet(bet_data: BetCreate):
+    """Create a new bet with automatic matching system"""
+    print(f"🎯 Creating bet for event: {bet_data.event_id}, side: {bet_data.side} ({bet_data.side_name})")
+    
     # Check if user exists and has enough balance
     user = await db.users.find_one({"id": bet_data.creator_id})
     if not user:
@@ -1240,6 +1243,9 @@ async def create_bet(bet_data: BetCreate):
     
     if user["balance"] < bet_data.amount:
         raise HTTPException(status_code=400, detail="Insufficient balance")
+    
+    # Look for matching bet FIRST (before deducting balance)
+    matching_bet = await find_matching_bet(bet_data.event_id, bet_data.side, bet_data.amount)
     
     # Deduct amount from creator's balance
     await db.users.update_one(
@@ -1258,13 +1264,57 @@ async def create_bet(bet_data: BetCreate):
         net_amount=net_amount,
         type=TransactionType.BET_DEBIT,
         status=TransactionStatus.APPROVED,
-        description=f"Aposta criada - {bet_data.event_description}"
+        description=f"Aposta criada - {bet_data.event_description} ({bet_data.side_name})"
     )
     await db.transactions.insert_one(transaction.dict())
     
+    # Create the new bet
     bet_dict = bet_data.dict()
     bet_dict["creator_name"] = user["name"]
     bet = Bet(**bet_dict)
+    
+    # Check if we found a matching bet for automatic connection
+    if matching_bet:
+        print(f"🎉 AUTO-MATCHING: Found opposite bet!")
+        print(f"   Original bet: {matching_bet['side']} ({matching_bet.get('side_name', 'Unknown')})")
+        print(f"   New bet: {bet.side} ({bet.side_name})")
+        
+        # Connect the bets automatically
+        bet.opponent_id = matching_bet["creator_id"]
+        bet.opponent_name = matching_bet["creator_name"] 
+        bet.status = BetStatus.ACTIVE
+        
+        # Also deduct from the matching bet's creator (if not already done)
+        matching_user = await db.users.find_one({"id": matching_bet["creator_id"]})
+        if matching_user and matching_user["balance"] >= matching_bet["amount"]:
+            await db.users.update_one(
+                {"id": matching_bet["creator_id"]},
+                {"$inc": {"balance": -matching_bet["amount"]}}
+            )
+            
+            # Create transaction for matching bet user
+            matching_transaction = Transaction(
+                user_id=matching_bet["creator_id"],
+                amount=matching_bet["amount"],
+                fee=0.0,
+                net_amount=matching_bet["amount"],
+                type=TransactionType.BET_DEBIT,
+                status=TransactionStatus.APPROVED,
+                description=f"Aposta conectada - {bet_data.event_description} ({matching_bet.get('side_name', 'Unknown')})"
+            )
+            await db.transactions.insert_one(matching_transaction.dict())
+        
+        # Update the original matching bet
+        success = await connect_bets(matching_bet["id"], bet.id, bet.creator_id, bet.creator_name)
+        
+        if success:
+            print(f"✅ BETS CONNECTED AUTOMATICALLY!")
+            print(f"   {matching_bet['creator_name']} ({matching_bet['side']}) vs {bet.creator_name} ({bet.side})")
+        else:
+            print(f"⚠️ Failed to connect bets, bet will remain in waiting status")
+    else:
+        print(f"⏳ No matching bet found, bet will wait for opponent")
+    
     await db.bets.insert_one(bet.dict())
     return bet
 
