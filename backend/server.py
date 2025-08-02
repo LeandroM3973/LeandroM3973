@@ -79,6 +79,7 @@ class TransactionStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+    CANCELLED = "cancelled"
 
 # Models
 class User(BaseModel):
