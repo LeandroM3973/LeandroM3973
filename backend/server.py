@@ -23,41 +23,31 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-# Mercado Pago setup
-mp_access_token = os.environ.get('MERCADO_PAGO_ACCESS_TOKEN')
-mp_public_key = os.environ.get('MERCADO_PAGO_PUBLIC_KEY')
+# AbacatePay Configuration
+abacate_api_token = os.environ.get('ABACATEPAY_API_TOKEN')
+abacate_webhook_secret = os.environ.get('ABACATEPAY_WEBHOOK_SECRET')
 
-# Validate Mercado Pago configuration
-def validate_mp_credentials():
-    if not mp_access_token or not mp_public_key:
-        print("⚠️  WARNING: Mercado Pago credentials not configured")
+# Validate AbacatePay configuration
+def validate_abacatepay_credentials():
+    if not abacate_api_token or not abacate_webhook_secret:
+        print("⚠️  WARNING: AbacatePay credentials not configured")
         return False
     
-    if mp_access_token == mp_public_key:
-        print("❌ ERROR: ACCESS_TOKEN and PUBLIC_KEY cannot be identical")
+    if len(abacate_api_token) < 10:
+        print("❌ ERROR: Invalid AbacatePay API token format")
         return False
     
-    # Detect credential type
-    is_test_access = mp_access_token.startswith('TEST-')
-    is_test_public = mp_public_key.startswith('TEST-')
-    is_prod_access = mp_access_token.startswith('APP_USR-')
-    is_prod_public = mp_public_key.startswith('APP_USR-')
-    
-    if is_test_access and is_test_public:
-        print("🧪 Mercado Pago: Using TEST credentials (sandbox mode)")
-        return True
-    elif is_prod_access and is_prod_public:
-        print("🚀 Mercado Pago: Using PRODUCTION credentials")
-        return True
-    else:
-        print("❌ ERROR: Mixed credential types detected")
-        print(f"   ACCESS_TOKEN: {'TEST' if is_test_access else 'PROD' if is_prod_access else 'UNKNOWN'}")
-        print(f"   PUBLIC_KEY: {'TEST' if is_test_public else 'PROD' if is_prod_public else 'UNKNOWN'}")
-        return False
+    print("🥑 AbacatePay: Configuration validated successfully")
+    return True
 
-# Initialize Mercado Pago with validation
-mp_valid = validate_mp_credentials()
-mp = None  # Placeholder for now - will be replaced with AbacatePay integration
+# Initialize AbacatePay with validation
+abacate_valid = validate_abacatepay_credentials()
+abacatepay_client = AbacatePay(abacate_api_token) if abacate_api_token and abacate_valid else None
+
+# Legacy variables for backward compatibility (will be removed)
+mp_valid = abacate_valid
+mp = abacatepay_client
+mp_access_token = abacate_api_token
 
 # Create the main app without a prefix
 app = FastAPI()
