@@ -193,26 +193,20 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
-  - task: "AbacatePay integration payment flow"
-    implemented: true  
-    working: true
-    file: "/app/frontend/src/App.js, /app/backend/server.py"
+  - task: "AbacatePay mobile payment integration fix"
+    implemented: false
+    working: false
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
-        - working: false
+        - working: true
           agent: "user"
-          comment: "User reports payment system is still not working despite AbacatePay migration. Previous error was 'user not found' during payment attempts. User specifically asking to fix: 'minha forma de pagamento ainda não funciona, resolva isso, por favor'"
-        - working: true
-          agent: "testing"
-          comment: "COMPREHENSIVE ABACATEPAY TESTING COMPLETED - BACKEND IS WORKING PERFECTLY: ✅ AbacatePay integration is fully functional with production credentials, ✅ Payment preferences created successfully for all test amounts (R$25, R$50, R$100, R$200), ✅ Real AbacatePay URLs generated correctly (https://abacatepay.com/pay/bill_*), ✅ Webhook endpoint working and processing payments, ✅ User balances updated correctly after webhook processing (fees deducted properly), ✅ Transaction history working, ✅ User authentication working (no 'user not found' errors), ✅ All backend API endpoints functional. Backend logs show successful webhook processing: '🥑 AbacatePay Webhook received: billing.paid' and '✅ AbacatePay: Updated user balance +X'. The backend payment system is operational - issue is likely frontend-related (incorrect AbacatePay SDK usage or JavaScript errors)."
-        - working: true
-          agent: "testing"
-          comment: "CRITICAL DISCOVERY - PAYMENT SYSTEM IS FULLY FUNCTIONAL! ✅ Complete end-to-end testing reveals AbacatePay integration works perfectly on both desktop and mobile. ✅ Frontend correctly displays payment confirmation dialogs with amount, fee, and bill ID. ✅ Popup blocker detection and fallback mechanisms work correctly. ✅ Successfully redirects to AbacatePay payment page (https://abacatepay.com/pay/bill_*) with pre-filled user data. ✅ PIX payment option available and functional. ✅ Mobile flow optimized with direct navigation instead of popups. ✅ All payment amounts tested (R$25, R$50, R$100) work correctly. THE ISSUE WAS USER EXPERIENCE: Users need to click 'OK' on confirmation dialogs and understand popup blocker messages. Payment system is 100% operational - no technical issues found. User education needed on dialog interactions."
-        - working: true
-          agent: "testing"
-          comment: "ABACATEPAY EMAIL VALIDATION FIX VERIFIED - BACKEND INTEGRATION FULLY OPERATIONAL: ✅ Fixed critical AbacatePay SDK API compatibility issue - updated billing.create() method to use correct data parameter structure with proper field names (return_url, completion_url, frequency='ONE_TIME'), ✅ Email validation working correctly - invalid emails automatically fallback to betarena.com format, ✅ Product class implementation working perfectly with correct price conversion to cents, ✅ Payment preferences created successfully for all test amounts (R$25, R$50, R$100, R$200), ✅ Real AbacatePay URLs generated correctly (https://abacatepay.com/pay/bill_*), ✅ No more 'bad request' or email format errors, ✅ Webhook endpoint accessible and functional, ✅ Transaction history working with proper AbacatePay bill IDs, ✅ User authentication working (no 'user not found' errors). The original email validation error 'body/customer/email must match format email' has been completely resolved. Backend payment system is 100% operational."
+          comment: "User confirmed desktop payment system works perfectly"
+        - working: false
+          agent: "user" 
+          comment: "User reports mobile payment system not working: 'a forma de pagamento funcionou perfeitamente no computador. Agora em dispositivos movéis, como celulares, não está funcionando'. Need to fix mobile payment flow specifically."
     - agent: "main"  
       message: "INVITE LINK ISSUE RESOLVED: Comprehensive investigation revealed the backend works perfectly (auto-generates invite_code, processes bets correctly). Frontend displays invite links properly when bets exist. Created test bet via API - link appears correctly in both 'Enviar Convite' and 'Minhas Apostas' tabs with full functionality."
     - agent: "testing"
