@@ -304,7 +304,7 @@ async def create_payment_preference(request: CreatePaymentRequest):
                 "name": user["name"],
                 "email": user["email"],
                 "cellphone": user["phone"],
-                "taxId": user["phone"]  # Using phone as taxId for now - should be CPF in production
+                "taxId": "11144477735"  # Valid test CPF for AbacatePay
             }
         }
         
