@@ -526,27 +526,55 @@ function App() {
   };
 
   const createBet = async () => {
-    if (!currentUser || !newBet.event_title.trim() || !newBet.event_description.trim()) return;
+    if (!currentUser || !newBet.event_description.trim() || !newBet.event_id.trim() || !newBet.side_name.trim()) {
+      alert('⚠️ Por favor, preencha todos os campos obrigatórios');
+      return;
+    }
+    
     setLoading(true);
     try {
       const betData = {
-        ...newBet,
-        creator_id: currentUser.id
+        event_description: newBet.event_description,
+        amount: newBet.amount,
+        creator_id: currentUser.id,
+        event_id: newBet.event_id,
+        side: newBet.side,
+        side_name: newBet.side_name
       };
-      await axios.post(`${API}/bets`, betData);
+      
+      console.log('🎯 Creating bet with matching system:', betData);
+      
+      const response = await axios.post(`${API}/bets`, betData);
+      
+      // Check if bet was automatically matched
+      if (response.data.status === 'active') {
+        alert(`🎉 APOSTA CONECTADA AUTOMATICAMENTE!\n\n` +
+              `Sua aposta em "${newBet.side_name}" foi conectada com uma aposta oposta!\n\n` +
+              `Aguarde o administrador decidir o vencedor.`);
+      } else {
+        alert(`⏳ APOSTA CRIADA COM SUCESSO!\n\n` +
+              `Sua aposta em "${newBet.side_name}" está aguardando uma aposta oposta.\n\n` +
+              `Quando alguém apostar no lado oposto, as apostas serão conectadas automaticamente.`);
+      }
+      
       setNewBet({
         event_title: '',
-        event_type: 'sports',
+        event_type: 'sports', 
         event_description: '',
-        amount: 50.00
+        amount: 50.00,
+        event_id: '',
+        side: 'A',
+        side_name: ''
       });
+      
       await Promise.all([loadBets(), loadWaitingBets(), loadUserBets(), loadUserTransactions()]);
+      
       // Refresh current user balance
-      const userResponse = await axios.get(`${API}/users/${currentUser.id}`);
-      setCurrentUser(userResponse.data);
+      await refreshCurrentUser();
+      
     } catch (error) {
       console.error('Error creating bet:', error);
-      alert(error.response?.data?.detail || 'Error creating bet');
+      alert(error.response?.data?.detail || 'Erro ao criar aposta');
     }
     setLoading(false);
   };
