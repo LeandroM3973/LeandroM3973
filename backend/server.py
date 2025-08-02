@@ -180,6 +180,22 @@ def is_webhook_already_processed(webhook_data: Dict[str, Any]) -> bool:
         print(f"⚠️ Error checking webhook duplication: {str(e)}")
         return False  # Process webhook if unsure
 
+# Admin authentication middleware
+async def verify_admin_access(user_id: str):
+    """Verify if user has admin privileges"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    if not user.get("is_admin", False):
+        raise HTTPException(
+            status_code=403, 
+            detail="Acesso negado. Apenas administradores podem acessar esta funcionalidade."
+        )
+    
+    print(f"✅ Admin access verified for user: {user['name']} ({user_id})")
+    return user
+
 # Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
