@@ -472,13 +472,14 @@ async def create_payment_preference(request: CreatePaymentRequest):
             user_email = f"user_{transaction.id}@betarena.com"
         
         # Create billing data dictionary with webhook URL
-        webhook_url = f"{frontend_url.replace('https://', 'https://')}/api/payments/webhook?webhookSecret={abacate_webhook_secret}"
+        # Webhook must point to backend API endpoint
+        backend_webhook_url = f"https://47eed0e6-f30e-431a-b6a5-47794796692b.preview.emergentagent.com/api/payments/webhook?webhookSecret={abacate_webhook_secret}"
         
         billing_data = {
             "products": [product],
             "return_url": f"{frontend_url}/payment-success",
-            "completion_url": f"{frontend_url}/payment-success",
-            "webhook_url": webhook_url,  # Critical: AbacatePay webhook URL
+            "completion_url": f"{frontend_url}/payment-success", 
+            "webhook_url": backend_webhook_url,  # Critical: AbacatePay webhook URL
             "customer": {
                 "name": user["name"],
                 "email": user_email,
@@ -488,7 +489,7 @@ async def create_payment_preference(request: CreatePaymentRequest):
             "frequency": 'ONE_TIME'  # Required parameter for AbacatePay API
         }
         
-        print(f"🥑 AbacatePay billing with webhook: {webhook_url}")
+        print(f"🥑 AbacatePay billing with webhook: {backend_webhook_url}")
         billing_response = abacatepay_client.billing.create(data=billing_data)
         
         # Update transaction with payment ID
