@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "o site voltou a dar erro no processamento do pagamento - estava funcionando normalmente antes das modificações de email verification, mas agora apresenta erro novamente. Usuário solicita verificação e correção do problema de pagamento."
+user_problem_statement: "após efetuar um pagamento o valor não é credito no saldo do site. O saldo do site deve atualizar conforme o usuário fizer o depósito do pagamento pelo AbacatePay - problema crítico no webhook/processamento de pagamentos"
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
