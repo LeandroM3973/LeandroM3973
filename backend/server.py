@@ -850,9 +850,12 @@ async def declare_winner(bet_id: str, winner_data: DeclareWinner):
     # Create bet credit transaction for winner (showing net amount received)
     winner_transaction = Transaction(
         user_id=winner_data.winner_id,
-        amount=winner_payout,
+        amount=total_pot,
+        fee=platform_fee,
+        net_amount=winner_payout,
         type=TransactionType.BET_CREDIT,
-        status=TransactionStatus.APPROVED
+        status=TransactionStatus.APPROVED,
+        description=f"Vitória na aposta - {bet['event_description']}"
     )
     await db.transactions.insert_one(winner_transaction.dict())
     
