@@ -1659,10 +1659,18 @@ function App() {
             </div>
           </TabsContent>
 
-          {/* Judge Panel */}
-          <TabsContent value="judge">
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold text-white">Painel do Juiz</h2>
+          {/* Judge Panel - ADMIN ONLY */}
+          {currentUser?.is_admin && (
+            <TabsContent value="judge">
+              <div className="space-y-6">
+                <div className="bg-white/10 backdrop-blur-lg border-white/20 rounded-lg p-6">
+                  <h2 className="text-2xl font-bold text-white flex items-center space-x-2 mb-4">
+                    🔒 <span>Painel do Juiz (Administrador)</span>
+                  </h2>
+                  <p className="text-gray-300 mb-6">
+                    ⚠️ <strong>Acesso restrito ao administrador.</strong> Apenas você pode declarar vencedores das apostas.
+                  </p>
+                </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {bets.filter(bet => bet.status === 'active').map((bet) => (
                   <Card key={bet.id} className="bg-white/10 backdrop-blur-lg border-white/20">
