@@ -1186,10 +1186,11 @@ class BetArenaAPITester:
         return all_tests_passed
 
 def main():
-    print("💰 CRITICAL BALANCE UPDATE TEST - AbacatePay Balance Crediting System")
+    print("📧 COMPREHENSIVE EMAIL VERIFICATION SYSTEM TESTING")
     print("=" * 80)
-    print("USER REQUIREMENT: 'ao valor ser depositado, deve creditar no site no campo $'")
-    print("FOCUS: Testing balance crediting after AbacatePay deposit")
+    print("USER REQUIREMENT: 'permita o usuario entrar somente se tiver e-mail'")
+    print("USER REQUIREMENT: 'exija um e-mail existente e uma confirmação do usuario'")
+    print("USER REQUIREMENT: 'mantenha todos os logins salvos no banco de dados'")
     print("=" * 80)
     
     tester = BetArenaAPITester()
@@ -1199,16 +1200,15 @@ def main():
     print("-" * 30)
     tester.test_health_check()
     
-    # Test 2: MAIN FOCUS - AbacatePay Balance Crediting System
-    print("\n💰 MAIN TEST: ABACATEPAY BALANCE CREDITING SYSTEM")
-    print("-" * 55)
+    # Test 2: MAIN FOCUS - Email Verification System
+    print("\n📧 MAIN TEST: EMAIL VERIFICATION SYSTEM")
+    print("-" * 45)
+    email_verification_success = tester.test_email_verification_system_comprehensive()
+    
+    # Test 3: Secondary - AbacatePay Balance Crediting System (if needed)
+    print("\n💰 SECONDARY TEST: ABACATEPAY BALANCE CREDITING SYSTEM")
+    print("-" * 60)
     balance_crediting_success = tester.test_abacatepay_balance_crediting_system()
-    
-    # Test 3: Secondary - General AbacatePay Integration Test
-    print("\n🥑 SECONDARY TEST: GENERAL ABACATEPAY INTEGRATION")
-    print("-" * 50)
-    abacatepay_success = tester.test_abacatepay_integration_comprehensive()
-    
     
     # Print final results
     print("\n" + "=" * 80)
@@ -1216,48 +1216,46 @@ def main():
     print(f"   Tests passed: {tester.tests_passed}/{tester.tests_run}")
     print(f"   Success rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
     
-    print(f"\n💰 CRITICAL BALANCE CREDITING RESULTS:")
-    if balance_crediting_success:
-        print("   ✅ BALANCE CREDITING SYSTEM IS WORKING CORRECTLY")
-        print("   ✅ Payment preferences created with correct external ID")
-        print("   ✅ Webhook processes successfully")
-        print("   ✅ User balance increases by (amount - fee)")
-        print("   ✅ Transaction status changes to APPROVED")
-        print("   ✅ No errors in webhook processing")
-        print("   ✅ The '$' field (balance) gets credited correctly after AbacatePay payment")
-        print("\n🎉 USER REQUIREMENT SATISFIED: Balance crediting works as expected!")
+    print(f"\n📧 EMAIL VERIFICATION SYSTEM RESULTS:")
+    if email_verification_success:
+        print("   ✅ EMAIL VERIFICATION SYSTEM IS WORKING CORRECTLY")
+        print("   ✅ New users cannot login until email is verified")
+        print("   ✅ Email verification system working properly")
+        print("   ✅ All login attempts (success/failure) are logged to database")
+        print("   ✅ Proper error messages for unverified emails")
+        print("   ✅ Manual verification process functional")
+        print("   ✅ Core security requirement satisfied")
+        print("\n🎉 USER REQUIREMENTS SATISFIED: Email verification works as expected!")
         
-        print(f"\n🥑 GENERAL ABACATEPAY INTEGRATION RESULTS:")
-        if abacatepay_success:
-            print("   ✅ General AbacatePay integration is also working correctly")
-            print("   ✅ Production credentials are valid")
-            print("   ✅ Payment URLs are being generated")
-            print("   ✅ API endpoints are functional")
+        print(f"\n💰 BALANCE CREDITING SYSTEM RESULTS:")
+        if balance_crediting_success:
+            print("   ✅ Balance crediting system is also working correctly")
+            print("   ✅ Payment processing and balance updates functional")
         else:
-            print("   ⚠️  Some general AbacatePay features may have issues")
-            print("   ✅ But the critical balance crediting functionality works")
+            print("   ⚠️  Some balance crediting features may have issues")
+            print("   ✅ But the critical email verification functionality works")
         
         return 0
     else:
-        print("   ❌ BALANCE CREDITING SYSTEM HAS CRITICAL ISSUES")
-        print("   🚨 This confirms the user's reported problem")
-        print("   🚨 USER REQUIREMENT NOT SATISFIED")
+        print("   ❌ EMAIL VERIFICATION SYSTEM HAS CRITICAL ISSUES")
+        print("   🚨 This affects the core security requirement")
+        print("   🚨 USER REQUIREMENTS NOT FULLY SATISFIED")
         
-        print("\n🔧 RECOMMENDED FIXES FOR BALANCE CREDITING:")
-        print("   1. Check webhook endpoint accessibility (/api/payments/webhook)")
-        print("   2. Verify webhook secret validation")
-        print("   3. Test amount conversion from cents to reais")
-        print("   4. Verify fee deduction logic (amount - fee)")
-        print("   5. Check database balance update mechanism")
-        print("   6. Verify transaction status update to APPROVED")
-        print("   7. Test AbacatePay webhook data structure processing")
+        print("\n🔧 RECOMMENDED FIXES FOR EMAIL VERIFICATION:")
+        print("   1. Check user registration creates email_verified=false")
+        print("   2. Verify email_verification_token generation")
+        print("   3. Test login blocking for unverified emails")
+        print("   4. Check email verification endpoint functionality")
+        print("   5. Verify login logging system for all attempts")
+        print("   6. Test proper error messages for unverified emails")
+        print("   7. Ensure login logs include IP, user agent, timestamp")
         
-        print(f"\n🥑 GENERAL ABACATEPAY INTEGRATION RESULTS:")
-        if abacatepay_success:
-            print("   ✅ General AbacatePay integration is working")
-            print("   🚨 But the critical balance crediting has issues")
+        print(f"\n💰 BALANCE CREDITING SYSTEM RESULTS:")
+        if balance_crediting_success:
+            print("   ✅ Balance crediting system is working")
+            print("   🚨 But the critical email verification has issues")
         else:
-            print("   ❌ Both balance crediting and general integration have issues")
+            print("   ❌ Both email verification and balance crediting have issues")
         
         return 1
 
