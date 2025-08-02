@@ -123,13 +123,25 @@ class UserResponse(BaseModel):
 class Transaction(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
-    amount: float
     type: TransactionType
-    status: TransactionStatus
-    payment_id: Optional[str] = None
-    mp_payment_id: Optional[str] = None
+    amount: float
+    fee: float = 0.0  # Platform fee
+    net_amount: float  # Amount after fee
+    status: TransactionStatus = TransactionStatus.PENDING
+    external_reference: Optional[str] = None  # Reference from payment provider
+    description: str = ""
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+class LoginLog(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    email: str
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    login_time: datetime = Field(default_factory=datetime.utcnow)
+    success: bool = True
+    failure_reason: Optional[str] = None
 
 class Bet(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
