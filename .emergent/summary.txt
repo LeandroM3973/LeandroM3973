@@ -1,29 +1,20 @@
 <analysis>
-The AI engineer successfully developed a full-stack betting application, BetArena, from scratch. Initially, it established a FastAPI backend, React frontend, and MongoDB database, setting up the basic user and betting logic. A significant portion of the work focused on payment integration, moving from a simulated system to a fully functional Mercado Pago integration after resolving multiple issues with incorrect API keys. Key features like platform fees on winnings, user data persistence via email/password authentication, bet timeouts with automatic refunds, and a robust invite link system were meticulously implemented. The engineer prioritized user-facing features and security, adding password hashing and clear protection messages. The last interactions indicate debugging an issue with invite link generation and a new request for a forgot password feature, highlighting an ongoing development cycle of refinement and expansion.
+The AI engineer successfully transformed a conceptual betting application, BetArena, into a functional MVP, then extensively refined and debugged it. Initially, the project focused on core betting logic, user authentication, and integrating Mercado Pago. Significant efforts were directed towards resolving persistent payment integration issues, including incorrect API keys, popup blockers, and hardcoded URLs in both frontend and backend. A major pivot involved migrating the entire payment system from Mercado Pago to AbacatePay, which required comprehensive code changes across the stack, careful debugging of API calls, and environment variable management. The engineer also addressed mobile UI responsiveness and session persistence bugs. The trajectory concludes with the implementation of the AbacatePay frontend SDK, poised for final integration testing.
 </analysis>
 
 <product_requirements>
-The user requested a betting website where two individuals deposit a value, and the winner receives the opponent's deposit. The initial concept involved external event results (e.g., sports, stocks) judged by a third party. The payment system was initially conceptualized as demo/points-based without credit/debit cards.
-
-The application, BetArena, evolved to include:
-1.  **Core Betting Logic**: Two-player bets with a clear winner determination by a judge.
-2.  **Payment System**: Initially a simulated payment system, later transitioned to real Mercado Pago integration for deposits via PIX and cards, and automatic payouts.
-3.  **Platform Fee**: Implementation of a 20% platform fee on the winner's payout.
-4.  **User Persistence & Authentication**: User data (balance, game info) must persist across sessions, identified by email. This evolved to include a secure email-and-password login/signup system with bcrypt hashing.
-5.  **Bet Timeouts & Refunds**: A 24-hour time limit for an opponent to join a bet, with automatic refunds if no one participates. This was later refined to a 20-minute timeout specifically for invite-based bets.
-6.  **Invite System**: Ability for a user to create a bet and invite another user via a unique link, with bet details (amount, event, names) linked.
-7.  **UI Enhancements**: Removal of no withdrawal fees message, addition of clear money protection messages across the site, and a flashy notification for winners.
-8.  **Admin Judge Panel**: The judge panel should only be accessible to an administrator.
+The BetArena application is a two-player betting platform where users deposit funds, and the winner claims the opponent's deposit. Initially, it supported third-party judging and a simulated payment system. The app evolved to include core two-player betting logic with judge determination, a real Mercado Pago integration for deposits (PIX/cards) and payouts, and a 20% platform fee on winnings. User persistence through secure email/password authentication (bcrypt hashed) was implemented. Bets feature a 20-minute timeout for invite-based bets with automatic refunds. An invite system allows users to create and share unique bet links. UI enhancements include money protection messages and responsive design. The judge panel access needs to be restricted to administrators. The payment system was recently migrated from Mercado Pago to AbacatePay, focusing on fixed-fee PIX transactions.
 </product_requirements>
 
 <key_technical_concepts>
--   **FastAPI**: Python web framework for the backend API.
--   **React**: JavaScript library for building the frontend user interface.
+-   **FastAPI**: Python web framework for backend APIs.
+-   **React**: JavaScript library for frontend UI.
 -   **MongoDB**: NoSQL database for data storage.
--   **Mercado Pago SDK**: Integration for processing payments (deposits and payouts).
--   **bcrypt**: Python library for secure password hashing.
--   **React Router DOM**: For client-side routing in the React application.
--   **SendGrid**: Email service for transactional emails (e.g., forgot password).
+-   **Mercado Pago SDK**: Initial payment gateway integration.
+-   **AbacatePay SDK**: Current payment gateway integration for PIX.
+-   **bcrypt**: Password hashing for security.
+-   **React Router DOM**: Client-side routing.
+-   **SendGrid**: Email service (planned for 'Forgot Password').
 </key_technical_concepts>
 
 <code_architecture>
@@ -32,63 +23,87 @@ The application follows a full-stack architecture with a React frontend, FastAPI
 
 
 -   ****:
-    -   **Summary**: The core FastAPI application. It handles all API endpoints for user management (signup, login, profile), bet creation, management (joining, declaring winner, processing expired bets), payment integration (Mercado Pago), and transaction history.
+    -   **Summary**: The core FastAPI application handling user authentication, bet management, payment processing, and transaction history.
     -   **Changes Made**:
-        -   Initial setup with CORS and basic routes.
-        -   Integration of Mercado Pago for  and webhook handling.
-        -   Logic for simulated payments fallback.
-        -   Implementation of a 20% platform fee in  endpoint, including transaction recording for the fee.
-        -   Password hashing using  for user creation and login validation.
-        -   Added  field to bet model and  endpoint for automatic refunds.
-        -   Added  generation and lookup for invite-based bets.
-        -   Includes email validation and password-based authentication.
+        -   Initial Mercado Pago integration and webhook handling (later removed).
+        -   Logic for platform fees, automatic refunds for expired bets.
+        -   Password hashing and invite code generation.
+        -   Complete migration from Mercado Pago to AbacatePay: Mercado Pago SDK removed, AbacatePay SDK integrated for  and webhooks.
+        -   Added logic for demo mode fallback for AbacatePay.
+        -   Adjusted AbacatePay API calls (data structure, response parsing).
+        -    environment variable introduced and used for AbacatePay callbacks.
+        -   Validation of AbacatePay API credentials.
 
 -   ****:
-    -   **Summary**: The main React component that structures the application's layout, navigation (using ), and displays various sections like home, bets, payments, and judge panel. It interacts with the backend API.
+    -   **Summary**: The main React component managing UI layout, routing, and interactions with the backend.
     -   **Changes Made**:
-        -   Initial UI setup with Tailwind CSS and Shadcn UI components.
-        -   Integration of Mercado Pago frontend SDK for displaying payment options.
-        -   Dynamic forms for user login/signup based on email existence.
-        -   UI elements for password input and visibility toggle.
-        -   Display of bet details, including expiration timers and invite link generation.
-        -   Removed Sem taxas de saque message.
-        -   Added Proteção Garantida messages across different sections (login, main UI, payments, judge panel).
-        -   Updated button text from Aceitar Convite to Enviar Convite.
+        -   Initial Mercado Pago SDK integration for payment display (later removed).
+        -   UI adjustments for mobile responsiveness (fixing overlapping text in navigation).
+        -   Improved handling of Mercado Pago payment redirects (avoiding popup blockers).
+        -   Implemented mobile-optimized dialogue for deposit function.
+        -   Removed Mercado Pago specific UI elements.
+        -   Updated for AbacatePay integration, including new UI dialogues, display of fixed fees.
+        -   Corrected user session persistence: added  to load user data from  on initial render.
+        -   Integrated AbacatePay frontend SDK.
 
 -   ****:
-    -   **Summary**: The entry point of the React application. It renders the root  component and configures global settings like React Strict Mode and  for routing.
-    -   **Changes Made**: Configured  and  to handle  for invite links.
+    -   **Summary**: Entry point configuring React app and .
+    -   **Changes Made**: Configured  and  for .
 
 -   ****:
-    -   **Summary**: A newly created React component dedicated to handling incoming invite links. It parses the invite code from the URL, fetches bet details from the backend, and allows the invited user to accept the bet.
-    -   **Changes Made**: Created from scratch to handle  route, display bet details, and enable accepting the invitation.
+    -   **Summary**: Handles invite links, parses codes, fetches bet details, and allows accepting invites.
+    -   **Changes Made**: Created from scratch.
 
 -   ** & **:
-    -   **Summary**: Environment variable files for backend (MongoDB URL, Mercado Pago Access Token) and frontend (Backend URL, Mercado Pago Public Key). Crucial for sensitive information and service communication.
-    -   **Changes Made**: Updated  and  for Mercado Pago multiple times based on user input (test, real, and hardcoded test keys). Added .
+    -   **Summary**: Environment variable files for backend (MongoDB URL, Mercado Pago/AbacatePay credentials) and frontend (Backend URL, payment provider config).
+    -   **Changes Made**:
+        -   Updated Mercado Pago keys multiple times.
+        -   Added .
+        -   Mercado Pago keys removed;  and  added for backend.
+        -    added to frontend  to switch payment providers.
+        -    in frontend fixed from preview to .
+        -    added to backend  for AbacatePay callbacks, changed from  to .
+
+-   ****:
+    -   **Summary**: A newly created file containing service logic for interacting with the AbacatePay frontend SDK.
+    -   **Changes Made**: Created from scratch to encapsulate AbacatePay client-side operations.
+
+-   ****:
+    -   **Summary**: A newly created file for configuring the AbacatePay frontend SDK.
+    -   **Changes Made**: Created from scratch to centralize AbacatePay client configuration.
 
 </code_architecture>
 
 <pending_tasks>
--   **Forgot Password Feature**: Implement a Forgot Password functionality that sends a confirmation email to the registered email address to allow password resetting. (Backend setup with SendGrid has started).
+-   **Forgot Password Feature**: Implement a Forgot Password functionality that sends a confirmation email for password resetting. (Backend setup with SendGrid has started but paused).
 -   **Judge Panel Access**: Restrict the Judge Panel to only administrator users.
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was addressing two concurrent tasks:
+Immediately before this summary, the AI engineer successfully completed the full migration from Mercado Pago to AbacatePay. This involved extensive modifications to the backend () to remove Mercado Pago SDK, integrate AbacatePay API calls for payment preference creation and webhooks, and handle credential validation. Frontend () was updated to reflect AbacatePay branding, dialogs, and to process payments via the new provider.
 
-1.  **Bug Fix: Invite Link Generation for Criar Aposta**:
-    *   **Problem**: The user reported that when creating a new bet via the criar nova aposta (create new bet) option, the system was not generating the expected invite link.
-    *   **Action Taken**: The AI engineer initiated a test to verify the  generation when creating a new bet.
-    *   **Observation**: The test output (Chat Message 429) showed a  and an  () for a newly created bet, indicating the backend part of the invite code generation was functioning. The next step would typically involve debugging the frontend to ensure the link is displayed correctly after bet creation.
+The system was fully tested for AbacatePay production keys (), with successful payment preference creation and accurate fee calculation (R$ 0,80 fixed fee).
 
-2.  **New Feature: Forgot Password**:
-    *   **Request**: The user explicitly requested to implement a Forgot Password feature that sends a confirmation email for password reset.
-    *   **Action Taken**: The AI engineer started by installing  and its dependencies (, , , ) in the backend's  and then installing them. This indicates the initial step to set up email sending capabilities for the password reset functionality.
+The last significant bug fixed was the persistent payment failure, which involved two core issues:
+1.  **Frontend Backend URL**:  in  was hardcoded to an invalid preview URL, preventing correct backend communication. This was changed to .
+2.  **Backend Callback URLs**: AbacatePay callback URLs in  were hardcoded to preview URLs, and then rejected . This was resolved by using an environment variable  () in  and utilizing it in the backend code.
 
-The work is currently at a point where a reported bug regarding invite link generation is being investigated (backend part seems okay, frontend still needs confirmation), and a new feature (forgot password) has just begun implementation with the installation of necessary email sending libraries.
+The very last set of actions involved implementing the AbacatePay JavaScript SDK on the frontend:
+-    was installed via yarn install v1.22.22
+[1/4] Resolving packages...
+[2/4] Fetching packages...
+[3/4] Linking dependencies...
+[4/4] Building fresh packages...
+success Saved lockfile.
+Done in 0.19s. in .
+-    was created for frontend configuration.
+-   The SDK was imported into .
+-    was created to handle frontend SDK interactions.
+-   The payment function in  was improved to leverage the new frontend SDK.
+
+The current state is that the AbacatePay frontend SDK has been implemented and is ready for a comprehensive full-stack integration test.
 </current_work>
 
 <optional_next_step>
-Investigate why the criar aposta feature is not displaying the generated invite link on the frontend.
+Test the complete frontend and backend integration of the AbacatePay SDK.
 </optional_next_step>
