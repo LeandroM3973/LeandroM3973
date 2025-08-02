@@ -407,12 +407,18 @@ async def create_payment_preference(request: CreatePaymentRequest):
     
     if not abacatepay_client or not abacate_valid:
         # Return demo mode when AbacatePay is not properly configured
+        fee = 0.80  # AbacatePay fixed fee
+        net_amount = request.amount - fee
+        
         transaction = Transaction(
             id=str(uuid.uuid4()),
             user_id=request.user_id,
             type=TransactionType.DEPOSIT,
             amount=request.amount,
+            fee=fee,
+            net_amount=net_amount,
             status=TransactionStatus.PENDING,
+            description="Depósito demo - AbacatePay não configurado",
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
         )
