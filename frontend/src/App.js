@@ -52,12 +52,15 @@ function App() {
   const [emailExists, setEmailExists] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Create Bet Form
+  // Create Bet Form - Enhanced for automatic matching
   const [newBet, setNewBet] = useState({
     event_title: '',
     event_type: 'sports',
     event_description: '',
-    amount: 50.00
+    amount: 50.00,
+    event_id: '',  // For matching bets (e.g., "brasil_vs_argentina")
+    side: 'A',     // "A" or "B"  
+    side_name: ''  // Human readable (e.g., "Brasil", "Argentina")
   });
 
   // Payment forms
