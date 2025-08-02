@@ -364,11 +364,11 @@ function App() {
           setCurrentUser(userResponse.data);
           await loadUserTransactions();
         } else {
-          alert('💡 Pagamento deixado como pendente para demonstração.\nEm produção, o usuário seria redirecionado para o Mercado Pago.');
+          alert('💡 Pagamento deixado como pendente para demonstração.\nEm produção, o usuário seria redirecionado para o AbacatePay.');
         }
-      } else {
-        // Redirect to real Mercado Pago (when using real keys)
-        const paymentUrl = response.data.sandbox_init_point || response.data.init_point;
+      } else if (response.data.abacatepay) {
+        // AbacatePay payment flow
+        const paymentUrl = response.data.payment_url || response.data.init_point;
         
         // Detect if user is on mobile device
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -377,8 +377,10 @@ function App() {
         if (isMobile) {
           // Mobile-optimized flow
           const userChoice = window.confirm(
-            `📱 PAGAMENTO MERCADO PAGO\n\n` +
-            `Valor: ${formatCurrency(depositAmount)}\n\n` +
+            `🥑 PAGAMENTO ABACATEPAY\n\n` +
+            `Valor: ${formatCurrency(depositAmount)}\n` +
+            `Taxa: R$ 0,80\n` +
+            `Valor final: ${formatCurrency(depositAmount - 0.80)}\n\n` +
             `Você será redirecionado para completar o pagamento.\n\n` +
             `✅ OK - Continuar com pagamento\n` +
             `❌ Cancelar - Voltar`
@@ -386,15 +388,16 @@ function App() {
           
           if (userChoice) {
             // For mobile, navigate directly to avoid popup issues
-            alert('🚀 Redirecionando para o Mercado Pago...\n\nVocê será levado para a página de pagamento.');
+            alert('🚀 Redirecionando para o AbacatePay...\n\nVocê será levado para a página de pagamento PIX.');
             window.location.href = paymentUrl;
           }
         } else {
           // Desktop flow with popup handling
           const userChoice = window.confirm(
-            `💳 PAGAMENTO VIA MERCADO PAGO\n\n` +
+            `🥑 PAGAMENTO VIA ABACATEPAY\n\n` +
             `Valor: ${formatCurrency(depositAmount)}\n` +
-            `Você será redirecionado para o Mercado Pago\n\n` +
+            `Taxa: R$ 0,80\n` +
+            `Valor final: ${formatCurrency(depositAmount - 0.80)}\n\n` +
             `✅ Clique OK para abrir o pagamento\n` +
             `❌ Clique Cancelar para desistir`
           );
@@ -409,7 +412,7 @@ function App() {
                 // Popup was blocked - show fallback
                 const fallbackChoice = window.confirm(
                   `🔒 POPUP BLOQUEADO\n\n` +
-                  `Seu navegador bloqueou o popup do Mercado Pago.\n\n` +
+                  `Seu navegador bloqueou o popup do AbacatePay.\n\n` +
                   `✅ Clique OK para abrir na mesma aba\n` +
                   `❌ Clique Cancelar para copiar o link`
                 );
@@ -420,14 +423,14 @@ function App() {
                 } else {
                   // Copy link to clipboard
                   navigator.clipboard.writeText(paymentUrl).then(() => {
-                    alert(`🔗 LINK COPIADO!\n\n${paymentUrl}\n\n📋 Cole este link em uma nova aba para pagar no Mercado Pago.`);
+                    alert(`🔗 LINK COPIADO!\n\n${paymentUrl}\n\n📋 Cole este link em uma nova aba para pagar no AbacatePay.`);
                   }).catch(() => {
                     alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📋 Copie este link e abra em uma nova aba.`);
                   });
                 }
               } else {
                 // Popup opened successfully
-                alert('🚀 Redirecionando para o Mercado Pago...\n\nComplete o pagamento na nova janela.');
+                alert('🚀 Redirecionando para o AbacatePay...\n\nComplete o pagamento PIX na nova janela.');
               }
             }, 1000);
           }
