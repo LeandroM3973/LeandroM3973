@@ -512,7 +512,9 @@ async def create_payment_preference(request: CreatePaymentRequest):
             "amount": billing_response.amount / 100,  # Convert back to reais
             "fee": 0.80,  # AbacatePay fixed fee
             "status": billing_response.status,
-            "message": f"Pagamento via AbacatePay configurado com sucesso! Taxa: R$ 0,80"
+            "message": f"Pagamento via AbacatePay configurado com sucesso! Taxa: R$ 0,80",
+            "webhook_status": "configure_webhook_in_dashboard",
+            "webhook_url_needed": f"{frontend_url}/api/payments/webhook?webhookSecret={abacate_webhook_secret}"
         }
     
     except Exception as e:
