@@ -914,8 +914,8 @@ async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
         if not transaction and amount > 0:
             transaction = await db.transactions.find_one({
                 "amount": amount,
-                "status": "PENDING",
-                "type": "DEPOSIT"
+                "status": TransactionStatus.PENDING,
+                "type": TransactionType.DEPOSIT
             })
             print(f"📋 Transaction found by amount matching: {'Yes' if transaction else 'No'}")
         
