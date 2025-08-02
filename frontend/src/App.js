@@ -1523,6 +1523,48 @@ function App() {
                 </CardContent>
               </Card>
 
+              {/* Payment Status Check */}
+              {lastPaymentTransactionId && (
+                <Card className="bg-white/10 backdrop-blur-lg border-white/20">
+                  <CardHeader>
+                    <CardTitle className="text-white flex items-center space-x-2">
+                      <CheckCircle className="w-6 h-6 text-yellow-400" />
+                      <span>Verificar Pagamento</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="bg-yellow-500/20 rounded-lg p-4 border border-yellow-500/30">
+                      <p className="text-yellow-200 text-sm mb-2">
+                        <strong>💳 Último Pagamento:</strong>
+                      </p>
+                      <p className="text-white text-xs font-mono mb-3">
+                        ID: {lastPaymentTransactionId}
+                      </p>
+                      <p className="text-yellow-200 text-xs mb-4">
+                        ⚠️ O webhook automático pode não estar funcionando. Use os botões abaixo para verificar se seu pagamento foi processado.
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <Button
+                          onClick={() => checkPaymentStatus(lastPaymentTransactionId)}
+                          disabled={paymentCheckLoading}
+                          className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                        >
+                          {paymentCheckLoading ? 'Verificando...' : '🔍 Verificar Status do Pagamento'}
+                        </Button>
+                        
+                        <Button
+                          onClick={() => manualApprovePayment(lastPaymentTransactionId, depositAmount)}
+                          className="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm"
+                        >
+                          🔧 Aprovar Manualmente (Teste)
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Withdraw */}
               <Card className="bg-white/10 backdrop-blur-lg border-white/20">
                 <CardHeader>
