@@ -285,6 +285,7 @@ class JoinBet(BaseModel):
 
 class DeclareWinner(BaseModel):
     winner_id: str
+    admin_user_id: str  # ID do administrador que está declarando o vencedor
 
 class DepositRequest(BaseModel):
     user_id: str
