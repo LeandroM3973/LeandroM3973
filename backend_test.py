@@ -430,17 +430,50 @@ class BetArenaAPITester:
             print(f"   ❌ NO PAYMENT PREFERENCES CREATED")
             print(f"   🚨 Complete failure of payment system")
             return False
-    def test_login_user(self, email, password):
-        """Test user login"""
+    def test_login_user(self, email, password, expected_status=200):
+        """Test user login with configurable expected status"""
         success, response = self.run_test(
             f"Login User '{email}'",
             "POST",
             "users/login",
-            200,
+            expected_status,
             data={
                 "email": email,
                 "password": password
             }
+        )
+        return response if success else None
+
+    def test_manual_verify_email(self, email):
+        """Test manual email verification"""
+        success, response = self.run_test(
+            f"Manual Verify Email '{email}'",
+            "POST",
+            "users/manual-verify",
+            200,
+            params={"email": email}
+        )
+        return response if success else None
+
+    def test_get_user_login_logs(self, user_id, limit=10):
+        """Test getting user login logs"""
+        success, response = self.run_test(
+            f"Get User Login Logs for {user_id}",
+            "GET",
+            f"users/{user_id}/login-logs",
+            200,
+            params={"limit": limit}
+        )
+        return response if success else None
+
+    def test_get_all_login_logs(self, limit=50):
+        """Test getting all login logs (admin endpoint)"""
+        success, response = self.run_test(
+            "Get All Login Logs (Admin)",
+            "GET",
+            "admin/login-logs",
+            200,
+            params={"limit": limit}
         )
         return response if success else None
 
