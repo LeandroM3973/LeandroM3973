@@ -153,6 +153,18 @@ frontend:
           agent: "testing"
           comment: "COMPREHENSIVE TESTING COMPLETED - MERCADO PAGO FIXES VERIFIED: ✅ Backend correctly shows '🚀 Mercado Pago: Using PRODUCTION credentials' in logs, ✅ Payment preference creation working for all test amounts (R$10, R$50, R$100, R$250), ✅ Real Mercado Pago URLs generated successfully (both init_point and sandbox_init_point), ✅ Webhook endpoint accessible, ✅ Transaction history working, ✅ No more 'não foi possível processar seu pagamento' errors - backend integration is fully functional. URLs return 403 status when accessed directly (normal MP behavior for security). The original user issue has been completely resolved."
 
+  - task: "Email verification and login logging system"
+    implemented: false
+    working: false
+    file: "/app/backend/server.py, /app/frontend/src/App.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User requests email verification system: 'exija um e-mail existente e uma confirmação do usuario, mantenha todos os logins salvos no banco de dados'. Need to implement: 1) Email existence verification 2) Email confirmation system 3) Login logging to database"
+
 backend:
   - task: "AbacatePay balance crediting system"
     implemented: true
