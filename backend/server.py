@@ -400,7 +400,133 @@ async def get_all_login_logs(limit: int = 50):
     
     return {"login_logs": formatted_logs}
 
-# Payment Routes
+@api_router.post("/payments/check-status/{transaction_id}")
+async def check_payment_status(transaction_id: str):
+    """Manual payment status check - for when webhook is not working"""
+    try:
+        # Find the transaction
+        transaction = await db.transactions.find_one({"id": transaction_id})
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        print(f"🔍 Manual payment status check for transaction: {transaction_id}")
+        
+        # If already approved, return current status
+        if transaction.get("status") == TransactionStatus.APPROVED:
+            return {
+                "transaction_id": transaction_id,
+                "status": "approved",
+                "balance_updated": True,
+                "message": "Payment already processed"
+            }
+        
+        # Check with AbacatePay API if payment was completed
+        if abacatepay_client and abacate_valid:
+            try:
+                # Get payment details from AbacatePay
+                payment_id = transaction.get("payment_id") or transaction.get("external_reference")
+                if payment_id:
+                    # Try to get payment status from AbacatePay
+                    payment_details = abacatepay_client.billing.retrieve(payment_id)
+                    
+                    print(f"🥑 AbacatePay payment status: {payment_details}")
+                    
+                    # If payment is completed, process it
+                    if hasattr(payment_details, 'status') and payment_details.status == 'paid':
+                        print(f"✅ Payment confirmed as paid, processing...")
+                        
+                        # Simulate webhook data for processing
+                        webhook_data = {
+                            "event": "billing.paid",
+                            "data": {
+                                "externalId": transaction_id,
+                                "payment": {
+                                    "amount": int(transaction["amount"] * 100),
+                                    "fee": 80  # R$ 0.80 in cents
+                                }
+                            }
+                        }
+                        
+                        # Process the payment
+                        await process_abacatepay_payment_success(webhook_data)
+                        
+                        return {
+                            "transaction_id": transaction_id,
+                            "status": "approved",
+                            "balance_updated": True,
+                            "message": "Payment confirmed and balance updated!"
+                        }
+                    else:
+                        return {
+                            "transaction_id": transaction_id,
+                            "status": "pending",
+                            "balance_updated": False,
+                            "message": f"Payment still pending on AbacatePay: {payment_details.status if hasattr(payment_details, 'status') else 'unknown'}"
+                        }
+                        
+            except Exception as api_error:
+                print(f"⚠️ AbacatePay API check failed: {str(api_error)}")
+                return {
+                    "transaction_id": transaction_id,
+                    "status": "pending",
+                    "balance_updated": False,
+                    "message": f"Could not check with AbacatePay: {str(api_error)}"
+                }
+        
+        return {
+            "transaction_id": transaction_id,
+            "status": "pending",
+            "balance_updated": False,
+            "message": "Payment still pending - webhook not configured"
+        }
+        
+    except Exception as e:
+        print(f"❌ Payment status check error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Status check failed: {str(e)}")
+
+@api_router.post("/payments/manual-approve/{transaction_id}")
+async def manual_approve_payment(transaction_id: str, amount: float):
+    """Manually approve payment - temporary solution for webhook issues"""
+    try:
+        # Find the transaction
+        transaction = await db.transactions.find_one({"id": transaction_id})
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        if transaction.get("status") == TransactionStatus.APPROVED:
+            return {"message": "Payment already approved", "status": "already_approved"}
+        
+        print(f"🔧 Manual payment approval for transaction: {transaction_id}")
+        
+        # Simulate webhook data
+        webhook_data = {
+            "event": "billing.paid", 
+            "data": {
+                "externalId": transaction_id,
+                "payment": {
+                    "amount": int(amount * 100),
+                    "fee": 80  # R$ 0.80 in cents
+                }
+            }
+        }
+        
+        # Process the payment
+        await process_abacatepay_payment_success(webhook_data)
+        
+        return {
+            "transaction_id": transaction_id,
+            "status": "approved",
+            "message": "Payment manually approved and balance updated!",
+            "amount": amount,
+            "fee": 0.80,
+            "net_amount": amount - 0.80
+        }
+        
+    except Exception as e:
+        print(f"❌ Manual approval error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Manual approval failed: {str(e)}")
+
+# Payment Routes (Modified for real currency)
 @api_router.post("/payments/create-preference")
 async def create_payment_preference(request: CreatePaymentRequest):
     """Create payment preference using AbacatePay"""
