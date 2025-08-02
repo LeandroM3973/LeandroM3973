@@ -207,26 +207,47 @@ async def create_user(user_data: UserCreate):
     # Check if user already exists by email
     existing_user = await db.users.find_one({"email": user_data.email})
     if existing_user:
-        raise HTTPException(status_code=400, detail="User with this email already exists")
+        raise HTTPException(status_code=400, detail="Usuário com este email já existe")
+    
+    # Validate email format
+    import re
+    email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if not re.match(email_regex, user_data.email):
+        raise HTTPException(status_code=400, detail="Formato de email inválido")
     
     # Validate password strength
     if len(user_data.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters long")
+        raise HTTPException(status_code=400, detail="Senha deve ter pelo menos 6 caracteres")
     
     # Hash the password
     password_hash = hash_password(user_data.password)
     
-    # Create user with hashed password
+    # Generate email verification token
+    import secrets
+    verification_token = secrets.token_urlsafe(32)
+    
+    # Create user with hashed password and email verification fields
     user_dict = user_data.dict()
     user_dict.pop('password')  # Remove plain password
     user_dict['password_hash'] = password_hash
+    user_dict['email_verified'] = False  # Initially not verified
+    user_dict['email_verification_token'] = verification_token
     
     user = User(**user_dict)
     await db.users.insert_one(user.dict())
-    print(f"New user created for email: {user_data.email}")
     
-    # Return user data without password hash
-    return UserResponse(**user.dict())
+    print(f"📧 New user created (email verification required): {user_data.email}")
+    print(f"🔐 Verification token: {verification_token}")
+    
+    # TODO: Send verification email with SendGrid when credentials are available
+    # For now, we'll manually verify users or provide a verification endpoint
+    
+    # Return user data without password hash and verification token
+    user_response_dict = user.dict()
+    user_response_dict.pop('password_hash', None)
+    user_response_dict.pop('email_verification_token', None)
+    
+    return UserResponse(**user_response_dict)
 
 @api_router.post("/users/login", response_model=UserResponse)
 async def login_user(login_data: UserLogin, request: Request):
