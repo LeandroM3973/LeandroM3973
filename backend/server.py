@@ -471,11 +471,14 @@ async def create_payment_preference(request: CreatePaymentRequest):
         if not user_email or "@" not in user_email:
             user_email = f"user_{transaction.id}@betarena.com"
         
-        # Create billing data dictionary
+        # Create billing data dictionary with webhook URL
+        webhook_url = f"{frontend_url.replace('https://', 'https://')}/api/payments/webhook?webhookSecret={abacate_webhook_secret}"
+        
         billing_data = {
             "products": [product],
             "return_url": f"{frontend_url}/payment-success",
             "completion_url": f"{frontend_url}/payment-success",
+            "webhook_url": webhook_url,  # Critical: AbacatePay webhook URL
             "customer": {
                 "name": user["name"],
                 "email": user_email,
@@ -485,6 +488,7 @@ async def create_payment_preference(request: CreatePaymentRequest):
             "frequency": 'ONE_TIME'  # Required parameter for AbacatePay API
         }
         
+        print(f"🥑 AbacatePay billing with webhook: {webhook_url}")
         billing_response = abacatepay_client.billing.create(data=billing_data)
         
         # Update transaction with payment ID
