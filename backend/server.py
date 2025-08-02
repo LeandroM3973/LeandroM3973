@@ -1115,6 +1115,42 @@ async def get_user_transactions(user_id: str):
     transactions = await db.transactions.find({"user_id": user_id}).sort("created_at", -1).to_list(100)
     return [Transaction(**tx) for tx in transactions]
 
+@api_router.post("/admin/make-admin/{user_email}")
+async def make_user_admin(user_email: str):
+    """Make a user admin - TEMPORARY ENDPOINT for initial setup"""
+    user = await db.users.find_one({"email": user_email})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    # Update user to admin
+    await db.users.update_one(
+        {"email": user_email},
+        {"$set": {"is_admin": True}}
+    )
+    
+    print(f"✅ User {user['name']} ({user_email}) is now an administrator")
+    return {
+        "message": f"Usuário {user['name']} agora é administrador",
+        "user_id": user["id"],
+        "user_name": user["name"],
+        "email": user_email,
+        "is_admin": True
+    }
+
+@api_router.get("/admin/check-admin/{user_id}")
+async def check_admin_status(user_id: str):
+    """Check if a user is admin"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    return {
+        "user_id": user_id,
+        "name": user["name"],
+        "email": user["email"],
+        "is_admin": user.get("is_admin", False)
+    }
+
 # Bet Routes (Modified for real currency)
 @api_router.post("/bets", response_model=Bet)
 async def create_bet(bet_data: BetCreate):
