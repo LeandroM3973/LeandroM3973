@@ -1019,11 +1019,17 @@ async def process_expired_bets():
         )
         
         # Create refund transaction
+        fee = 0.0  # No fee for refund
+        net_amount = bet["amount"]
+        
         refund_transaction = Transaction(
             user_id=bet["creator_id"],
             amount=bet["amount"],
+            fee=fee,
+            net_amount=net_amount,
             type=TransactionType.BET_CREDIT,  # Using bet_credit for refund
-            status=TransactionStatus.APPROVED
+            status=TransactionStatus.APPROVED,
+            description=f"Reembolso - aposta expirada: {bet['event_description']}"
         )
         await db.transactions.insert_one(refund_transaction.dict())
         
