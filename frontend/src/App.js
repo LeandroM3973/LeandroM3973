@@ -1064,7 +1064,14 @@ function App() {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-4 py-2">
               <DollarSign className="w-5 h-5 text-green-400" />
-              <span className="text-white font-semibold">{formatCurrency(currentUser.balance)}</span>
+              <span className="text-white font-semibold flex items-center space-x-2">
+                <span>{formatCurrency(currentUser.balance)}</span>
+                {currentUser.is_admin && (
+                  <span className="inline-flex items-center px-2 py-1 bg-yellow-500/80 text-yellow-100 text-xs font-bold rounded-full">
+                    🔒 ADMIN
+                  </span>
+                )}
+              </span>
             </div>
             <Button 
               variant="outline" 
