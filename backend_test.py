@@ -442,7 +442,11 @@ class BetArenaAPITester:
                 "password": password
             }
         )
-        return response if success else None
+        if expected_status == 200:
+            return response if success else None
+        else:
+            # For non-200 expected status, return success boolean
+            return success
 
     def test_manual_verify_email(self, email):
         """Test manual email verification"""
