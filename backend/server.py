@@ -292,18 +292,19 @@ async def create_payment_preference(request: CreatePaymentRequest):
         }
         
         # Create billing with AbacatePay
-        billing_response = abacatepay_client.billing.create(
-            data={},  # Empty data dict as first parameter
-            products=[product],
-            returnURL=f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success",
-            completionUrl=f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success", 
-            customer={
+        billing_data = {
+            "products": [product],
+            "return_url": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success",
+            "completion_url": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success", 
+            "customer": {
                 "name": user["name"],
                 "email": user["email"],
                 "cellphone": user["phone"],
                 "taxId": user["phone"]  # Using phone as taxId for now - should be CPF in production
             }
-        )
+        }
+        
+        billing_response = abacatepay_client.billing.create(data=billing_data)
         
         # Update transaction with payment ID
         await db.transactions.update_one(
