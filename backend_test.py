@@ -633,7 +633,9 @@ class BetArenaAPITester:
         print("=" * 80)
         
         # Create test user with initial balance
-        test_user_email = "balance.test@gmail.com"
+        import time
+        timestamp = str(int(time.time()))
+        test_user_email = f"balance.test.{timestamp}@gmail.com"
         test_user_name = "Balance Test User"
         test_user_phone = "11999888777"
         test_user_password = "balancetest123"
