@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timedelta, timedelta
 from enum import Enum
 from abacatepay import AbacatePay
+from abacatepay.products import Product
 
 import json
 import bcrypt
