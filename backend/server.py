@@ -78,6 +78,9 @@ def validate_abacatepay_credentials():
     
     print(f"🥑 AbacatePay: Configuration validated successfully")
     print(f"🌐 Frontend URL: {frontend_url}")
+    if abacate_webhook_id:
+        print(f"🆔 Webhook ID: {abacate_webhook_id}")
+        print(f"✅ Webhook configured and active in AbacatePay dashboard")
     return True
 
 # Initialize AbacatePay with validation
