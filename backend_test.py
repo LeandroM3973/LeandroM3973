@@ -1023,8 +1023,8 @@ class BetArenaAPITester:
         
         # Attempt login with wrong password
         failed_login = self.test_login_user(test_user_email, "wrongpassword123", expected_status=401)
-        if failed_login is not None:
-            print("❌ Login with wrong password should fail")
+        if not failed_login:
+            print("❌ Login with wrong password should return 401")
             return False
         
         # Check if failed login was logged
