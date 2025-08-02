@@ -1092,7 +1092,7 @@ class BetArenaAPITester:
         # Test 13: Complete flow test with new user
         print(f"\n   5.1 Testing complete flow with new user...")
         
-        flow_test_email = "maria.santos@hotmail.com"
+        flow_test_email = f"maria.santos.{timestamp}@hotmail.com"
         flow_test_name = "Maria Santos"
         flow_test_phone = "11999888777"
         flow_test_password = "senha456"
