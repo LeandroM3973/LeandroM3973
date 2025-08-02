@@ -898,9 +898,9 @@ class BetArenaAPITester:
         
         # Test 3: Verify email_verification_token is generated (test through login failure)
         print(f"\n   1.3 Testing that registration prevents auto-login...")
-        login_attempt = self.test_login_user(test_user_email, test_user_password, expected_status=401)
-        if login_attempt is not None:
-            print("❌ CRITICAL: User was able to login without email verification!")
+        login_blocked = self.test_login_user(test_user_email, test_user_password, expected_status=401)
+        if not login_blocked:
+            print("❌ CRITICAL: Login should be blocked for unverified email!")
             return False
         
         print(f"✅ Login correctly blocked for unverified email")
