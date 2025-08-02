@@ -955,11 +955,17 @@ async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
     )
     
     # Create bet debit transaction for opponent
+    fee = 0.0  # No fee for bet join
+    net_amount = bet["amount"]
+    
     transaction = Transaction(
         user_id=join_data.user_id,
         amount=bet["amount"],
+        fee=fee,
+        net_amount=net_amount,
         type=TransactionType.BET_DEBIT,
-        status=TransactionStatus.APPROVED
+        status=TransactionStatus.APPROVED,
+        description=f"Aposta aceita - {bet['event_description']}"
     )
     await db.transactions.insert_one(transaction.dict())
     
