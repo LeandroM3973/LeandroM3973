@@ -591,8 +591,232 @@ class BetArenaAPITester:
         
         return True
 
+    def test_abacatepay_balance_crediting_system(self):
+        """CRITICAL TEST: AbacatePay Balance Crediting System - USER REQUIREMENT FOCUS"""
+        print("\n💰 CRITICAL BALANCE UPDATE TEST - AbacatePay Balance Crediting System")
+        print("=" * 80)
+        print("USER REQUIREMENT: 'ao valor ser depositado, deve creditar no site no campo $ (saldo)'")
+        print("TESTING: Balance must be credited in the $ field after deposit")
+        print("=" * 80)
+        
+        # Create test user with initial balance
+        test_user_email = "balance.test@gmail.com"
+        test_user_name = "Balance Test User"
+        test_user_phone = "11999888777"
+        test_user_password = "balancetest123"
+        
+        print(f"\n1. SETUP: Creating test user with initial balance...")
+        print("-" * 55)
+        
+        # Create user
+        user_data = self.test_create_user(test_user_name, test_user_email, test_user_phone, test_user_password)
+        if not user_data:
+            print("❌ CRITICAL: Failed to create test user")
+            return False
+        
+        test_user_id = user_data['id']
+        initial_balance = user_data['balance']
+        print(f"✅ Test user created - ID: {test_user_id}")
+        print(f"✅ Initial balance: R$ {initial_balance:.2f}")
+        
+        # Add some initial balance for testing (R$ 100.00)
+        print(f"\n   Adding initial balance of R$ 100.00...")
+        initial_deposit = self.test_create_payment_preference(test_user_id, 100.00)
+        if initial_deposit and initial_deposit.get('transaction_id'):
+            if initial_deposit.get('demo_mode'):
+                approval_response = self.run_test(
+                    "Simulate Initial Balance Addition",
+                    "POST", 
+                    f"payments/simulate-approval/{initial_deposit['transaction_id']}",
+                    200
+                )
+                if approval_response[0]:
+                    user_data = self.test_get_user(test_user_id)
+                    initial_balance = user_data['balance']
+                    print(f"✅ Initial balance set to: R$ {initial_balance:.2f}")
+        
+        # Test deposit amount
+        deposit_amount = 50.00
+        expected_fee = 0.80
+        expected_net_credit = deposit_amount - expected_fee
+        expected_final_balance = initial_balance + expected_net_credit
+        
+        print(f"\n2. PAYMENT CREATION TEST: Creating payment preference...")
+        print("-" * 60)
+        print(f"   Deposit Amount: R$ {deposit_amount:.2f}")
+        print(f"   Expected Fee: R$ {expected_fee:.2f}")
+        print(f"   Expected Net Credit: R$ {expected_net_credit:.2f}")
+        print(f"   Expected Final Balance: R$ {expected_final_balance:.2f}")
+        
+        # Create payment preference
+        payment_response = self.test_create_payment_preference(test_user_id, deposit_amount)
+        if not payment_response:
+            print("❌ CRITICAL: Payment preference creation failed")
+            return False
+        
+        transaction_id = payment_response.get('transaction_id')
+        if not transaction_id:
+            print("❌ CRITICAL: No transaction ID returned")
+            return False
+        
+        print(f"✅ Payment preference created successfully")
+        print(f"   Transaction ID: {transaction_id}")
+        print(f"   Payment URL: {payment_response.get('payment_url', 'N/A')}")
+        
+        # Verify transaction was created in database
+        print(f"\n3. TRANSACTION VERIFICATION: Checking transaction in database...")
+        print("-" * 65)
+        
+        transactions_before = self.test_get_user_transactions(test_user_id)
+        transaction_found = False
+        for tx in transactions_before:
+            if tx.get('id') == transaction_id:
+                transaction_found = True
+                print(f"✅ Transaction found in database")
+                print(f"   Status: {tx.get('status')}")
+                print(f"   Amount: R$ {tx.get('amount'):.2f}")
+                print(f"   Type: {tx.get('type')}")
+                break
+        
+        if not transaction_found:
+            print("❌ CRITICAL: Transaction not found in database")
+            return False
+        
+        # Test webhook simulation (AbacatePay success event)
+        print(f"\n4. WEBHOOK SIMULATION TEST: Simulating AbacatePay webhook...")
+        print("-" * 65)
+        
+        # Prepare webhook data structure as specified in review request
+        webhook_data = {
+            "event": "billing.paid",
+            "data": {
+                "externalId": transaction_id,
+                "payment": {
+                    "amount": int(deposit_amount * 100),  # 50.00 in cents = 5000
+                    "fee": 80  # 0.80 in cents = 80
+                }
+            }
+        }
+        
+        print(f"   Webhook Data Structure:")
+        print(f"   {json.dumps(webhook_data, indent=4)}")
+        
+        # Test webhook endpoint with proper secret
+        webhook_url = f"{self.api_url}/payments/webhook?webhookSecret=betarena_webhook_secret_2025"
+        print(f"   Webhook URL: {webhook_url}")
+        
+        try:
+            webhook_response = requests.post(webhook_url, json=webhook_data, timeout=10)
+            if webhook_response.status_code == 200:
+                print(f"✅ Webhook processed successfully")
+                webhook_result = webhook_response.json()
+                print(f"   Response: {json.dumps(webhook_result, indent=2)}")
+            else:
+                print(f"❌ CRITICAL: Webhook failed with status {webhook_response.status_code}")
+                print(f"   Error: {webhook_response.text}")
+                return False
+        except Exception as e:
+            print(f"❌ CRITICAL: Webhook request failed: {str(e)}")
+            return False
+        
+        # Wait a moment for database update
+        import time
+        time.sleep(1)
+        
+        # Test balance update verification
+        print(f"\n5. BALANCE UPDATE VERIFICATION: Checking user balance after webhook...")
+        print("-" * 70)
+        
+        updated_user = self.test_get_user(test_user_id)
+        if not updated_user:
+            print("❌ CRITICAL: Failed to retrieve updated user data")
+            return False
+        
+        actual_final_balance = updated_user['balance']
+        balance_difference = actual_final_balance - initial_balance
+        
+        print(f"   Initial Balance: R$ {initial_balance:.2f}")
+        print(f"   Actual Final Balance: R$ {actual_final_balance:.2f}")
+        print(f"   Balance Increase: R$ {balance_difference:.2f}")
+        print(f"   Expected Increase: R$ {expected_net_credit:.2f}")
+        
+        # Verify balance calculation (deposit_amount - fee)
+        if abs(balance_difference - expected_net_credit) < 0.01:
+            print(f"✅ BALANCE CALCULATION CORRECT: Balance = Deposit - Fee")
+            print(f"   R$ {balance_difference:.2f} = R$ {deposit_amount:.2f} - R$ {expected_fee:.2f}")
+        else:
+            print(f"❌ CRITICAL: BALANCE CALCULATION ERROR")
+            print(f"   Expected: R$ {expected_net_credit:.2f}")
+            print(f"   Actual: R$ {balance_difference:.2f}")
+            return False
+        
+        # Test transaction status update
+        print(f"\n6. TRANSACTION HISTORY VERIFICATION: Checking transaction status...")
+        print("-" * 70)
+        
+        transactions_after = self.test_get_user_transactions(test_user_id)
+        transaction_updated = False
+        for tx in transactions_after:
+            if tx.get('id') == transaction_id:
+                transaction_updated = True
+                print(f"✅ Transaction status updated")
+                print(f"   Status: {tx.get('status')}")
+                print(f"   Amount: R$ {tx.get('amount'):.2f}")
+                print(f"   Fee: R$ {tx.get('fee', 0):.2f}")
+                print(f"   Net Amount: R$ {tx.get('net_amount', 0):.2f}")
+                
+                if tx.get('status') == 'approved':
+                    print(f"✅ Transaction marked as APPROVED")
+                else:
+                    print(f"❌ CRITICAL: Transaction not marked as approved")
+                    return False
+                break
+        
+        if not transaction_updated:
+            print("❌ CRITICAL: Transaction not found after webhook processing")
+            return False
+        
+        # Final verification summary
+        print(f"\n7. FINAL VERIFICATION SUMMARY:")
+        print("=" * 50)
+        
+        success_criteria = [
+            ("Payment preference created", payment_response is not None),
+            ("Transaction created in database", transaction_found),
+            ("Webhook processed successfully", webhook_response.status_code == 200),
+            ("Balance updated correctly", abs(balance_difference - expected_net_credit) < 0.01),
+            ("Transaction marked as approved", any(tx.get('id') == transaction_id and tx.get('status') == 'approved' for tx in transactions_after)),
+            ("Fee deduction applied", abs(balance_difference - (deposit_amount - expected_fee)) < 0.01)
+        ]
+        
+        all_passed = True
+        for criteria, passed in success_criteria:
+            status = "✅" if passed else "❌"
+            print(f"   {status} {criteria}")
+            if not passed:
+                all_passed = False
+        
+        print(f"\n{'✅ SUCCESS' if all_passed else '❌ FAILURE'}: AbacatePay Balance Crediting System")
+        
+        if all_passed:
+            print(f"\n🎉 CRITICAL TEST PASSED - USER REQUIREMENT SATISFIED:")
+            print(f"   ✅ Payment preference created with correct external ID")
+            print(f"   ✅ Webhook processes successfully")
+            print(f"   ✅ User balance increases by (amount - fee)")
+            print(f"   ✅ Transaction status changes to APPROVED")
+            print(f"   ✅ No errors in webhook processing")
+            print(f"   ✅ The '$' field (balance) gets credited correctly after AbacatePay payment")
+        else:
+            print(f"\n🚨 CRITICAL TEST FAILED - USER REQUIREMENT NOT SATISFIED")
+            print(f"   The balance crediting system has issues that need immediate attention")
+        
+        return all_passed
+
 def main():
-    print("🥑 Starting BetArena API Tests - Focus on AbacatePay Integration Issue...")
+    print("💰 CRITICAL BALANCE UPDATE TEST - AbacatePay Balance Crediting System")
+    print("=" * 80)
+    print("USER REQUIREMENT: 'ao valor ser depositado, deve creditar no site no campo $'")
+    print("FOCUS: Testing balance crediting after AbacatePay deposit")
     print("=" * 80)
     
     tester = BetArenaAPITester()
@@ -602,9 +826,14 @@ def main():
     print("-" * 30)
     tester.test_health_check()
     
-    # Test 2: MAIN FOCUS - AbacatePay Integration Test
-    print("\n🥑 MAIN TEST: ABACATEPAY INTEGRATION")
-    print("-" * 45)
+    # Test 2: MAIN FOCUS - AbacatePay Balance Crediting System
+    print("\n💰 MAIN TEST: ABACATEPAY BALANCE CREDITING SYSTEM")
+    print("-" * 55)
+    balance_crediting_success = tester.test_abacatepay_balance_crediting_system()
+    
+    # Test 3: Secondary - General AbacatePay Integration Test
+    print("\n🥑 SECONDARY TEST: GENERAL ABACATEPAY INTEGRATION")
+    print("-" * 50)
     abacatepay_success = tester.test_abacatepay_integration_comprehensive()
     
     # Test 3: User Authentication Test
