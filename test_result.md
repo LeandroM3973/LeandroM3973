@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "ao tentar efetuar um pagamento teste, gera a mensagem no mercado pago '' não foi possível processar seu pagamento ''"
+user_problem_statement: "o site está dando erro ao tentar efetuar um pagamento, a mensagem do erro é '' user not found ''"
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
