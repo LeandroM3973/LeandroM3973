@@ -355,10 +355,50 @@ async def get_user(user_id: str):
         raise HTTPException(status_code=404, detail="User not found")
     return UserResponse(**user)
 
-@api_router.get("/users", response_model=List[UserResponse])
-async def get_all_users():
-    users = await db.users.find().to_list(1000)
-    return [UserResponse(**user) for user in users]
+@api_router.get("/users/{user_id}/login-logs")
+async def get_user_login_logs(user_id: str, limit: int = 10):
+    """Get login logs for a specific user"""
+    cursor = db.login_logs.find({"user_id": user_id}).sort("login_time", -1).limit(limit)
+    logs = await cursor.to_list(length=limit)
+    
+    # Format logs for response
+    formatted_logs = []
+    for log in logs:
+        formatted_log = {
+            "id": log["id"],
+            "email": log["email"], 
+            "ip_address": log.get("ip_address", "unknown"),
+            "user_agent": log.get("user_agent", "unknown")[:100] + "..." if len(log.get("user_agent", "")) > 100 else log.get("user_agent", "unknown"),
+            "login_time": log["login_time"].isoformat(),
+            "success": log["success"],
+            "failure_reason": log.get("failure_reason")
+        }
+        formatted_logs.append(formatted_log)
+    
+    return {"login_logs": formatted_logs}
+
+@api_router.get("/admin/login-logs")
+async def get_all_login_logs(limit: int = 50):
+    """Get all login logs (admin only)"""
+    cursor = db.login_logs.find({}).sort("login_time", -1).limit(limit)
+    logs = await cursor.to_list(length=limit)
+    
+    # Format logs for response
+    formatted_logs = []
+    for log in logs:
+        formatted_log = {
+            "id": log["id"],
+            "user_id": log["user_id"],
+            "email": log["email"],
+            "ip_address": log.get("ip_address", "unknown"),
+            "user_agent": log.get("user_agent", "unknown")[:100] + "..." if len(log.get("user_agent", "")) > 100 else log.get("user_agent", "unknown"),
+            "login_time": log["login_time"].isoformat(),
+            "success": log["success"],
+            "failure_reason": log.get("failure_reason")
+        }
+        formatted_logs.append(formatted_log)
+    
+    return {"login_logs": formatted_logs}
 
 # Payment Routes
 @api_router.post("/payments/create-preference")
