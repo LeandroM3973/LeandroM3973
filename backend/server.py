@@ -645,7 +645,8 @@ async def create_payment_preference(request: CreatePaymentRequest):
         }
         
         print(f"🥑 AbacatePay billing created - Webhook must be configured in dashboard")
-        print(f"🔗 Required webhook URL for dashboard: {frontend_url}/api/payments/webhook?webhookSecret={abacate_webhook_secret}")
+        secure_webhook_url = generate_webhook_url(frontend_url, abacate_webhook_secret)
+        print(f"🔗 Required HTTPS webhook URL for dashboard: {secure_webhook_url}")
         
         billing_response = abacatepay_client.billing.create(data=billing_data)
         
