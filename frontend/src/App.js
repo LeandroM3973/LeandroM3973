@@ -137,7 +137,44 @@ function App() {
     const handleWindowFocus = () => {
       if (currentUser) {
         console.log('👁️ Window focused, checking for balance updates...');
-        refreshCurrentUser();
+        
+        // Check for pending payment
+        const pendingPayment = localStorage.getItem('betarena_pending_payment');
+        if (pendingPayment) {
+          try {
+            const paymentInfo = JSON.parse(pendingPayment);
+            const timeDiff = Date.now() - paymentInfo.timestamp;
+            
+            // If payment was initiated less than 1 hour ago
+            if (timeDiff < 3600000) {
+              console.log('💳 Found pending payment, refreshing balance...');
+              
+              refreshCurrentUser().then((updatedUser) => {
+                if (updatedUser) {
+                  // Show success message if balance increased
+                  setTimeout(() => {
+                    alert(`💰 BEM-VINDO DE VOLTA!\n\n` +
+                          `✅ Verificação de saldo concluída\n` +
+                          `💳 Saldo atual: ${formatCurrency(updatedUser.balance)}\n\n` +
+                          `Se você concluiu o pagamento, o saldo deve estar atualizado.`);
+                  }, 1000);
+                }
+              });
+              
+              // Clear pending payment after 5 minutes to avoid repeated messages
+              setTimeout(() => {
+                localStorage.removeItem('betarena_pending_payment');
+              }, 300000);
+            } else {
+              // Remove old pending payments
+              localStorage.removeItem('betarena_pending_payment');
+            }
+          } catch (error) {
+            localStorage.removeItem('betarena_pending_payment');
+          }
+        } else {
+          refreshCurrentUser();
+        }
       }
     };
 
