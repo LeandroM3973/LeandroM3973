@@ -45,6 +45,18 @@ def ensure_https_url(url: str) -> str:
     
     return url
 
+def generate_webhook_url(base_url: str, secret: str) -> str:
+    """Generate secure HTTPS webhook URL"""
+    base_url = ensure_https_url(base_url)
+    webhook_url = f"{base_url}/api/payments/webhook?webhookSecret={secret}"
+    
+    # Final HTTPS validation
+    if not webhook_url.startswith('https://'):
+        raise ValueError(f"🚨 SECURITY ERROR: Webhook URL must use HTTPS: {webhook_url}")
+    
+    print(f"🔒 Generated secure webhook URL: {webhook_url}")
+    return webhook_url
+
 # Ensure frontend URL is always HTTPS for webhook security
 frontend_url = ensure_https_url(os.environ.get('FRONTEND_URL', 'https://localhost:3000'))
 print(f"🔒 Frontend URL (HTTPS enforced): {frontend_url}")
