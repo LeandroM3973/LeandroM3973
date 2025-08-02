@@ -250,6 +250,21 @@ backend:
           agent: "testing"
           comment: "COMPREHENSIVE TESTING COMPLETED: Mercado Pago backend integration is WORKING CORRECTLY. ✅ Real MP integration active (real_mp: true), ✅ Production keys valid and functional, ✅ Payment preferences created successfully for all test amounts (R$10, R$50, R$100, R$250), ✅ Valid Mercado Pago URLs generated (both init_point and sandbox_init_point), ✅ Webhook endpoint accessible, ✅ Transaction history working. URLs return 403 status when accessed directly (normal MP behavior). Issue is likely frontend-related: popup blockers, JavaScript errors, or incorrect frontend implementation of window.open() for payment links."
 
+  - task: "Admin access control system"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "ADMIN ROLE IMPLEMENTATION: Admin-only access control for judge panel implemented. USER REQUIREMENT: 'permita que somente eu, o administrador tenha acesso a aba juiz. Eu que decido quem venceu a aposta, os usuarios só vão entrar no site, depositar um valor e esperar eu decidir o resultado e o vencedor'. IMPLEMENTATION: ✅ Admin status management with POST /admin/make-admin/{email} and GET /admin/check-admin/{user_id}, ✅ Admin verification middleware for protected endpoints, ✅ Enhanced winner declaration with admin_user_id parameter validation, ✅ Proper error messages for non-admin access, ✅ Atomic winner declaration with platform fee calculation (20% platform, 80% winner)"
+        - working: true
+          agent: "testing"
+          comment: "ADMIN ACCESS CONTROL SYSTEM TEST PASSED - USER REQUIREMENTS FULLY SATISFIED: ✅ Admin status management working (POST /admin/make-admin/{email} promotes users to admin successfully), ✅ Admin status verification working (GET /admin/check-admin/{user_id} correctly returns is_admin status), ✅ Regular users correctly BLOCKED from admin functions (403 Forbidden with proper error message: 'Acesso negado. Apenas administradores podem acessar esta funcionalidade.'), ✅ Admin users can successfully declare winners via POST /bets/{bet_id}/declare-winner with admin_user_id validation, ✅ Winner payout calculation correct (80% to winner, 20% platform fee): tested R$ 150.00 total pot → R$ 120.00 winner payout + R$ 30.00 platform fee, ✅ Bet status changes to 'completed' after winner declaration, ✅ Admin verification middleware working consistently across all protected endpoints, ✅ Complete user flow testing: regular users can create bets/deposit/view history but cannot access judge functions, admin users have full access including winner declaration, ✅ Security testing passed: invalid admin_user_id rejected (404), non-admin users consistently blocked (403). CORE USER REQUIREMENTS ACHIEVED: Only administrators can access judge functionality and decide bet winners, regular users are limited to betting and waiting for admin decisions. System maintains security while providing clear admin/user separation with atomic winner declaration preventing double processing."
+
 metadata:
   created_by: "main_agent"
   version: "1.2"
