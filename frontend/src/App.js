@@ -270,10 +270,24 @@ function App() {
           email: authForm.email,
           password: authForm.password
         });
-        setCurrentUser(response.data);
+        
+        // Get fresh user data including admin status
+        const userData = response.data;
+        
+        // Force refresh of user data to get latest admin status
+        console.log('🔄 Refreshing user data to get latest admin status...');
+        const refreshedUser = await refreshCurrentUser() || userData;
+        
+        setCurrentUser(refreshedUser);
         setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
-        localStorage.setItem('betarena_user', JSON.stringify(response.data));
-        console.log('✅ User logged in successfully:', response.data.name);
+        localStorage.setItem('betarena_user', JSON.stringify(refreshedUser));
+        
+        if (refreshedUser.is_admin) {
+          console.log('✅ Admin user logged in:', refreshedUser.name);
+          console.log('🔒 Admin privileges active');
+        } else {
+          console.log('✅ Regular user logged in:', refreshedUser.name);
+        }
       } catch (error) {
         console.error('❌ Login error:', error);
         const errorMessage = error.response?.data?.detail;
