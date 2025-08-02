@@ -283,13 +283,13 @@ async def create_payment_preference(request: CreatePaymentRequest):
     
     try:
         # Create product for AbacatePay
-        product = Product(
-            externalId=transaction.id,
-            name=f"Depósito BetArena - {user['name']}",
-            description=f"Depósito para conta de apostas - {user['email']}",
-            quantity=1,
-            price=int(request.amount * 100)  # Convert to cents
-        )
+        product = {
+            "externalId": transaction.id,
+            "name": f"Depósito BetArena - {user['name']}",
+            "description": f"Depósito para conta de apostas - {user['email']}",
+            "quantity": 1,
+            "price": int(request.amount * 100)  # Convert to cents
+        }
         
         # Create billing with AbacatePay
         billing_response = abacatepay_client.create_billing(
