@@ -1356,77 +1356,129 @@ function App() {
             </div>
           </TabsContent>
 
-          {/* Create Bet */}
+          {/* Create Bet - Enhanced with Auto-Matching */}
           <TabsContent value="create">
             <Card className="bg-white/10 backdrop-blur-lg border-white/20">
               <CardHeader>
-                <CardTitle className="text-white">Criar Nova Aposta</CardTitle>
+                <CardTitle className="text-white flex items-center space-x-2">
+                  🎯 <span>Criar Aposta com Matching Automático</span>
+                </CardTitle>
+                <p className="text-gray-300 text-sm">
+                  Sistema conecta automaticamente apostas opostas do mesmo evento
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
+                
+                {/* Event ID for Matching */}
                 <div>
-                  <label className="text-white text-sm font-medium">Título do Evento</label>
+                  <label className="text-white text-sm font-medium">ID do Evento (para conexão automática)</label>
                   <Input
-                    value={newBet.event_title}
-                    onChange={(e) => setNewBet({...newBet, event_title: e.target.value})}
-                    placeholder="Ex: Brasil vs Argentina - Copa do Mundo"
+                    value={newBet.event_id}
+                    onChange={(e) => setNewBet({...newBet, event_id: e.target.value})}
+                    placeholder="Ex: brasil_vs_argentina_final"
                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
+                  <p className="text-gray-400 text-xs mt-1">
+                    Use o mesmo ID para apostas que devem se conectar
+                  </p>
                 </div>
+
+                {/* Event Description */}
                 <div>
-                  <label className="text-white text-sm font-medium">Tipo de Evento</label>
-                  <Select 
-                    value={newBet.event_type} 
-                    onValueChange={(value) => setNewBet({...newBet, event_type: value})}
-                  >
-                    <SelectTrigger className="bg-white/10 border-white/20 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="sports">Esportes</SelectItem>
-                      <SelectItem value="stocks">Ações/Mercado</SelectItem>
-                      <SelectItem value="custom">Personalizado</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-white text-sm font-medium">Descrição</label>
-                  <Textarea
+                  <label className="text-white text-sm font-medium">Descrição do Evento</label>
+                  <Input
                     value={newBet.event_description}
                     onChange={(e) => setNewBet({...newBet, event_description: e.target.value})}
-                    placeholder="Descreva os detalhes da aposta..."
+                    placeholder="Ex: Final da Copa - Brasil vs Argentina"
                     className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
                   />
                 </div>
+
+                {/* Side Selection */}
+                <div>
+                  <label className="text-white text-sm font-medium">Escolha seu lado</label>
+                  <div className="flex space-x-4 mt-2">
+                    <Button
+                      type="button"
+                      variant={newBet.side === 'A' ? 'default' : 'outline'}
+                      className={`flex-1 ${newBet.side === 'A' ? 'bg-blue-600 hover:bg-blue-700' : 'border-white/20 text-white hover:bg-white/10'}`}
+                      onClick={() => setNewBet({...newBet, side: 'A'})}
+                    >
+                      Lado A
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={newBet.side === 'B' ? 'default' : 'outline'}
+                      className={`flex-1 ${newBet.side === 'B' ? 'bg-green-600 hover:bg-green-700' : 'border-white/20 text-white hover:bg-white/10'}`}
+                      onClick={() => setNewBet({...newBet, side: 'B'})}
+                    >
+                      Lado B
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Side Name */}
+                <div>
+                  <label className="text-white text-sm font-medium">
+                    Nome do seu lado ({newBet.side === 'A' ? 'Lado A' : 'Lado B'})
+                  </label>
+                  <Input
+                    value={newBet.side_name}
+                    onChange={(e) => setNewBet({...newBet, side_name: e.target.value})}
+                    placeholder={newBet.side === 'A' ? "Ex: Brasil" : "Ex: Argentina"}
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  />
+                </div>
+
+                {/* Bet Amount */}
                 <div>
                   <label className="text-white text-sm font-medium">Valor da Aposta</label>
                   <Input
                     type="number"
-                    step="0.01"
                     value={newBet.amount}
-                    onChange={(e) => setNewBet({...newBet, amount: parseFloat(e.target.value) || 0})}
-                    min="10"
-                    max={currentUser.balance}
+                    onChange={(e) => setNewBet({...newBet, amount: parseFloat(e.target.value)})}
+                    min="1"
+                    step="0.01"
                     className="bg-white/10 border-white/20 text-white"
                   />
-                  <p className="text-sm text-gray-400 mt-1">Mínimo: R$ 10,00 | Saldo: {formatCurrency(currentUser.balance)}</p>
-                </div>
-                <Button 
-                  onClick={createBet}
-                  disabled={loading || !newBet.event_title.trim() || !newBet.event_description.trim() || newBet.amount > currentUser.balance || newBet.amount < 10}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                >
-                  {loading ? 'Criando...' : 'Criar Aposta'}
-                </Button>
-                
-                <div className="bg-yellow-500/20 rounded-lg p-3 border border-yellow-500/30">
-                  <p className="text-yellow-200 text-sm">
-                    ⏰ <strong>Como Funciona:</strong> Após criar a aposta, você receberá um <strong>link completo</strong> para enviar ao seu adversário. 
-                    O link contém todas as informações da aposta (valor, evento, seu nome). O adversário tem <strong>20 minutos</strong> para clicar no link e aceitar. 
-                    Caso ninguém aceite, o valor será <strong>automaticamente devolvido</strong>.
+                  <p className="text-gray-400 text-xs mt-1">
+                    Mínimo: R$ 1,00
                   </p>
                 </div>
+
+                {/* Example/Preview */}
+                {newBet.event_id && newBet.side_name && (
+                  <div className="bg-green-500/20 rounded-lg p-4 border border-green-500/30">
+                    <h4 className="text-green-200 font-semibold mb-2">📋 Preview da Aposta</h4>
+                    <div className="space-y-1 text-sm text-green-200">
+                      <p><strong>Evento:</strong> {newBet.event_id}</p>
+                      <p><strong>Seu lado:</strong> {newBet.side_name} ({newBet.side})</p>
+                      <p><strong>Valor:</strong> {formatCurrency(newBet.amount)}</p>
+                      <p><strong>Buscando:</strong> Aposta oposta no mesmo evento</p>
+                    </div>
+                  </div>
+                )}
+
+                <Button
+                  onClick={createBet}
+                  disabled={loading || !currentUser}
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                >
+                  {loading ? 'Criando Aposta...' : '🎯 Criar Aposta (Auto-Match)'}
+                </Button>
               </CardContent>
             </Card>
+
+            {/* Auto-Matching Instructions */}
+            <div className="mt-6 bg-blue-500/20 rounded-lg p-4 border border-blue-500/30">
+              <h4 className="text-white font-semibold mb-3">🎯 Como Funciona o Sistema Automático</h4>
+              <div className="space-y-2 text-blue-200 text-sm">
+                <p><strong>1. João aposta no Brasil</strong> → Aposta fica aguardando</p>
+                <p><strong>2. Maria aposta na Argentina</strong> → Sistema conecta automaticamente!</p>
+                <p><strong>3. Apostas ficam ativas</strong> → Aguardando decisão do administrador</p>
+                <p><strong>4. Admin decide vencedor</strong> → Pagamento automático (80% vencedor + 20% taxa)</p>
+              </div>
+            </div>
           </TabsContent>
 
           {/* User Bets */}
