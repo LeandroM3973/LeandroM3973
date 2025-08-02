@@ -64,6 +64,19 @@ function App() {
   const [selectedWinner, setSelectedWinner] = useState('');
 
   useEffect(() => {
+    // Load user from localStorage on app initialization
+    const savedUser = localStorage.getItem('betarena_user');
+    if (savedUser) {
+      try {
+        const userData = JSON.parse(savedUser);
+        setCurrentUser(userData);
+        console.log('User loaded from localStorage:', userData.name);
+      } catch (error) {
+        console.error('Error parsing saved user data:', error);
+        localStorage.removeItem('betarena_user');
+      }
+    }
+    
     loadUsers();
     loadBets();
     loadWaitingBets();
