@@ -27,6 +27,7 @@ db = client[os.environ['DB_NAME']]
 # AbacatePay Configuration with HTTPS validation
 abacate_api_token = os.environ.get('ABACATEPAY_API_TOKEN')
 abacate_webhook_secret = os.environ.get('ABACATEPAY_WEBHOOK_SECRET')
+abacate_webhook_id = os.environ.get('ABACATEPAY_WEBHOOK_ID')
 
 # HTTPS validation for webhook security
 def ensure_https_url(url: str) -> str:
