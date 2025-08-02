@@ -740,11 +740,17 @@ async def create_bet(bet_data: BetCreate):
     )
     
     # Create bet debit transaction
+    fee = 0.0  # No fee for bet creation
+    net_amount = bet_data.amount
+    
     transaction = Transaction(
         user_id=bet_data.creator_id,
         amount=bet_data.amount,
+        fee=fee,
+        net_amount=net_amount,
         type=TransactionType.BET_DEBIT,
-        status=TransactionStatus.APPROVED
+        status=TransactionStatus.APPROVED,
+        description=f"Aposta criada - {bet_data.event_description}"
     )
     await db.transactions.insert_one(transaction.dict())
     
