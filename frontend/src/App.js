@@ -533,6 +533,13 @@ function App() {
           );
           
           if (userChoice) {
+            // Store payment info for balance refresh
+            localStorage.setItem('betarena_pending_payment', JSON.stringify({
+              amount: depositAmount,
+              billId: billId,
+              timestamp: Date.now()
+            }));
+            
             // Try window.open first on desktop
             const paymentWindow = window.open(paymentUrl, '_blank', 'noopener,noreferrer,width=800,height=600');
             
@@ -548,19 +555,27 @@ function App() {
                 );
                 
                 if (fallbackChoice) {
+                  // Show balance update instruction
+                  alert(`💳 ABRINDO PAGAMENTO PIX\n\n` +
+                        `Após concluir o pagamento:\n` +
+                        `✅ Retorne a este site\n` +
+                        `✅ Seu saldo será atualizado automaticamente\n` +
+                        `💰 Valor líquido: ${formatCurrency(depositAmount - 0.80)}\n\n` +
+                        `ID: ${billId}`);
+                  
                   // Navigate to payment page in same tab
                   window.location.href = paymentUrl;
                 } else {
                   // Copy link to clipboard
                   navigator.clipboard.writeText(paymentUrl).then(() => {
-                    alert(`🔗 LINK COPIADO!\n\n${paymentUrl}\n\n📋 Cole este link em uma nova aba para pagar no AbacatePay.\n\nBill ID: ${billId}`);
+                    alert(`🔗 LINK COPIADO!\n\n${paymentUrl}\n\n📋 Cole este link em uma nova aba para pagar no AbacatePay.\n\n💰 Após o pagamento, retorne aqui para ver seu saldo atualizado.\n\nBill ID: ${billId}`);
                   }).catch(() => {
-                    alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📋 Copie este link e abra em uma nova aba.\n\nBill ID: ${billId}`);
+                    alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📋 Copie este link e abra em uma nova aba.\n\n💰 Após o pagamento, retorne aqui para ver seu saldo atualizado.\n\nBill ID: ${billId}`);
                   });
                 }
               } else {
                 // Popup opened successfully
-                alert(`🚀 Redirecionando para o AbacatePay...\n\nComplete o pagamento PIX na nova janela.\n\nBill ID: ${billId}`);
+                alert(`🚀 Pagamento AbacatePay aberto!\n\n💳 Complete o pagamento PIX na nova janela.\n💰 Após o pagamento, retorne aqui para ver seu saldo atualizado automaticamente.\n\nBill ID: ${billId}`);
               }
             }, 1000);
           }
