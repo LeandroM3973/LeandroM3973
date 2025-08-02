@@ -481,11 +481,11 @@ async def get_user_by_id(user_id: str):
     return user_data
 
 @api_router.get("/users")
-async def get_user(user_id: str):
-    user = await db.users.find_one({"id": user_id})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return UserResponse(**user)
+async def get_all_users():
+    """Get all users for admin purposes"""
+    cursor = db.users.find({}, {"password_hash": 0, "email_verification_token": 0})
+    users = await cursor.to_list(length=100)
+    return users
 
 @api_router.get("/users/{user_id}/login-logs")
 async def get_user_login_logs(user_id: str, limit: int = 10):
