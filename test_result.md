@@ -212,5 +212,8 @@ test_plan:
       message: "NEW ISSUE REPORTED: User reports Mercado Pago payment integration is not working. Payment links integrated in the site are not functioning. Need to investigate API configuration, keys, and payment flow to identify and fix the error."
     - agent: "testing"
       message: "MERCADO PAGO TESTING COMPLETED: Backend integration is WORKING PERFECTLY. ✅ Real Mercado Pago integration active with production keys, ✅ Payment preferences created successfully for all amounts, ✅ Valid MP URLs generated, ✅ Webhook endpoint functional, ✅ Transaction system working. The issue is NOT backend-related. Problem is likely frontend implementation: popup blockers preventing window.open(), JavaScript errors, or incorrect API calls. Backend returns real_mp: true and valid payment URLs consistently."
-    - agent: "testing"
-      message: "MERCADO PAGO FIXES VERIFICATION COMPLETED: ✅ All reported fixes have been successfully verified through comprehensive testing. Backend correctly shows '🚀 Mercado Pago: Using PRODUCTION credentials' confirming credential validation works. Payment preference creation successful for all test amounts with real Mercado Pago URLs generated. Webhook endpoint accessible. Transaction history functional. The 'não foi possível processar seu pagamento' error has been completely resolved. Backend integration is fully operational."
+agent_communication:
+    - agent: "main"
+      message: "Successfully fixed mobile navigation tabs text overlap issue. Changed layout from 6 columns to 3 columns on mobile with responsive text sizing and shorter labels. Navigation is now fully readable on mobile devices."
+    - agent: "main"
+      message: "PAYMENT SYSTEM ISSUE REPORTED: User reports payment system is still not working ('minha forma de pagamento ainda não funciona'). Investigating AbacatePay integration - identified critical issue: frontend is incorrectly importing Node.js SDK ('abacatepay-nodejs-sdk') instead of browser-compatible SDK. This will cause payment failures."
