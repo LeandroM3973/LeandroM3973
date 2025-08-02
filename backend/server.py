@@ -95,9 +95,12 @@ class User(BaseModel):
     email: str
     phone: str
     password_hash: str  # Added password hash field
+    email_verified: bool = False  # Email verification status
+    email_verification_token: Optional[str] = None  # Token for email verification
     is_admin: bool = False  # Added admin flag
     balance: float = 0.0  # Changed to real currency (BRL)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_login: Optional[datetime] = None
 
 class UserCreate(BaseModel):
     name: str
