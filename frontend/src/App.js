@@ -119,19 +119,31 @@ function App() {
     }
   };
 
-  // Function to refresh current user data (for balance updates)
+  // Function to refresh current user data (for balance updates and admin status)
   const refreshCurrentUser = async () => {
     if (!currentUser) return;
     
     try {
-      console.log('🔄 Refreshing user balance...');
+      console.log('🔄 Refreshing user data and admin status...');
       const response = await axios.get(`${API}/users/${currentUser.id}`);
       const updatedUser = response.data;
+      
+      // Also check admin status to ensure it's current
+      try {
+        const adminCheck = await axios.get(`${API}/admin/check-admin/${currentUser.id}`);
+        if (adminCheck.data) {
+          updatedUser.is_admin = adminCheck.data.is_admin;
+          console.log(`🔒 Admin status updated: ${updatedUser.is_admin ? 'ADMIN' : 'Regular User'}`);
+        }
+      } catch (adminError) {
+        console.log('⚠️ Could not check admin status:', adminError.message);
+      }
       
       setCurrentUser(updatedUser);
       localStorage.setItem('betarena_user', JSON.stringify(updatedUser));
       
-      console.log(`💰 Balance updated: ${formatCurrency(updatedUser.balance)}`);
+      console.log(`💰 User refreshed: ${updatedUser.name} (Admin: ${updatedUser.is_admin ? 'Yes' : 'No'})`);
+      console.log(`💰 Balance: ${formatCurrency(updatedUser.balance)}`);
       return updatedUser;
     } catch (error) {
       console.error('Error refreshing user data:', error);
