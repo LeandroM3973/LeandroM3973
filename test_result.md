@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "sistema de pagamento mobile corrigido, mas agora precisa verificar se quando o valor é depositado via AbacatePay, o saldo é creditado corretamente no site no campo '$' (saldo do usuário)"
+user_problem_statement: "implementar sistema de autenticação com verificação de e-mail obrigatória, confirmação do usuário por e-mail, e salvar todos os logins no banco de dados"
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
