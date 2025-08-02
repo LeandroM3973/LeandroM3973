@@ -911,7 +911,7 @@ class BetArenaAPITester:
         # Test 4: Test login BLOCKED for unverified emails
         print(f"\n   2.1 Testing login blocked for unverified emails...")
         blocked_login = self.test_login_user(test_user_email, test_user_password, expected_status=401)
-        if blocked_login is not None:
+        if not blocked_login:
             print("❌ CRITICAL: Login should be blocked for unverified emails")
             return False
         
