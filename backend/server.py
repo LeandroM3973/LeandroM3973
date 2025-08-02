@@ -1212,6 +1212,12 @@ async def join_bet(bet_id: str, join_data: JoinBet):
 
 @api_router.post("/bets/{bet_id}/declare-winner", response_model=Bet)
 async def declare_winner(bet_id: str, winner_data: DeclareWinner):
+    """Declare winner of a bet - ADMIN ONLY"""
+    
+    # CRITICAL: Verify admin access first
+    admin_user = await verify_admin_access(winner_data.admin_user_id)
+    print(f"🔒 Admin {admin_user['name']} is declaring winner for bet {bet_id}")
+    
     # Get the bet
     bet = await db.bets.find_one({"id": bet_id})
     if not bet:
