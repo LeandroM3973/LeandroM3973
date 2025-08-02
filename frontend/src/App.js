@@ -398,8 +398,16 @@ function App() {
           alert('💡 Pagamento deixado como pendente para demonstração.\nEm produção, o usuário seria redirecionado para o AbacatePay.');
         }
       } else if (response.data.abacatepay) {
-        // AbacatePay payment flow
+        // AbacatePay payment flow with enhanced frontend integration
         const paymentUrl = response.data.payment_url || response.data.init_point;
+        const billId = response.data.preference_id;
+        
+        console.log('🥑 AbacatePay Payment Data:', {
+          billId,
+          paymentUrl,
+          amount: response.data.amount,
+          fee: response.data.fee
+        });
         
         // Detect if user is on mobile device
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
@@ -411,15 +419,16 @@ function App() {
             `🥑 PAGAMENTO ABACATEPAY\n\n` +
             `Valor: ${formatCurrency(depositAmount)}\n` +
             `Taxa: R$ 0,80\n` +
-            `Valor final: ${formatCurrency(depositAmount - 0.80)}\n\n` +
-            `Você será redirecionado para completar o pagamento.\n\n` +
+            `Valor líquido: ${formatCurrency(depositAmount - 0.80)}\n\n` +
+            `ID: ${billId}\n\n` +
+            `Você será redirecionado para completar o pagamento PIX.\n\n` +
             `✅ OK - Continuar com pagamento\n` +
             `❌ Cancelar - Voltar`
           );
           
           if (userChoice) {
             // For mobile, navigate directly to avoid popup issues
-            alert('🚀 Redirecionando para o AbacatePay...\n\nVocê será levado para a página de pagamento PIX.');
+            alert('🚀 Redirecionando para o AbacatePay...\n\nVocê será levado para a página de pagamento PIX segura.');
             window.location.href = paymentUrl;
           }
         } else {
@@ -428,14 +437,16 @@ function App() {
             `🥑 PAGAMENTO VIA ABACATEPAY\n\n` +
             `Valor: ${formatCurrency(depositAmount)}\n` +
             `Taxa: R$ 0,80\n` +
-            `Valor final: ${formatCurrency(depositAmount - 0.80)}\n\n` +
+            `Valor líquido: ${formatCurrency(depositAmount - 0.80)}\n\n` +
+            `Bill ID: ${billId}\n` +
+            `Status: ${response.data.status}\n\n` +
             `✅ Clique OK para abrir o pagamento\n` +
             `❌ Clique Cancelar para desistir`
           );
           
           if (userChoice) {
             // Try window.open first on desktop
-            const paymentWindow = window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+            const paymentWindow = window.open(paymentUrl, '_blank', 'noopener,noreferrer,width=800,height=600');
             
             // Check if popup was blocked after a short delay
             setTimeout(() => {
@@ -454,14 +465,14 @@ function App() {
                 } else {
                   // Copy link to clipboard
                   navigator.clipboard.writeText(paymentUrl).then(() => {
-                    alert(`🔗 LINK COPIADO!\n\n${paymentUrl}\n\n📋 Cole este link em uma nova aba para pagar no AbacatePay.`);
+                    alert(`🔗 LINK COPIADO!\n\n${paymentUrl}\n\n📋 Cole este link em uma nova aba para pagar no AbacatePay.\n\nBill ID: ${billId}`);
                   }).catch(() => {
-                    alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📋 Copie este link e abra em uma nova aba.`);
+                    alert(`🔗 LINK DE PAGAMENTO:\n\n${paymentUrl}\n\n📋 Copie este link e abra em uma nova aba.\n\nBill ID: ${billId}`);
                   });
                 }
               } else {
                 // Popup opened successfully
-                alert('🚀 Redirecionando para o AbacatePay...\n\nComplete o pagamento PIX na nova janela.');
+                alert(`🚀 Redirecionando para o AbacatePay...\n\nComplete o pagamento PIX na nova janela.\n\nBill ID: ${billId}`);
               }
             }, 1000);
           }
