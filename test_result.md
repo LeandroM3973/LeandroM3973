@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "implementar controle de acesso para aba Juiz - somente o administrador deve ter acesso à aba juiz para decidir quem venceu as apostas. Usuários normais só podem entrar no site, depositar valor e esperar o administrador decidir o resultado."
+user_problem_statement: "CRÍTICO: usuário foi promovido a administrador no backend, mas no frontend ainda não aparecem as opções de admin - aba Juiz não aparece e não há opções para decidir vencedores"
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
