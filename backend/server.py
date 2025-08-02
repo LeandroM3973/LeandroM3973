@@ -785,65 +785,110 @@ async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
         
         payment_data = webhook_data.get('data', {})
         payment_info = payment_data.get('payment', {})
+        pix_info = payment_data.get('pixQrCode', {})
         
-        # Extract payment details
+        # Extract payment details from real AbacatePay format
         amount = payment_info.get('amount', 0) / 100  # Convert from cents to reais
         fee = payment_info.get('fee', 80) / 100  # AbacatePay fee in reais
-        external_reference = payment_data.get('externalId') or payment_data.get('external_reference')
         
         print(f"🥑 Processing AbacatePay payment success:")
         print(f"   Amount: R$ {amount}")
         print(f"   Fee: R$ {fee}")
-        print(f"   External ID: {external_reference}")
         print(f"   Net Amount: R$ {amount - fee}")
+        print(f"   PIX Status: {pix_info.get('status', 'unknown')}")
         
+        # Try multiple approaches to find the transaction
+        external_reference = None
+        billing_id = pix_info.get('id', '').strip()
+        
+        # Method 1: Look for external_reference in various places
+        external_reference = (
+            payment_data.get('externalId') or 
+            payment_data.get('external_reference') or
+            payment_info.get('externalId') or 
+            payment_info.get('external_reference')
+        )
+        
+        print(f"🔍 Looking for transaction with:")
+        print(f"   External Reference: {external_reference}")
+        print(f"   Billing ID: {billing_id}")
+        
+        transaction = None
+        
+        # Method 1: Find by external_reference if available
         if external_reference:
-            # Find and update transaction
             transaction = await db.transactions.find_one({"id": external_reference})
-            if transaction:
-                print(f"✅ Found transaction for user: {transaction['user_id']}")
-                
-                # Update transaction status
-                await db.transactions.update_one(
-                    {"id": external_reference},
-                    {"$set": {
-                        "status": TransactionStatus.APPROVED,
-                        "updated_at": datetime.utcnow(),
-                        "fee": fee,
-                        "net_amount": amount - fee,
-                        "external_reference": external_reference
-                    }}
-                )
-                print(f"✅ Transaction updated to APPROVED")
-                
-                # Get current user balance before update
-                user = await db.users.find_one({"id": transaction["user_id"]})
-                old_balance = user.get("balance", 0) if user else 0
-                
-                # Update user balance
-                credit_amount = amount - fee
-                await db.users.update_one(
-                    {"id": transaction["user_id"]},
-                    {"$inc": {"balance": credit_amount}}
-                )
-                
-                # Get updated balance
-                updated_user = await db.users.find_one({"id": transaction["user_id"]})
-                new_balance = updated_user.get("balance", 0) if updated_user else 0
-                
-                print(f"✅ AbacatePay: Balance updated for user {transaction['user_id']}")
-                print(f"   Old balance: R$ {old_balance:.2f}")
-                print(f"   Credit amount: +R$ {credit_amount:.2f}")
-                print(f"   New balance: R$ {new_balance:.2f}")
-                
-            else:
-                print(f"❌ Transaction not found: {external_reference}")
-                print("Available transactions:")
-                cursor = db.transactions.find({}).limit(5)
-                async for tx in cursor:
-                    print(f"  - Transaction ID: {tx.get('id')}")
+            print(f"📋 Transaction found by external_reference: {'Yes' if transaction else 'No'}")
+        
+        # Method 2: Find by payment_id (billing ID)
+        if not transaction and billing_id:
+            transaction = await db.transactions.find_one({"payment_id": billing_id})
+            print(f"📋 Transaction found by payment_id: {'Yes' if transaction else 'No'}")
+        
+        # Method 3: Find pending transaction with matching amount (fallback)
+        if not transaction and amount > 0:
+            transaction = await db.transactions.find_one({
+                "amount": amount,
+                "status": "PENDING",
+                "type": "DEPOSIT"
+            })
+            print(f"📋 Transaction found by amount matching: {'Yes' if transaction else 'No'}")
+        
+        if transaction:
+            print(f"✅ Found transaction for user: {transaction['user_id']}")
+            print(f"   Transaction ID: {transaction['id']}")
+            print(f"   Original Amount: R$ {transaction['amount']}")
+            
+            # Update transaction status
+            await db.transactions.update_one(
+                {"id": transaction["id"]},
+                {"$set": {
+                    "status": TransactionStatus.APPROVED,
+                    "updated_at": datetime.utcnow(),
+                    "fee": fee,
+                    "net_amount": amount - fee,
+                    "external_reference": billing_id,
+                    "payment_method": "PIX"
+                }}
+            )
+            print(f"✅ Transaction updated to APPROVED")
+            
+            # Get current user balance before update
+            user = await db.users.find_one({"id": transaction["user_id"]})
+            old_balance = user.get("balance", 0) if user else 0
+            
+            # Update user balance
+            credit_amount = amount - fee
+            await db.users.update_one(
+                {"id": transaction["user_id"]},
+                {"$inc": {"balance": credit_amount}}
+            )
+            
+            # Get updated balance
+            updated_user = await db.users.find_one({"id": transaction["user_id"]})
+            new_balance = updated_user.get("balance", 0) if updated_user else 0
+            
+            print(f"✅ AbacatePay: Balance updated for user {transaction['user_id']}")
+            print(f"   Old balance: R$ {old_balance:.2f}")
+            print(f"   Credit amount: +R$ {credit_amount:.2f}")
+            print(f"   New balance: R$ {new_balance:.2f}")
+            
+            # Success notification
+            print(f"🎉 PAYMENT PROCESSED SUCCESSFULLY!")
+            print(f"   User: {transaction['user_id']}")
+            print(f"   Amount: R$ {amount:.2f}")
+            print(f"   Fee: R$ {fee:.2f}")
+            print(f"   Net Credit: R$ {credit_amount:.2f}")
+            
         else:
-            print(f"❌ No external reference found in webhook data")
+            print(f"❌ Transaction not found for AbacatePay payment")
+            print("🔍 Available recent transactions:")
+            cursor = db.transactions.find({"status": "PENDING"}).sort("created_at", -1).limit(5)
+            async for tx in cursor:
+                print(f"  - Transaction ID: {tx.get('id')}")
+                print(f"    Amount: R$ {tx.get('amount', 0):.2f}")
+                print(f"    User: {tx.get('user_id')}")
+                print(f"    Payment ID: {tx.get('payment_id', 'none')}")
         
     except Exception as e:
         print(f"❌ Error processing AbacatePay success: {str(e)}")
