@@ -10,6 +10,8 @@ import { Textarea } from './components/ui/textarea';
 import { Trophy, Users, Target, DollarSign, Clock, CheckCircle, CreditCard, Wallet, ArrowUpCircle, ArrowDownCircle, History, Eye, EyeOff, Share2, Copy, Link } from 'lucide-react';
 import axios from 'axios';
 import './App.css';
+// AbacatePay SDK import
+import AbacatePay from 'abacatepay-nodejs-sdk';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
