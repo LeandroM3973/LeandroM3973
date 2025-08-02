@@ -10,27 +10,12 @@ import { Textarea } from './components/ui/textarea';
 import { Trophy, Users, Target, DollarSign, Clock, CheckCircle, CreditCard, Wallet, ArrowUpCircle, ArrowDownCircle, History, Eye, EyeOff, Share2, Copy, Link } from 'lucide-react';
 import axios from 'axios';
 import './App.css';
-// AbacatePay SDK import
-import AbacatePay from 'abacatepay-nodejs-sdk';
-
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-// AbacatePay Frontend Configuration
-const ABACATEPAY_PUBLIC_KEY = process.env.REACT_APP_ABACATEPAY_PUBLIC_KEY;
-
-// Initialize AbacatePay client for frontend operations
-let abacatePayClient = null;
-try {
-  if (ABACATEPAY_PUBLIC_KEY) {
-    abacatePayClient = new AbacatePay(ABACATEPAY_PUBLIC_KEY);
-    console.log('🥑 AbacatePay client initialized in frontend');
-  } else {
-    console.log('⚠️ AbacatePay public key not configured in frontend');
-  }
-} catch (error) {
-  console.error('❌ Error initializing AbacatePay client:', error);
-}
+// Remove AbacatePay SDK import - it's Node.js only and should only be used in backend
+// Frontend will communicate with backend API for all payment operations
+console.log('🥑 AbacatePay: Frontend configured to use backend API for payments');
 const MP_PUBLIC_KEY = process.env.REACT_APP_MERCADO_PAGO_PUBLIC_KEY;
 
 function App() {
