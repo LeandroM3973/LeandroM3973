@@ -42,6 +42,9 @@ function App() {
 
   // Auth states
   const [isLogin, setIsLogin] = useState(true); // true = login, false = register
+  const [emailVerificationRequired, setEmailVerificationRequired] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [manualVerificationEmail, setManualVerificationEmail] = useState('');
   const [emailExists, setEmailExists] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
