@@ -289,29 +289,27 @@ async def create_payment_preference(request: CreatePaymentRequest):
     await db.transactions.insert_one(transaction.dict())
     
     try:
-        # Create product for AbacatePay
-        product = {
-            "externalId": transaction.id,
-            "name": f"Depósito BetArena - {user['name']}",
-            "description": f"Depósito para conta de apostas - {user['email']}",
-            "quantity": 1,
-            "price": int(request.amount * 100)  # Convert to cents
-        }
+        # Create product using correct AbacatePay Product class
+        product = Product(
+            external_id=transaction.id,
+            name="BET ARENA - Depósito",
+            quantity=1,
+            price=int(request.amount * 100),  # Convert to cents
+            description=f"Depósito BetArena - {user['name']}"
+        )
         
-        # Create billing with AbacatePay
-        billing_data = {
-            "products": [product],
-            "return_url": f"{frontend_url}/payment-success",
-            "completion_url": f"{frontend_url}/payment-success", 
-            "customer": {
+        # Create billing with AbacatePay using new API
+        billing_response = abacatepay_client.billing.create(
+            products=[product],
+            return_url=f"{frontend_url}/payment-success",
+            completion_url=f"{frontend_url}/payment-success",
+            customer={
                 "name": user["name"],
                 "email": user["email"],
                 "cellphone": user["phone"],
                 "taxId": "11144477735"  # Valid test CPF for AbacatePay
             }
-        }
-        
-        billing_response = abacatepay_client.billing.create(data=billing_data)
+        )
         
         # Update transaction with payment ID
         await db.transactions.update_one(
