@@ -394,6 +394,29 @@ function App() {
     setLoading(false);
   };
 
+  // Manual email verification function (temporary)
+  const handleManualVerification = async () => {
+    if (!manualVerificationEmail.trim()) {
+      alert('Digite o email para verificação');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API}/users/manual-verify?email=${encodeURIComponent(manualVerificationEmail)}`);
+      alert(`✅ ${response.data.message}`);
+      setEmailVerificationRequired(false);
+      setManualVerificationEmail('');
+      
+      // If this was the verification email, clear it
+      if (manualVerificationEmail === verificationEmail) {
+        setVerificationEmail('');
+      }
+    } catch (error) {
+      console.error('❌ Verification error:', error);
+      alert(error.response?.data?.detail || 'Erro na verificação');
+    }
+  };
+
   const logout = () => {
     setCurrentUser(null);
     setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
