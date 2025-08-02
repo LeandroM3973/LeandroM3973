@@ -163,6 +163,10 @@ class WithdrawRequest(BaseModel):
     user_id: str
     amount: float
 
+class CreatePaymentRequest(BaseModel):
+    user_id: str
+    amount: float
+
 # User Routes
 # Password hashing utilities
 def hash_password(password: str) -> str:
