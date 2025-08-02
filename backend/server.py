@@ -298,7 +298,7 @@ async def create_payment_preference(request: CreatePaymentRequest):
             description=f"Depósito BetArena - {user['name']}"
         )
         
-        # Create billing with AbacatePay using new API
+        # Create billing with AbacatePay using correct API
         # Ensure email is valid format for AbacatePay
         user_email = user.get("email", "")
         if not user_email or "@" not in user_email:
@@ -312,8 +312,9 @@ async def create_payment_preference(request: CreatePaymentRequest):
                 "name": user["name"],
                 "email": user_email,
                 "cellphone": user.get("phone", "11999999999"),
-                "taxId": "11144477735"  # Valid test CPF for AbacatePay
-            }
+                "tax_id": "11144477735"  # Valid test CPF for AbacatePay (corrected field name)
+            },
+            frequency='ONE_TIME'  # Required parameter for AbacatePay API
         )
         
         # Update transaction with payment ID
