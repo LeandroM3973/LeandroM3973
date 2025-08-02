@@ -596,6 +596,8 @@ async def webhook_abacatepay(request: Request):
 async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
     """Process successful AbacatePay payment"""
     try:
+        print(f"🥑 AbacatePay payment success webhook data: {json.dumps(webhook_data, indent=2)}")
+        
         payment_data = webhook_data.get('data', {})
         payment_info = payment_data.get('payment', {})
         
@@ -604,12 +606,18 @@ async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
         fee = payment_info.get('fee', 80) / 100  # AbacatePay fee in reais
         external_reference = payment_data.get('externalId') or payment_data.get('external_reference')
         
-        print(f"🥑 Processing AbacatePay payment success: Amount {amount}, Fee {fee}")
+        print(f"🥑 Processing AbacatePay payment success:")
+        print(f"   Amount: R$ {amount}")
+        print(f"   Fee: R$ {fee}")
+        print(f"   External ID: {external_reference}")
+        print(f"   Net Amount: R$ {amount - fee}")
         
         if external_reference:
             # Find and update transaction
             transaction = await db.transactions.find_one({"id": external_reference})
             if transaction:
+                print(f"✅ Found transaction for user: {transaction['user_id']}")
+                
                 # Update transaction status
                 await db.transactions.update_one(
                     {"id": external_reference},
@@ -617,22 +625,46 @@ async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
                         "status": TransactionStatus.APPROVED,
                         "updated_at": datetime.utcnow(),
                         "fee": fee,
-                        "net_amount": amount - fee
+                        "net_amount": amount - fee,
+                        "external_reference": external_reference
                     }}
                 )
+                print(f"✅ Transaction updated to APPROVED")
+                
+                # Get current user balance before update
+                user = await db.users.find_one({"id": transaction["user_id"]})
+                old_balance = user.get("balance", 0) if user else 0
                 
                 # Update user balance
+                credit_amount = amount - fee
                 await db.users.update_one(
                     {"id": transaction["user_id"]},
-                    {"$inc": {"balance": amount - fee}}
+                    {"$inc": {"balance": credit_amount}}
                 )
                 
-                print(f"✅ AbacatePay: Updated user balance +{amount - fee}")
+                # Get updated balance
+                updated_user = await db.users.find_one({"id": transaction["user_id"]})
+                new_balance = updated_user.get("balance", 0) if updated_user else 0
+                
+                print(f"✅ AbacatePay: Balance updated for user {transaction['user_id']}")
+                print(f"   Old balance: R$ {old_balance:.2f}")
+                print(f"   Credit amount: +R$ {credit_amount:.2f}")
+                print(f"   New balance: R$ {new_balance:.2f}")
+                
             else:
-                print(f"⚠️ Transaction not found: {external_reference}")
+                print(f"❌ Transaction not found: {external_reference}")
+                print("Available transactions:")
+                cursor = db.transactions.find({}).limit(5)
+                async for tx in cursor:
+                    print(f"  - Transaction ID: {tx.get('id')}")
+        else:
+            print(f"❌ No external reference found in webhook data")
         
     except Exception as e:
         print(f"❌ Error processing AbacatePay success: {str(e)}")
+        import traceback
+        print(f"❌ Full traceback: {traceback.format_exc()}")
+        raise e
 
 async def process_abacatepay_payment_failure(webhook_data: Dict[str, Any]):
     """Process failed AbacatePay payment"""
