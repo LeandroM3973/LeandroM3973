@@ -683,11 +683,17 @@ async def withdraw_funds(withdraw_request: WithdrawRequest):
         raise HTTPException(status_code=400, detail="Insufficient balance")
     
     # Create withdrawal transaction
+    fee = 0.0  # No fee for withdrawal
+    net_amount = withdraw_request.amount
+    
     transaction = Transaction(
         user_id=withdraw_request.user_id,
         amount=withdraw_request.amount,
+        fee=fee,
+        net_amount=net_amount,
         type=TransactionType.WITHDRAWAL,
-        status=TransactionStatus.PENDING
+        status=TransactionStatus.PENDING,
+        description="Saque de fundos"
     )
     await db.transactions.insert_one(transaction.dict())
     
