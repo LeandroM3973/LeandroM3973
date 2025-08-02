@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "implementar sistema de autenticação com verificação de e-mail obrigatória, confirmação do usuário por e-mail, e salvar todos os logins no banco de dados"
+user_problem_statement: "o site voltou a dar erro no processamento do pagamento - estava funcionando normalmente antes das modificações de email verification, mas agora apresenta erro novamente. Usuário solicita verificação e correção do problema de pagamento."
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
