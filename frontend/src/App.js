@@ -15,6 +15,22 @@ import AbacatePay from 'abacatepay-nodejs-sdk';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
+
+// AbacatePay Frontend Configuration
+const ABACATEPAY_PUBLIC_KEY = process.env.REACT_APP_ABACATEPAY_PUBLIC_KEY;
+
+// Initialize AbacatePay client for frontend operations
+let abacatePayClient = null;
+try {
+  if (ABACATEPAY_PUBLIC_KEY) {
+    abacatePayClient = new AbacatePay(ABACATEPAY_PUBLIC_KEY);
+    console.log('🥑 AbacatePay client initialized in frontend');
+  } else {
+    console.log('⚠️ AbacatePay public key not configured in frontend');
+  }
+} catch (error) {
+  console.error('❌ Error initializing AbacatePay client:', error);
+}
 const MP_PUBLIC_KEY = process.env.REACT_APP_MERCADO_PAGO_PUBLIC_KEY;
 
 function App() {
