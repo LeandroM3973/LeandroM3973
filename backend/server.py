@@ -124,6 +124,62 @@ class TransactionStatus(str, Enum):
     REJECTED = "rejected"
     CANCELLED = "cancelled"
 
+# Webhook processing cache to prevent duplicates
+webhook_processing_cache = {}
+WEBHOOK_CACHE_TTL = 300  # 5 minutes cache
+
+def is_webhook_already_processed(webhook_data: Dict[str, Any]) -> bool:
+    """Check if this webhook has already been processed to prevent duplicates"""
+    try:
+        # Create a unique identifier for this webhook
+        payment_data = webhook_data.get('data', {})
+        payment_info = payment_data.get('payment', {})
+        pix_info = payment_data.get('pixQrCode', {})
+        
+        # Create unique hash based on payment details
+        unique_data = {
+            'event': webhook_data.get('event'),
+            'amount': payment_info.get('amount'),
+            'fee': payment_info.get('fee'),
+            'pix_id': pix_info.get('id'),
+            'pix_status': pix_info.get('status'),
+            'dev_mode': webhook_data.get('devMode', False)
+        }
+        
+        import hashlib
+        webhook_hash = hashlib.md5(str(unique_data).encode()).hexdigest()
+        
+        current_time = datetime.utcnow()
+        
+        # Check if this webhook was processed recently
+        if webhook_hash in webhook_processing_cache:
+            last_processed = webhook_processing_cache[webhook_hash]
+            time_diff = (current_time - last_processed).total_seconds()
+            
+            if time_diff < WEBHOOK_CACHE_TTL:
+                print(f"🚫 DUPLICATE WEBHOOK DETECTED - Hash: {webhook_hash[:8]}...")
+                print(f"   Last processed: {time_diff:.1f} seconds ago")
+                print(f"   Skipping duplicate processing")
+                return True
+        
+        # Mark this webhook as processed
+        webhook_processing_cache[webhook_hash] = current_time
+        
+        # Clean old entries from cache
+        expired_keys = [
+            key for key, timestamp in webhook_processing_cache.items()
+            if (current_time - timestamp).total_seconds() > WEBHOOK_CACHE_TTL
+        ]
+        for key in expired_keys:
+            del webhook_processing_cache[key]
+        
+        print(f"✅ NEW WEBHOOK - Hash: {webhook_hash[:8]}... (Processing)")
+        return False
+        
+    except Exception as e:
+        print(f"⚠️ Error checking webhook duplication: {str(e)}")
+        return False  # Process webhook if unsure
+
 # Models
 class User(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
