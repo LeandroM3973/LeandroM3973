@@ -733,6 +733,8 @@ async def test_webhook_endpoint():
         "message": "Webhook endpoint is accessible",
         "expected_url": secure_webhook_url,
         "webhook_secret": abacate_webhook_secret,
+        "webhook_id": abacate_webhook_id,
+        "webhook_configured": bool(abacate_webhook_id),
         "timestamp": datetime.utcnow().isoformat(),
         "https_enforced": True
     }
