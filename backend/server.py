@@ -324,23 +324,23 @@ async def create_payment_preference(request: CreatePaymentRequest):
         await db.transactions.update_one(
             {"id": transaction.id},
             {"$set": {
-                "payment_id": billing_response.data.id,
-                "external_reference": billing_response.data.id
+                "payment_id": billing_response.id,
+                "external_reference": billing_response.id
             }}
         )
         
         return {
-            "preference_id": billing_response.data.id,
-            "init_point": billing_response.data.url,
-            "sandbox_init_point": billing_response.data.url,  # AbacatePay uses same URL
+            "preference_id": billing_response.id,
+            "init_point": billing_response.url,
+            "sandbox_init_point": billing_response.url,  # AbacatePay uses same URL
             "transaction_id": transaction.id,
             "real_mp": False,  # Changed to indicate AbacatePay usage
             "abacatepay": True,
-            "test_mode": billing_response.data.dev_mode,
-            "payment_url": billing_response.data.url,
-            "amount": billing_response.data.amount / 100,  # Convert back to reais
+            "test_mode": billing_response.dev_mode,
+            "payment_url": billing_response.url,
+            "amount": billing_response.amount / 100,  # Convert back to reais
             "fee": 0.80,  # AbacatePay fixed fee
-            "status": billing_response.data.status,
+            "status": billing_response.status,
             "message": f"Pagamento via AbacatePay configurado com sucesso! Taxa: R$ 0,80"
         }
     
