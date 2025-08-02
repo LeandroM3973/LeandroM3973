@@ -540,17 +540,29 @@ function App() {
 
   const declareWinner = async () => {
     if (!selectedBetForJudge || !selectedWinner) return;
+    
+    // Verify admin access
+    if (!currentUser?.is_admin) {
+      alert('❌ ACESSO NEGADO\n\nApenas administradores podem declarar vencedores.');
+      return;
+    }
+    
     setLoading(true);
     try {
       await axios.post(`${API}/bets/${selectedBetForJudge.id}/declare-winner`, { 
-        winner_id: selectedWinner 
+        winner_id: selectedWinner,
+        admin_user_id: currentUser.id  // Include admin user ID for verification
       });
+      
+      alert(`✅ VENCEDOR DECLARADO!\n\nVencedor: ${selectedWinner === selectedBetForJudge.creator_id ? selectedBetForJudge.creator_name : selectedBetForJudge.opponent_name}\n\nO saldo foi transferido automaticamente.`);
+      
       setSelectedBetForJudge(null);
       setSelectedWinner('');
       await Promise.all([loadBets(), loadWaitingBets(), loadUserBets()]);
     } catch (error) {
       console.error('Error declaring winner:', error);
-      alert(error.response?.data?.detail || 'Error declaring winner');
+      const errorMsg = error.response?.data?.detail || 'Erro ao declarar vencedor';
+      alert(`❌ ERRO AO DECLARAR VENCEDOR\n\n${errorMsg}`);
     }
     setLoading(false);
   };
