@@ -371,62 +371,122 @@ async def simulate_payment_approval(transaction_id: str):
     }
 
 @api_router.post("/payments/webhook")
-async def payment_webhook(request: Request):
+async def webhook_abacatepay(request: Request):
+    """AbacatePay webhook endpoint"""
     try:
-        body = await request.body()
-        data = json.loads(body)
+        # Validate webhook secret from query parameters
+        webhook_secret = request.query_params.get('webhookSecret')
+        if not webhook_secret or webhook_secret != abacate_webhook_secret:
+            print(f"❌ Invalid AbacatePay webhook secret")
+            raise HTTPException(status_code=401, detail="Invalid webhook secret")
         
-        if data.get("type") == "payment":
-            payment_id = data["data"]["id"]
-            
-            # Get payment details from Mercado Pago
-            payment_info = mp.payment().get(payment_id)
-            
-            if payment_info["status"] == 200:
-                payment = payment_info["response"]
-                external_reference = payment.get("external_reference")
-                
-                if external_reference:
-                    # Find transaction
-                    transaction = await db.transactions.find_one({"id": external_reference})
-                    
-                    if transaction:
-                        if payment["status"] == "approved":
-                            # Update transaction status
-                            await db.transactions.update_one(
-                                {"id": external_reference},
-                                {
-                                    "$set": {
-                                        "status": TransactionStatus.APPROVED,
-                                        "mp_payment_id": payment_id,
-                                        "updated_at": datetime.utcnow()
-                                    }
-                                }
-                            )
-                            
-                            # Add balance to user
-                            await db.users.update_one(
-                                {"id": transaction["user_id"]},
-                                {"$inc": {"balance": transaction["amount"]}}
-                            )
-                            
-                        elif payment["status"] in ["rejected", "cancelled"]:
-                            await db.transactions.update_one(
-                                {"id": external_reference},
-                                {
-                                    "$set": {
-                                        "status": TransactionStatus.REJECTED,
-                                        "mp_payment_id": payment_id,
-                                        "updated_at": datetime.utcnow()
-                                    }
-                                }
-                            )
+        # Parse webhook payload
+        webhook_data = await request.json()
+        event_type = webhook_data.get('event')
         
-        return {"status": "ok"}
-    
+        print(f"🥑 AbacatePay Webhook received: {event_type}")
+        
+        if event_type == 'billing.paid':
+            await process_abacatepay_payment_success(webhook_data)
+        elif event_type == 'billing.failed':
+            await process_abacatepay_payment_failure(webhook_data)
+        elif event_type == 'billing.cancelled':
+            await process_abacatepay_payment_cancellation(webhook_data)
+        else:
+            print(f"⚠️ Unknown AbacatePay webhook event: {event_type}")
+        
+        return {"received": True, "event": event_type}
+        
+    except HTTPException:
+        raise
     except Exception as e:
-        logging.error(f"Webhook error: {str(e)}")
-        return {"status": "error"}
+        print(f"❌ AbacatePay Webhook Error: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Webhook processing error: {str(e)}")
+
+async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
+    """Process successful AbacatePay payment"""
+    try:
+        payment_data = webhook_data.get('data', {})
+        payment_info = payment_data.get('payment', {})
+        
+        # Extract payment details
+        amount = payment_info.get('amount', 0) / 100  # Convert from cents to reais
+        fee = payment_info.get('fee', 80) / 100  # AbacatePay fee in reais
+        external_reference = payment_data.get('externalId') or payment_data.get('external_reference')
+        
+        print(f"🥑 Processing AbacatePay payment success: Amount {amount}, Fee {fee}")
+        
+        if external_reference:
+            # Find and update transaction
+            transaction = await db.transactions.find_one({"id": external_reference})
+            if transaction:
+                # Update transaction status
+                await db.transactions.update_one(
+                    {"id": external_reference},
+                    {"$set": {
+                        "status": TransactionStatus.APPROVED,
+                        "updated_at": datetime.utcnow(),
+                        "fee": fee,
+                        "net_amount": amount - fee
+                    }}
+                )
+                
+                # Update user balance
+                await db.users.update_one(
+                    {"id": transaction["user_id"]},
+                    {"$inc": {"balance": amount - fee}}
+                )
+                
+                print(f"✅ AbacatePay: Updated user balance +{amount - fee}")
+            else:
+                print(f"⚠️ Transaction not found: {external_reference}")
+        
+    except Exception as e:
+        print(f"❌ Error processing AbacatePay success: {str(e)}")
+
+async def process_abacatepay_payment_failure(webhook_data: Dict[str, Any]):
+    """Process failed AbacatePay payment"""
+    try:
+        payment_data = webhook_data.get('data', {})
+        external_reference = payment_data.get('externalId') or payment_data.get('external_reference')
+        
+        print(f"🥑 Processing AbacatePay payment failure for: {external_reference}")
+        
+        if external_reference:
+            # Update transaction status
+            await db.transactions.update_one(
+                {"id": external_reference},
+                {"$set": {
+                    "status": TransactionStatus.REJECTED,
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+            print(f"❌ AbacatePay: Payment failed for transaction {external_reference}")
+        
+    except Exception as e:
+        print(f"❌ Error processing AbacatePay failure: {str(e)}")
+
+async def process_abacatepay_payment_cancellation(webhook_data: Dict[str, Any]):
+    """Process cancelled AbacatePay payment"""
+    try:
+        payment_data = webhook_data.get('data', {})
+        external_reference = payment_data.get('externalId') or payment_data.get('external_reference')
+        
+        print(f"🥑 Processing AbacatePay payment cancellation for: {external_reference}")
+        
+        if external_reference:
+            # Update transaction status
+            await db.transactions.update_one(
+                {"id": external_reference},
+                {"$set": {
+                    "status": TransactionStatus.CANCELLED,
+                    "updated_at": datetime.utcnow()
+                }}
+            )
+            print(f"⚠️ AbacatePay: Payment cancelled for transaction {external_reference}")
+        
+    except Exception as e:
+        print(f"❌ Error processing AbacatePay cancellation: {str(e)}")
 
 @api_router.post("/payments/withdraw")
 async def withdraw_funds(withdraw_request: WithdrawRequest):
