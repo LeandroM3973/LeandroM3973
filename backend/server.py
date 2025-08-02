@@ -304,6 +304,50 @@ async def check_email_exists(email: str):
     user = await db.users.find_one({"email": email})
     return {"exists": user is not None}
 
+@api_router.post("/users/verify-email/{verification_token}")
+async def verify_email(verification_token: str):
+    """Verify user email with token"""
+    user = await db.users.find_one({"email_verification_token": verification_token})
+    if not user:
+        raise HTTPException(status_code=404, detail="Token de verificação inválido ou expirado")
+    
+    if user.get("email_verified", False):
+        return {"message": "Email já verificado", "verified": True}
+    
+    # Mark email as verified
+    await db.users.update_one(
+        {"email_verification_token": verification_token},
+        {
+            "$set": {"email_verified": True},
+            "$unset": {"email_verification_token": ""}
+        }
+    )
+    
+    print(f"✅ Email verified for user: {user['email']}")
+    return {"message": "Email verificado com sucesso!", "verified": True}
+
+@api_router.post("/users/manual-verify")
+async def manual_verify_email(email: str):
+    """Manually verify email (admin function - temporary)"""
+    user = await db.users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    if user.get("email_verified", False):
+        return {"message": "Email já verificado", "verified": True}
+    
+    # Mark email as verified
+    await db.users.update_one(
+        {"email": email},
+        {
+            "$set": {"email_verified": True},
+            "$unset": {"email_verification_token": ""}
+        }
+    )
+    
+    print(f"✅ Email manually verified for user: {email}")
+    return {"message": f"Email {email} verificado manualmente!", "verified": True}
+
 @api_router.get("/users/{user_id}", response_model=UserResponse)
 async def get_user(user_id: str):
     user = await db.users.find_one({"id": user_id})
