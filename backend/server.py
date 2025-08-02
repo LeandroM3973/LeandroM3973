@@ -430,13 +430,19 @@ async def create_payment_preference(request: CreatePaymentRequest):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Create transaction record
+    # Create transaction record with fee calculation
+    fee = 0.80  # AbacatePay fixed fee
+    net_amount = request.amount - fee
+    
     transaction = Transaction(
         id=str(uuid.uuid4()),
         user_id=request.user_id,
         type=TransactionType.DEPOSIT,
         amount=request.amount,
+        fee=fee,
+        net_amount=net_amount,
         status=TransactionStatus.PENDING,
+        description=f"Depósito AbacatePay - {user['name']}",
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
     )
