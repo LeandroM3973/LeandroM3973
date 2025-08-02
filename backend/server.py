@@ -279,6 +279,8 @@ class BetCreate(BaseModel):
     event_description: str
     amount: float
     creator_id: str
+    side: str  # "A" or "B" (e.g., "Brasil" or "Argentina")
+    event_id: str  # Common event ID for matching (e.g., "brasil_vs_argentina")
 
 class JoinBet(BaseModel):
     user_id: str
