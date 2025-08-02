@@ -154,6 +154,21 @@ frontend:
           comment: "COMPREHENSIVE TESTING COMPLETED - MERCADO PAGO FIXES VERIFIED: ✅ Backend correctly shows '🚀 Mercado Pago: Using PRODUCTION credentials' in logs, ✅ Payment preference creation working for all test amounts (R$10, R$50, R$100, R$250), ✅ Real Mercado Pago URLs generated successfully (both init_point and sandbox_init_point), ✅ Webhook endpoint accessible, ✅ Transaction history working, ✅ No more 'não foi possível processar seu pagamento' errors - backend integration is fully functional. URLs return 403 status when accessed directly (normal MP behavior for security). The original user issue has been completely resolved."
 
 backend:
+  - task: "AbacatePay balance crediting system"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "USER REQUIREMENT: 'ao valor ser depositado, deve creditar no site no campo $' - Need to test if balance is credited correctly after AbacatePay deposit with proper fee deduction (R$ 0.80)"
+        - working: true
+          agent: "testing"
+          comment: "CRITICAL BALANCE UPDATE TEST PASSED - USER REQUIREMENT SATISFIED: ✅ Payment preference created with correct external ID (transaction_id: 323b600f-38c7-4591-b7f2-923b9d332029), ✅ Webhook processes successfully with proper data structure (event: billing.paid, amount: 5000 cents, fee: 80 cents), ✅ User balance increases correctly by (amount - fee): R$ 49.20 = R$ 50.00 - R$ 0.80, ✅ Transaction status changes to APPROVED after webhook processing, ✅ No errors in webhook processing (/api/payments/webhook endpoint working), ✅ Database balance update working perfectly, ✅ Fee deduction logic implemented correctly, ✅ Amount conversion from cents to reais working, ✅ The '$' field (balance) gets credited correctly after AbacatePay payment processing. COMPREHENSIVE TEST: Created test user, added R$ 50.00 deposit, simulated AbacatePay webhook success event, verified balance became R$ 49.20 (correct calculation), confirmed transaction marked as approved. All expected results achieved - balance crediting system is 100% functional."
+
   - task: "Bet creation API and invite code generation"
     implemented: true
     working: true
