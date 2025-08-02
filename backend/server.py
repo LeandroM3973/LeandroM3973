@@ -300,8 +300,8 @@ async def create_payment_preference(request: CreatePaymentRequest):
         # Create billing with AbacatePay
         billing_data = {
             "products": [product],
-            "return_url": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success",
-            "completion_url": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success", 
+            "return_url": f"{frontend_url}/payment-success",
+            "completion_url": f"{frontend_url}/payment-success", 
             "customer": {
                 "name": user["name"],
                 "email": user["email"],
