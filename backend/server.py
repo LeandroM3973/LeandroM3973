@@ -229,17 +229,52 @@ async def create_user(user_data: UserCreate):
     return UserResponse(**user.dict())
 
 @api_router.post("/users/login", response_model=UserResponse)
-async def login_user(login_data: UserLogin):
-    """Login user with email and password"""
+async def login_user(login_data: UserLogin, request: Request):
+    """Login user with email and password - requires verified email"""
+    # Function to log login attempts
+    async def log_login_attempt(user_id: str, email: str, success: bool, failure_reason: str = None):
+        client_ip = request.client.host if request.client else "unknown"
+        user_agent = request.headers.get("user-agent", "unknown")
+        
+        login_log = LoginLog(
+            user_id=user_id if user_id else "unknown",
+            email=email,
+            ip_address=client_ip,
+            user_agent=user_agent,
+            success=success,
+            failure_reason=failure_reason
+        )
+        await db.login_logs.insert_one(login_log.dict())
+    
+    # Find user by email
     user = await db.users.find_one({"email": login_data.email})
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        await log_login_attempt("unknown", login_data.email, False, "Email not found")
+        raise HTTPException(status_code=401, detail="Email não encontrado ou não verificado")
+    
+    # Check if email is verified
+    if not user.get("email_verified", False):
+        await log_login_attempt(user["id"], login_data.email, False, "Email not verified")
+        raise HTTPException(
+            status_code=401, 
+            detail="Email não verificado. Verifique seu email para confirmar sua conta."
+        )
     
     # Verify password
     if not verify_password(login_data.password, user["password_hash"]):
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+        await log_login_attempt(user["id"], login_data.email, False, "Invalid password")
+        raise HTTPException(status_code=401, detail="Senha incorreta")
     
-    print(f"User logged in: {login_data.email}")
+    # Update last login time
+    await db.users.update_one(
+        {"id": user["id"]},
+        {"$set": {"last_login": datetime.utcnow()}}
+    )
+    
+    # Log successful login
+    await log_login_attempt(user["id"], login_data.email, True)
+    
+    print(f"✅ User logged in successfully: {login_data.email} (verified)")
     return UserResponse(**user)
 
 @api_router.post("/users/check-email")
