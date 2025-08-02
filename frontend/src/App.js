@@ -112,6 +112,52 @@ function App() {
     }
   };
 
+  // Function to refresh current user data (for balance updates)
+  const refreshCurrentUser = async () => {
+    if (!currentUser) return;
+    
+    try {
+      console.log('🔄 Refreshing user balance...');
+      const response = await axios.get(`${API}/users/${currentUser.id}`);
+      const updatedUser = response.data;
+      
+      setCurrentUser(updatedUser);
+      localStorage.setItem('betarena_user', JSON.stringify(updatedUser));
+      
+      console.log(`💰 Balance updated: ${formatCurrency(updatedUser.balance)}`);
+      return updatedUser;
+    } catch (error) {
+      console.error('Error refreshing user data:', error);
+      return null;
+    }
+  };
+
+  // Auto-refresh user data when window gains focus (user returns from payment)
+  useEffect(() => {
+    const handleWindowFocus = () => {
+      if (currentUser) {
+        console.log('👁️ Window focused, checking for balance updates...');
+        refreshCurrentUser();
+      }
+    };
+
+    window.addEventListener('focus', handleWindowFocus);
+    return () => window.removeEventListener('focus', handleWindowFocus);
+  }, [currentUser]);
+
+  // Set up periodic balance refresh every 30 seconds when user is active
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const balanceRefreshInterval = setInterval(() => {
+      if (document.visibilityState === 'visible' && currentUser) {
+        refreshCurrentUser();
+      }
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(balanceRefreshInterval);
+  }, [currentUser]);
+
   const loadBets = async () => {
     try {
       const response = await axios.get(`${API}/bets`);
