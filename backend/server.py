@@ -841,9 +841,16 @@ async def webhook_abacatepay(request: Request):
         raise HTTPException(status_code=400, detail=f"Webhook processing error: {str(e)}")
 
 async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
-    """Process successful AbacatePay payment"""
+    """Process successful AbacatePay payment with duplicate protection"""
     try:
-        print(f"🥑 AbacatePay payment success webhook data: {json.dumps(webhook_data, indent=2)}")
+        print(f"🥑 AbacatePay payment success webhook received")
+        
+        # Check for duplicate webhook processing
+        if is_webhook_already_processed(webhook_data):
+            print(f"🚫 DUPLICATE WEBHOOK IGNORED - Preventing multiple processing")
+            return {"status": "duplicate_ignored", "message": "Webhook already processed"}
+        
+        print(f"🥑 Processing NEW webhook - Full payload: {json.dumps(webhook_data, indent=2)}")
         
         payment_data = webhook_data.get('data', {})
         payment_info = payment_data.get('payment', {})
@@ -897,34 +904,54 @@ async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
             print(f"📋 Transaction found by amount matching: {'Yes' if transaction else 'No'}")
         
         if transaction:
-            print(f"✅ Found transaction for user: {transaction['user_id']}")
+            # CRITICAL: Check if transaction was already processed to prevent double crediting
+            if transaction.get("status") == TransactionStatus.APPROVED:
+                print(f"🚫 TRANSACTION ALREADY APPROVED - Preventing double credit")
+                print(f"   Transaction ID: {transaction['id']}")
+                print(f"   User: {transaction['user_id']}")
+                return {"status": "already_processed", "message": "Transaction already approved"}
+            
+            print(f"✅ Found PENDING transaction for user: {transaction['user_id']}")
             print(f"   Transaction ID: {transaction['id']}")
             print(f"   Original Amount: R$ {transaction['amount']}")
             
-            # Update transaction status
-            await db.transactions.update_one(
-                {"id": transaction["id"]},
+            # Update transaction status atomically to prevent race conditions
+            result = await db.transactions.update_one(
+                {
+                    "id": transaction["id"],
+                    "status": "PENDING"  # Only update if still pending
+                },
                 {"$set": {
                     "status": TransactionStatus.APPROVED,
                     "updated_at": datetime.utcnow(),
                     "fee": fee,
                     "net_amount": amount - fee,
                     "external_reference": billing_id,
-                    "payment_method": "PIX"
+                    "payment_method": "PIX",
+                    "webhook_processed_at": datetime.utcnow()
                 }}
             )
-            print(f"✅ Transaction updated to APPROVED")
+            
+            if result.modified_count == 0:
+                print(f"🚫 RACE CONDITION DETECTED - Transaction already processed by another webhook")
+                return {"status": "race_condition", "message": "Transaction already being processed"}
+            
+            print(f"✅ Transaction updated to APPROVED (atomic update successful)")
             
             # Get current user balance before update
             user = await db.users.find_one({"id": transaction["user_id"]})
             old_balance = user.get("balance", 0) if user else 0
             
-            # Update user balance
+            # Update user balance atomically
             credit_amount = amount - fee
-            await db.users.update_one(
+            update_result = await db.users.update_one(
                 {"id": transaction["user_id"]},
                 {"$inc": {"balance": credit_amount}}
             )
+            
+            if update_result.modified_count == 0:
+                print(f"⚠️ WARNING: User balance update failed")
+                return {"status": "balance_update_failed", "message": "Failed to update user balance"}
             
             # Get updated balance
             updated_user = await db.users.find_one({"id": transaction["user_id"]})
@@ -936,11 +963,13 @@ async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
             print(f"   New balance: R$ {new_balance:.2f}")
             
             # Success notification
-            print(f"🎉 PAYMENT PROCESSED SUCCESSFULLY!")
+            print(f"🎉 PAYMENT PROCESSED SUCCESSFULLY (NO DUPLICATES)!")
             print(f"   User: {transaction['user_id']}")
             print(f"   Amount: R$ {amount:.2f}")
             print(f"   Fee: R$ {fee:.2f}")
             print(f"   Net Credit: R$ {credit_amount:.2f}")
+            
+            return {"status": "processed", "message": "Payment processed successfully", "amount": credit_amount}
             
         else:
             print(f"❌ Transaction not found for AbacatePay payment")
@@ -951,6 +980,8 @@ async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
                 print(f"    Amount: R$ {tx.get('amount', 0):.2f}")
                 print(f"    User: {tx.get('user_id')}")
                 print(f"    Payment ID: {tx.get('payment_id', 'none')}")
+                
+            return {"status": "transaction_not_found", "message": "No matching transaction found"}
         
     except Exception as e:
         print(f"❌ Error processing AbacatePay success: {str(e)}")
