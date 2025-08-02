@@ -268,10 +268,24 @@ function App() {
         });
         setCurrentUser(response.data);
         setAuthForm({ name: '', email: '', phone: '', password: '', confirmPassword: '' });
-        console.log('User logged in:', response.data.name);
+        localStorage.setItem('betarena_user', JSON.stringify(response.data));
+        console.log('✅ User logged in successfully:', response.data.name);
       } catch (error) {
-        console.error('Error logging in:', error);
-        alert(error.response?.data?.detail || 'Email ou senha incorretos');
+        console.error('❌ Login error:', error);
+        const errorMessage = error.response?.data?.detail;
+        
+        if (errorMessage && errorMessage.includes('não verificado')) {
+          // Email not verified
+          setEmailVerificationRequired(true);
+          setVerificationEmail(authForm.email);
+          alert(`📧 EMAIL NÃO VERIFICADO\n\n${errorMessage}\n\nPor favor, verifique seu email ou use a verificação manual temporária.`);
+        } else if (errorMessage && errorMessage.includes('não encontrado')) {
+          // Email not found  
+          alert(`📧 EMAIL NÃO ENCONTRADO\n\n${errorMessage}\n\nVerifique se o email está correto ou crie uma nova conta.`);
+        } else {
+          // Other errors (wrong password, etc.)
+          alert(errorMessage || 'Erro no login. Verifique suas credenciais.');
+        }
       }
       setLoading(false);
     } else {
