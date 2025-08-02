@@ -472,8 +472,8 @@ async def create_payment_preference(request: CreatePaymentRequest):
             user_email = f"user_{transaction.id}@betarena.com"
         
         # Create billing data dictionary with webhook URL
-        # Webhook must point to backend API endpoint
-        backend_webhook_url = f"https://47eed0e6-f30e-431a-b6a5-47794796692b.preview.emergentagent.com/api/payments/webhook?webhookSecret={abacate_webhook_secret}"
+        # Webhook must point to accessible backend API endpoint
+        backend_webhook_url = f"{frontend_url}/api/payments/webhook?webhookSecret={abacate_webhook_secret}"
         
         billing_data = {
             "products": [product],
