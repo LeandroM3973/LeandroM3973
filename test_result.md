@@ -193,9 +193,17 @@ test_plan:
   test_all: false
   test_priority: "high_first"
 
-agent_communication:
-    - agent: "main"
-      message: "Successfully fixed mobile navigation tabs text overlap issue. Changed layout from 6 columns to 3 columns on mobile with responsive text sizing and shorter labels. Navigation is now fully readable on mobile devices."
+  - task: "AbacatePay integration payment flow"
+    implemented: true  
+    working: false
+    file: "/app/frontend/src/App.js, /app/backend/server.py"
+    stuck_count: 1
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: false
+          agent: "user"
+          comment: "User reports payment system is still not working despite AbacatePay migration. Previous error was 'user not found' during payment attempts. User specifically asking to fix: 'minha forma de pagamento ainda não funciona, resolva isso, por favor'"
     - agent: "main"  
       message: "INVITE LINK ISSUE RESOLVED: Comprehensive investigation revealed the backend works perfectly (auto-generates invite_code, processes bets correctly). Frontend displays invite links properly when bets exist. Created test bet via API - link appears correctly in both 'Enviar Convite' and 'Minhas Apostas' tabs with full functionality."
     - agent: "testing"
