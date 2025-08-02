@@ -45,6 +45,10 @@ function App() {
   const [emailVerificationRequired, setEmailVerificationRequired] = useState(false);
   const [verificationEmail, setVerificationEmail] = useState('');
   const [manualVerificationEmail, setManualVerificationEmail] = useState('');
+  
+  // Payment verification states
+  const [paymentCheckLoading, setPaymentCheckLoading] = useState(false);
+  const [lastPaymentTransactionId, setLastPaymentTransactionId] = useState('');
   const [emailExists, setEmailExists] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
