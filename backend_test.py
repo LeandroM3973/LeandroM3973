@@ -854,8 +854,10 @@ class BetArenaAPITester:
         print("USER REQUIREMENT: 'mantenha todos os logins salvos no banco de dados'")
         print("=" * 80)
         
-        # Test data with realistic Brazilian user information
-        test_user_email = "joao.silva@gmail.com"
+        # Test data with realistic Brazilian user information (with timestamp for uniqueness)
+        import time
+        timestamp = str(int(time.time()))
+        test_user_email = f"joao.silva.{timestamp}@gmail.com"
         test_user_name = "João Silva"
         test_user_phone = "11987654321"
         test_user_password = "minhasenha123"
