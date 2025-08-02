@@ -470,6 +470,22 @@ function App() {
               try {
                 // Method 1: Direct navigation (best for mobile)
                 console.log('📱 Attempting direct navigation to:', paymentUrl);
+                
+                // Store payment info for balance refresh
+                localStorage.setItem('betarena_pending_payment', JSON.stringify({
+                  amount: depositAmount,
+                  billId: billId,
+                  timestamp: Date.now()
+                }));
+                
+                // Show instruction about balance update
+                alert(`💳 REDIRECIONANDO PARA PAGAMENTO PIX\n\n` +
+                      `Após concluir o pagamento:\n` +
+                      `✅ Retorne a este site\n` +
+                      `✅ Seu saldo será atualizado automaticamente\n` +
+                      `💰 Valor líquido: ${formatCurrency(depositAmount - 0.80)}\n\n` +
+                      `ID: ${billId}`);
+                
                 window.location.href = paymentUrl;
               } catch (redirectError) {
                 console.error('❌ Direct navigation failed:', redirectError);
