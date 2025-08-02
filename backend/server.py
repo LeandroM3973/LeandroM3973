@@ -797,11 +797,13 @@ async def test_webhook_endpoint():
 
 @api_router.post("/payments/webhook")
 async def webhook_abacatepay(request: Request):
-    """AbacatePay webhook endpoint"""
+    """AbacatePay webhook endpoint with duplicate protection"""
+    start_time = datetime.utcnow()
+    
     try:
         # Get client IP for logging
         client_ip = request.client.host if request.client else "unknown"
-        print(f"🥑 AbacatePay Webhook received from IP: {client_ip}")
+        print(f"🥑 AbacatePay Webhook received from IP: {client_ip} at {start_time.isoformat()}")
         
         # Validate webhook secret from query parameters
         webhook_secret = request.query_params.get('webhookSecret')
@@ -816,26 +818,40 @@ async def webhook_abacatepay(request: Request):
         webhook_data = await request.json()
         event_type = webhook_data.get('event')
         
-        print(f"🥑 AbacatePay Webhook received: {event_type}")
-        print(f"🥑 Full webhook payload: {json.dumps(webhook_data, indent=2)}")
+        print(f"🥑 AbacatePay Webhook Event: {event_type}")
+
+        result = {"received": True, "event": event_type}
 
         if event_type == 'billing.paid':
-            await process_abacatepay_payment_success(webhook_data)
+            process_result = await process_abacatepay_payment_success(webhook_data)
+            result.update(process_result or {})
         elif event_type == 'billing.failed':
             await process_abacatepay_payment_failure(webhook_data)
         elif event_type == 'billing.cancelled':
             await process_abacatepay_payment_cancellation(webhook_data)
         else:
             print(f"⚠️ Unknown AbacatePay webhook event: {event_type}")
+            result["warning"] = f"Unknown event type: {event_type}"
 
-        return {"received": True, 
-                "message": f"Webhook processed successfully: {event_type}"}
+        # Calculate processing time
+        end_time = datetime.utcnow()
+        processing_time = (end_time - start_time).total_seconds()
+        
+        result.update({
+            "message": f"Webhook processed successfully: {event_type}",
+            "processing_time_seconds": processing_time,
+            "processed_at": end_time.isoformat()
+        })
+        
+        print(f"✅ Webhook processing completed in {processing_time:.3f} seconds")
+        return result
         
     except HTTPException as he:
         # Re-raise HTTP exceptions
         raise he
     except Exception as e:
-        print(f"❌ AbacatePay Webhook Error: {str(e)}")
+        processing_time = (datetime.utcnow() - start_time).total_seconds()
+        print(f"❌ AbacatePay Webhook Error after {processing_time:.3f} seconds: {str(e)}")
         import traceback
         print(f"❌ Full traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=400, detail=f"Webhook processing error: {str(e)}")
