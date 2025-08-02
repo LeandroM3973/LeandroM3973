@@ -304,18 +304,21 @@ async def create_payment_preference(request: CreatePaymentRequest):
         if not user_email or "@" not in user_email:
             user_email = f"user_{transaction.id}@betarena.com"
         
-        billing_response = abacatepay_client.billing.create(
-            products=[product],
-            return_url=f"{frontend_url}/payment-success",
-            completion_url=f"{frontend_url}/payment-success",
-            customer={
+        # Create billing data dictionary
+        billing_data = {
+            "products": [product],
+            "returnURL": f"{frontend_url}/payment-success",
+            "completionUrl": f"{frontend_url}/payment-success",
+            "customer": {
                 "name": user["name"],
                 "email": user_email,
                 "cellphone": user.get("phone", "11999999999"),
-                "tax_id": "11144477735"  # Valid test CPF for AbacatePay (corrected field name)
+                "tax_id": "11144477735"  # Valid test CPF for AbacatePay
             },
-            frequency='ONE_TIME'  # Required parameter for AbacatePay API
-        )
+            "frequency": 'ONE_TIME'  # Required parameter for AbacatePay API
+        }
+        
+        billing_response = abacatepay_client.billing.create(data=billing_data)
         
         # Update transaction with payment ID
         await db.transactions.update_one(
