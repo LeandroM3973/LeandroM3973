@@ -239,16 +239,16 @@ async def get_all_users():
 
 # Payment Routes
 @api_router.post("/payments/create-preference")
-async def create_payment_preference(deposit_request: DepositRequest):
-    """Create payment preference - handles both test and production modes"""
+async def create_payment_preference(request: CreatePaymentRequest):
+    """Create payment preference using AbacatePay"""
     
-    if not mp or not mp_valid:
-        # Return demo mode when MP is not properly configured
+    if not abacatepay_client or not abacate_valid:
+        # Return demo mode when AbacatePay is not properly configured
         transaction = Transaction(
             id=str(uuid.uuid4()),
-            user_id=deposit_request.user_id,
+            user_id=request.user_id,
             type=TransactionType.DEPOSIT,
-            amount=deposit_request.amount,
+            amount=request.amount,
             status=TransactionStatus.PENDING,
             created_at=datetime.utcnow(),
             updated_at=datetime.utcnow()
@@ -259,20 +259,20 @@ async def create_payment_preference(deposit_request: DepositRequest):
         return {
             "demo_mode": True,
             "transaction_id": transaction.id,
-            "message": "Demo mode - Mercado Pago not configured. Use 'OK' to simulate approval."
+            "message": "Demo mode - AbacatePay not configured. Use 'OK' to simulate approval."
         }
     
     # Get user details for payment
-    user = await db.users.find_one({"id": deposit_request.user_id})
+    user = await db.users.find_one({"id": request.user_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
     # Create transaction record
     transaction = Transaction(
         id=str(uuid.uuid4()),
-        user_id=deposit_request.user_id,
+        user_id=request.user_id,
         type=TransactionType.DEPOSIT,
-        amount=deposit_request.amount,
+        amount=request.amount,
         status=TransactionStatus.PENDING,
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow()
@@ -281,83 +281,59 @@ async def create_payment_preference(deposit_request: DepositRequest):
     await db.transactions.insert_one(transaction.dict())
     
     try:
-        # Determine if using test or production credentials
-        is_test_mode = mp_access_token.startswith('TEST-')
+        # Create product for AbacatePay
+        product = Product(
+            externalId=transaction.id,
+            name=f"Depósito BetArena - {user['name']}",
+            description=f"Depósito para conta de apostas - {user['email']}",
+            quantity=1,
+            price=int(request.amount * 100)  # Convert to cents
+        )
         
-        # Create payment preference
-        preference_data = {
-            "items": [
-                {
-                    "id": "deposit",
-                    "title": f"Depósito - {user['name']}",
-                    "quantity": 1,
-                    "unit_price": float(deposit_request.amount),
-                    "currency_id": "BRL"
-                }
-            ],
-            "payer": {
+        # Create billing with AbacatePay
+        billing_response = abacatepay_client.create_billing(
+            products=[product],
+            returnURL=f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success",
+            completionUrl=f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success", 
+            customer={
                 "name": user["name"],
                 "email": user["email"],
-                "phone": {
-                    "number": user["phone"]
-                }
-            },
-            "external_reference": transaction.id,
-            "notification_url": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/api/payments/webhook",
-            "back_urls": {
-                "success": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-success",
-                "failure": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-failure",
-                "pending": f"https://3f53ea77-ae19-43a7-bb8d-f20048b8df6d.preview.emergentagent.com/payment-pending"
-            },
-            "auto_return": "approved",
-            "payment_methods": {
-                "excluded_payment_types": [],
-                "installments": 12
+                "cellphone": user["phone"],
+                "taxId": user["phone"]  # Using phone as taxId for now - should be CPF in production
             }
+        )
+        
+        # Update transaction with payment ID
+        await db.transactions.update_one(
+            {"id": transaction.id},
+            {"$set": {
+                "payment_id": billing_response.data.id,
+                "external_reference": billing_response.data.id
+            }}
+        )
+        
+        return {
+            "preference_id": billing_response.data.id,
+            "init_point": billing_response.data.url,
+            "sandbox_init_point": billing_response.data.url,  # AbacatePay uses same URL
+            "transaction_id": transaction.id,
+            "real_mp": False,  # Changed to indicate AbacatePay usage
+            "abacatepay": True,
+            "test_mode": False,
+            "payment_url": billing_response.data.url,
+            "amount": billing_response.data.amount / 100,  # Convert back to reais
+            "fee": 0.80,  # AbacatePay fixed fee
+            "message": f"Pagamento via AbacatePay configurado com sucesso! Taxa: R$ 0,80"
         }
-        
-        # Add test-specific configuration if in test mode
-        if is_test_mode:
-            preference_data["payment_methods"]["excluded_payment_methods"] = []
-        
-        preference_response = mp.preference().create(preference_data)
-        
-        if preference_response["status"] == 201:
-            # Update transaction with payment ID
-            await db.transactions.update_one(
-                {"id": transaction.id},
-                {"$set": {"payment_id": preference_response["response"]["id"]}}
-            )
-            
-            environment_msg = "TESTE (sandbox)" if is_test_mode else "PRODUÇÃO"
-            
-            return {
-                "preference_id": preference_response["response"]["id"],
-                "init_point": preference_response["response"]["init_point"],
-                "sandbox_init_point": preference_response["response"]["sandbox_init_point"],
-                "transaction_id": transaction.id,
-                "real_mp": True,
-                "test_mode": is_test_mode,
-                "message": f"Pagamento via Mercado Pago configurado com sucesso! Ambiente: {environment_msg}"
-            }
-        else:
-            logging.error(f"MP Error: {preference_response}")
-            # Log the detailed error for debugging
-            error_detail = preference_response.get("response", {})
-            print(f"❌ Mercado Pago API Error: {error_detail}")
-            
-            # Return more specific error message
-            if preference_response["status"] == 401:
-                raise HTTPException(status_code=401, detail="Credenciais do Mercado Pago inválidas. Verifique ACCESS_TOKEN.")
-            elif preference_response["status"] == 400:
-                raise HTTPException(status_code=400, detail="Dados de pagamento inválidos. Verifique as informações do usuário.")
-            else:
-                raise HTTPException(status_code=500, detail=f"Erro no Mercado Pago: {error_detail}")
     
     except Exception as e:
-        logging.error(f"Payment preference creation error: {str(e)}")
-        print(f"❌ Payment Error Details: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Erro ao criar preferência de pagamento: {str(e)}")
+        logging.error(f"AbacatePay payment creation error: {str(e)}")
+        print(f"❌ AbacatePay Error Details: {str(e)}")
+        
+        # Delete failed transaction
+        await db.transactions.delete_one({"id": transaction.id})
+        
+        raise HTTPException(status_code=500, detail=f"Erro ao criar pagamento via AbacatePay: {str(e)}")
 
 @api_router.post("/payments/simulate-approval/{transaction_id}")
 async def simulate_payment_approval(transaction_id: str):
