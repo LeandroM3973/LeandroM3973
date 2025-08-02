@@ -457,7 +457,30 @@ async def manual_verify_email(email: str):
     print(f"✅ Email manually verified for user: {email}")
     return {"message": f"Email {email} verificado manualmente!", "verified": True}
 
-@api_router.get("/users/{user_id}", response_model=UserResponse)
+@api_router.get("/users/{user_id}")
+async def get_user_by_id(user_id: str):
+    """Get user data by ID including admin status"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuário não encontrado")
+    
+    # Return user data without sensitive information
+    user_data = {
+        "id": user["id"],
+        "name": user["name"],
+        "email": user["email"],
+        "phone": user["phone"],
+        "is_admin": user.get("is_admin", False),
+        "balance": user.get("balance", 0.0),
+        "created_at": user.get("created_at"),
+        "last_login": user.get("last_login"),
+        "email_verified": user.get("email_verified", False)
+    }
+    
+    print(f"📋 User data requested for: {user['name']} (Admin: {user_data['is_admin']})")
+    return user_data
+
+@api_router.get("/users")
 async def get_user(user_id: str):
     user = await db.users.find_one({"id": user_id})
     if not user:
