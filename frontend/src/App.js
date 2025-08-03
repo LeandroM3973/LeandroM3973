@@ -1324,43 +1324,100 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
       {/* Header */}
       <div className="bg-black/20 backdrop-blur-lg border-b border-white/10">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-white" />
+        <div className="container mx-auto px-4 py-4">
+          {/* Desktop Layout */}
+          <div className="hidden md:flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                <Trophy className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-white">BetArena</h1>
+                <p className="text-sm text-gray-300">Olá, {currentUser.name}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-white">BetArena</h1>
-              <p className="text-sm text-gray-300">Olá, {currentUser.name}</p>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-4 py-2">
+                <DollarSign className="w-5 h-5 text-green-400" />
+                <span className="text-white font-semibold flex items-center space-x-2">
+                  <span>{formatCurrency(currentUser.balance)}</span>
+                  {currentUser.is_admin && (
+                    <span className="inline-flex items-center px-2 py-1 bg-yellow-500/80 text-yellow-100 text-xs font-bold rounded-full">
+                      🔒 ADMIN
+                    </span>
+                  )}
+                </span>
+              </div>
+              <Button 
+                onClick={forceRefreshUserData}
+                disabled={loading}
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
+                size="sm"
+              >
+                {loading ? '⏳' : '🔄 Atualizar'}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={logout}
+                className="border-white/20 text-white hover:bg-white/10"
+              >
+                Sair
+              </Button>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-4 py-2">
-              <DollarSign className="w-5 h-5 text-green-400" />
-              <span className="text-white font-semibold flex items-center space-x-2">
-                <span>{formatCurrency(currentUser.balance)}</span>
-                {currentUser.is_admin && (
-                  <span className="inline-flex items-center px-2 py-1 bg-yellow-500/80 text-yellow-100 text-xs font-bold rounded-full">
-                    🔒 ADMIN
-                  </span>
-                )}
-              </span>
+
+          {/* Mobile Layout */}
+          <div className="md:hidden">
+            {/* Mobile Header Row 1 - Logo and User */}
+            <div className="flex justify-between items-center mb-3">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                  <Trophy className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-white">BetArena</h1>
+                  <p className="text-xs text-gray-300">Olá, {currentUser.name}</p>
+                </div>
+              </div>
+              
+              {/* Mobile Admin Badge */}
+              {currentUser.is_admin && (
+                <span className="inline-flex items-center px-2 py-1 bg-yellow-500/80 text-yellow-100 text-xs font-bold rounded-full">
+                  🔒 ADMIN
+                </span>
+              )}
             </div>
-            <Button 
-              onClick={forceRefreshUserData}
-              disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
-              size="sm"
-            >
-              {loading ? '⏳' : '🔄 Atualizar'}
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={logout}
-              className="border-white/20 text-white hover:bg-white/10"
-            >
-              Sair
-            </Button>
+
+            {/* Mobile Header Row 2 - Balance and Actions */}
+            <div className="flex justify-between items-center">
+              {/* Balance Display - Mobile Optimized */}
+              <div className="flex items-center space-x-2 bg-white/10 rounded-lg px-3 py-2 flex-1 mr-2">
+                <DollarSign className="w-4 h-4 text-green-400" />
+                <span className="text-white font-semibold text-sm">
+                  {formatCurrency(currentUser.balance)}
+                </span>
+              </div>
+              
+              {/* Action Buttons - Mobile Optimized */}
+              <div className="flex items-center space-x-2">
+                <Button 
+                  onClick={forceRefreshUserData}
+                  disabled={loading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2 py-1"
+                  size="sm"
+                >
+                  {loading ? '⏳' : '🔄'}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={logout}
+                  className="border-white/20 text-white hover:bg-white/10 text-xs px-3 py-1"
+                  size="sm"
+                >
+                  Sair
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       </div>
