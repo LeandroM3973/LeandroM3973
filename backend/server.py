@@ -1559,6 +1559,51 @@ async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
 async def root():
     return {"message": "BetArena API with Payment System is running"}
 
+# Emergency Balance Fix Endpoint
+@api_router.post("/admin/fix-pending-payments")
+async def fix_pending_payments():
+    """EMERGENCY: Fix all pending payments and restore user balances"""
+    print("🚨 EMERGENCY: Starting balance fix for all pending payments")
+    
+    # Find all pending transactions
+    pending_transactions = await db.transactions.find({
+        "status": TransactionStatus.PENDING,
+        "type": TransactionType.DEPOSIT
+    }).to_list(length=1000)
+    
+    fixed_count = 0
+    errors = []
+    
+    for transaction in pending_transactions:
+        try:
+            # Update transaction to approved
+            await db.transactions.update_one(
+                {"id": transaction["id"]},
+                {"$set": {"status": TransactionStatus.APPROVED}}
+            )
+            
+            # Credit user balance
+            net_amount = transaction["amount"] - transaction["fee"]
+            await db.users.update_one(
+                {"id": transaction["user_id"]},
+                {"$inc": {"balance": net_amount}}
+            )
+            
+            fixed_count += 1
+            print(f"✅ Fixed transaction {transaction['id']} for user {transaction['user_id']}, credited: R$ {net_amount}")
+            
+        except Exception as e:
+            error_msg = f"Failed to fix transaction {transaction['id']}: {str(e)}"
+            errors.append(error_msg)
+            print(f"❌ {error_msg}")
+    
+    return {
+        "message": f"Emergency balance fix completed",
+        "fixed_transactions": fixed_count,
+        "errors": errors,
+        "emergency_fix": True
+    }
+
 # Demo/Testing Endpoints
 class DemoBalanceRequest(BaseModel):
     amount: float
