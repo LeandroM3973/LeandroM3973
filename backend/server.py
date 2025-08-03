@@ -1978,6 +1978,25 @@ async def fix_pending_payments():
         "emergency_fix": True
     }
 
+@api_router.post("/debug/check-password/{user_id}")
+async def debug_check_password(user_id: str, password_data: dict):
+    """DEBUG: Check if password matches for troubleshooting"""
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        return {"found": False}
+    
+    password = password_data.get("password", "")
+    password_match = bcrypt.checkpw(password.encode('utf-8'), user["password"])
+    
+    return {
+        "found": True,
+        "user_name": user["name"],
+        "user_email": user["email"],
+        "password_match": password_match,
+        "tried_password": password,
+        "has_password_hash": bool(user.get("password"))
+    }
+
 # Demo/Testing Endpoints
 class DemoBalanceRequest(BaseModel):
     amount: float
