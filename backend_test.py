@@ -101,10 +101,18 @@ class BetArenaAPITester:
         )
         return response if success else []
 
-    def test_create_bet(self, event_title, event_type, event_description, amount, creator_id):
-        """Test bet creation"""
+    def test_create_bet(self, event_title, event_type, event_description, amount, creator_id, event_id=None, side=None, side_name=None):
+        """Test bet creation with automatic matching system fields"""
+        # Generate default values for automatic matching if not provided
+        if not event_id:
+            event_id = event_title.lower().replace(" ", "_").replace("-", "_")
+        if not side:
+            side = "A"  # Default to side A
+        if not side_name:
+            side_name = "Lado A"  # Default side name
+            
         success, response = self.run_test(
-            f"Create Bet '{event_title}'",
+            f"Create Bet '{event_title}' (Side: {side_name})",
             "POST",
             "bets",
             200,
@@ -113,7 +121,10 @@ class BetArenaAPITester:
                 "event_type": event_type,
                 "event_description": event_description,
                 "amount": amount,
-                "creator_id": creator_id
+                "creator_id": creator_id,
+                "event_id": event_id,
+                "side": side,
+                "side_name": side_name
             }
         )
         if success and 'id' in response:
