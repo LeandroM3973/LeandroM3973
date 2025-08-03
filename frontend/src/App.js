@@ -526,6 +526,28 @@ function App() {
     }
   };
 
+  // Force refresh user data
+  const forceRefreshUserData = async () => {
+    setLoading(true);
+    try {
+      console.log('🔄 Force refreshing user data...');
+      
+      await Promise.all([
+        refreshCurrentUser(),
+        loadUserBets(),
+        loadUserTransactions()
+      ]);
+      
+      alert('✅ DADOS ATUALIZADOS!\n\nSeus dados foram recarregados com sucesso.');
+      
+    } catch (error) {
+      console.error('Error force refreshing user data:', error);
+      alert('❌ Erro ao atualizar dados. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Load pending deposits for admin
   const loadPendingDeposits = async () => {
     if (!currentUser?.is_admin) return;
