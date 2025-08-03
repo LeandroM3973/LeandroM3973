@@ -1549,20 +1549,22 @@ function App() {
                               </p>
                             </div>
                             
-                            <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="flex flex-col sm:flex-row gap-3 mb-4">
                               <Button
                                 onClick={() => copyInviteLink(bet.invite_code)}
                                 className="bg-blue-600 hover:bg-blue-700 text-white"
                               >
                                 <Copy className="w-4 h-4 mr-2" />
-                                Copiar Link
+                                <span className="hidden sm:inline">Copiar Link</span>
+                                <span className="sm:hidden">Copiar</span>
                               </Button>
                               <Button
                                 onClick={() => shareInviteLink(bet.invite_code)}
                                 className="bg-green-600 hover:bg-green-700 text-white"
                               >
                                 <Share2 className="w-4 h-4 mr-2" />
-                                Compartilhar
+                                <span className="hidden sm:inline">Compartilhar</span>
+                                <span className="sm:hidden">Enviar</span>
                               </Button>
                             </div>
                             
