@@ -1559,6 +1559,51 @@ async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
 async def root():
     return {"message": "BetArena API with Payment System is running"}
 
+# Demo/Testing Endpoints
+class DemoBalanceRequest(BaseModel):
+    amount: float
+
+@api_router.post("/demo/add-balance-v2/{user_id}")
+async def demo_add_balance_v2(user_id: str, request: DemoBalanceRequest):
+    """Demo endpoint to add balance to users for testing purposes (JSON body version)"""
+    amount = request.amount
+    
+    # Check if user exists
+    user = await db.users.find_one({"id": user_id})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Add balance
+    await db.users.update_one(
+        {"id": user_id},
+        {"$inc": {"balance": amount}}
+    )
+    
+    # Create demo transaction record
+    transaction = Transaction(
+        user_id=user_id,
+        amount=amount,
+        fee=0.0,
+        net_amount=amount,
+        type=TransactionType.DEPOSIT,
+        status=TransactionStatus.APPROVED,
+        description=f"Demo balance added for testing: R$ {amount:.2f}"
+    )
+    await db.transactions.insert_one(transaction.dict())
+    
+    # Get updated user data
+    updated_user = await db.users.find_one({"id": user_id})
+    
+    return {
+        "message": f"Added R$ {amount:.2f} to user {user['name']}",
+        "user_id": user_id,
+        "user_name": user["name"],
+        "previous_balance": user["balance"],
+        "added_amount": amount,
+        "new_balance": updated_user["balance"],
+        "demo_mode": True
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
