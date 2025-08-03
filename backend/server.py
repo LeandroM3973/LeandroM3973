@@ -1981,6 +1981,51 @@ async def fix_pending_payments():
         "emergency_fix": True
     }
 
+@api_router.get("/admin/user-details/{email}")
+async def get_user_details_by_email(email: str):
+    """ADMIN: Get detailed user information for troubleshooting"""
+    # Find user by email
+    user = await db.users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Get recent login attempts
+    login_logs = await db.login_logs.find({"email": email}).sort("timestamp", -1).limit(10).to_list(length=10)
+    
+    # Get user transactions
+    transactions = await db.transactions.find({"user_id": user["id"]}).sort("created_at", -1).limit(5).to_list(length=5)
+    
+    return {
+        "user_info": {
+            "id": user["id"],
+            "name": user["name"],
+            "email": user["email"],
+            "balance": user["balance"],
+            "created_at": user["created_at"],
+            "last_login": user.get("last_login"),
+            "email_verified": user.get("email_verified"),
+            "is_admin": user.get("is_admin")
+        },
+        "recent_login_attempts": [
+            {
+                "timestamp": log.get("timestamp"),
+                "success": log.get("success"),
+                "failure_reason": log.get("failure_reason"),
+                "ip_address": log.get("ip_address")
+            } for log in login_logs
+        ],
+        "recent_transactions": [
+            {
+                "id": txn["id"],
+                "type": txn["type"],
+                "amount": txn["amount"],
+                "status": txn["status"],
+                "created_at": txn["created_at"],
+                "description": txn.get("description")
+            } for txn in transactions
+        ]
+    }
+
 @api_router.post("/admin/test-user-passwords")
 async def test_user_passwords(test_data: dict):
     """ADMIN: Test multiple passwords for a user to find the correct one"""
