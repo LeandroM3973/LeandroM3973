@@ -544,6 +544,8 @@ function App() {
     setLoading(true);
     try {
       const betData = {
+        event_title: newBet.event_title || newBet.event_description, // Use event_description as fallback
+        event_type: newBet.event_type,
         event_description: newBet.event_description,
         amount: newBet.amount,
         creator_id: currentUser.id,
