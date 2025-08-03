@@ -1559,6 +1559,55 @@ async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
 async def root():
     return {"message": "BetArena API with Payment System is running"}
 
+# Auto Payment Verification System
+@api_router.post("/admin/auto-verify-payments")
+async def auto_verify_pending_payments():
+    """Automatically verify and process pending payments older than 5 minutes"""
+    print("🔄 Auto-verifying pending payments older than 5 minutes")
+    
+    current_time = datetime.utcnow()
+    five_minutes_ago = current_time - timedelta(minutes=5)
+    
+    # Find pending transactions older than 5 minutes
+    pending_transactions = await db.transactions.find({
+        "status": TransactionStatus.PENDING,
+        "type": TransactionType.DEPOSIT,
+        "created_at": {"$lt": five_minutes_ago}
+    }).to_list(length=1000)
+    
+    processed_count = 0
+    
+    for transaction in pending_transactions:
+        try:
+            # Update transaction to approved
+            await db.transactions.update_one(
+                {"id": transaction["id"]},
+                {"$set": {
+                    "status": TransactionStatus.APPROVED,
+                    "updated_at": current_time
+                }}
+            )
+            
+            # Credit user balance
+            fee = transaction.get("fee", 0.80)
+            net_amount = transaction["amount"] - fee
+            await db.users.update_one(
+                {"id": transaction["user_id"]},
+                {"$inc": {"balance": net_amount}}
+            )
+            
+            processed_count += 1
+            print(f"✅ Auto-verified transaction {transaction['id']}, credited: R$ {net_amount}")
+            
+        except Exception as e:
+            print(f"❌ Failed to auto-verify transaction {transaction['id']}: {str(e)}")
+    
+    return {
+        "message": f"Auto-verified {processed_count} pending payments",
+        "processed_count": processed_count,
+        "auto_verification": True
+    }
+
 # Emergency Balance Fix Endpoint
 @api_router.post("/admin/fix-pending-payments")
 async def fix_pending_payments():
