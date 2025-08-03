@@ -2236,6 +2236,43 @@ function App() {
                     </p>
                   </div>
 
+                  {/* Emergency Password Reset */}
+                  <div className="bg-orange-500/20 rounded-lg p-4 border border-orange-500/30 mb-6">
+                    <h3 className="text-orange-200 font-semibold mb-3">🔑 Reset de Senha de Emergência</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-orange-200 text-sm font-medium">Email do Usuário</label>
+                        <Input
+                          type="email"
+                          value={resetPasswordEmail}
+                          onChange={(e) => setResetPasswordEmail(e.target.value)}
+                          placeholder="usuario@email.com"
+                          className="bg-white/10 border-orange-500/30 text-white placeholder:text-gray-400 mt-1"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-orange-200 text-sm font-medium">Nova Senha</label>
+                        <Input
+                          type="text"
+                          value={resetPasswordNew}
+                          onChange={(e) => setResetPasswordNew(e.target.value)}
+                          placeholder="nova_senha_123"
+                          className="bg-white/10 border-orange-500/30 text-white placeholder:text-gray-400 mt-1"
+                        />
+                      </div>
+                      <Button
+                        onClick={resetUserPassword}
+                        disabled={loading || !resetPasswordEmail || !resetPasswordNew}
+                        className="w-full bg-orange-600 hover:bg-orange-700 text-white text-sm py-2"
+                      >
+                        {loading ? 'Resetando...' : '🔑 Resetar Senha'}
+                      </Button>
+                    </div>
+                    <p className="text-orange-200 text-xs mt-2">
+                      ⚠️ Use apenas para resolver problemas de login. Email será verificado automaticamente.
+                    </p>
+                  </div>
+
                   {/* Pending Deposits Management */}
                   <div className="bg-orange-500/20 rounded-lg p-6 border border-orange-500/30 mb-6">
                     <h3 className="text-orange-200 font-semibold mb-4 flex items-center space-x-2">
