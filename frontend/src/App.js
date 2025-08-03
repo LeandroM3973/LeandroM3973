@@ -572,6 +572,10 @@ function App() {
         await Promise.all([loadUsers(), loadBets(), loadUserBets(), loadUserTransactions()]);
         if (currentUser) {
           await refreshCurrentUser();
+          // Reload pending deposits if admin
+          if (currentUser.is_admin) {
+            await loadPendingDeposits();
+          }
         }
       } else {
         alert(`ℹ️ VERIFICAÇÃO CONCLUÍDA\n\nNenhum pagamento pendente foi encontrado para processar.`);
