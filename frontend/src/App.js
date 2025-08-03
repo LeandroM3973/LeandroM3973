@@ -1518,11 +1518,12 @@ function App() {
                 </div>
 
                 {/* Example/Preview */}
-                {newBet.event_id && newBet.side_name && (
+                {newBet.event_title && newBet.event_id && newBet.side_name && (
                   <div className="bg-green-500/20 rounded-lg p-4 border border-green-500/30">
                     <h4 className="text-green-200 font-semibold mb-2">📋 Preview da Aposta</h4>
                     <div className="space-y-1 text-sm text-green-200">
-                      <p><strong>Evento:</strong> {newBet.event_id}</p>
+                      <p><strong>Título:</strong> {newBet.event_title}</p>
+                      <p><strong>ID Evento:</strong> {newBet.event_id}</p>
                       <p><strong>Seu lado:</strong> {newBet.side_name} ({newBet.side})</p>
                       <p><strong>Valor:</strong> {formatCurrency(newBet.amount)}</p>
                       <p><strong>Buscando:</strong> Aposta oposta no mesmo evento</p>
