@@ -2159,12 +2159,12 @@ function App() {
                                       <p className="text-orange-200 font-medium">R$ {deposit.amount.toFixed(2)}</p>
                                     </div>
                                     <div>
-                                      <p className="text-gray-400">Valor Líquido:</p>
-                                      <p className="text-green-200 font-medium">R$ {deposit.net_amount.toFixed(2)}</p>
+                                      <p className="text-gray-400">Valor Creditado:</p>
+                                      <p className="text-green-200 font-medium">R$ {deposit.net_amount.toFixed(2)} (INTEGRAL)</p>
                                     </div>
                                     <div>
-                                      <p className="text-gray-400">Taxa:</p>
-                                      <p className="text-red-200 font-medium">R$ {deposit.fee.toFixed(2)}</p>
+                                      <p className="text-gray-400">Taxa Plataforma:</p>
+                                      <p className="text-orange-200 font-medium">R$ {deposit.platform_fee.toFixed(2)} (absorvida)</p>
                                     </div>
                                     <div>
                                       <p className="text-gray-400">Data:</p>
