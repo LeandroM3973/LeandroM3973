@@ -1439,6 +1439,20 @@ function App() {
                   </p>
                 </div>
 
+                {/* Event Title */}
+                <div>
+                  <label className="text-white text-sm font-medium">Título do Evento</label>
+                  <Input
+                    value={newBet.event_title}
+                    onChange={(e) => setNewBet({...newBet, event_title: e.target.value})}
+                    placeholder="Ex: Brasil vs Argentina - Copa do Mundo"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-gray-400"
+                  />
+                  <p className="text-gray-400 text-xs mt-1">
+                    Título público do evento
+                  </p>
+                </div>
+
                 {/* Event Description */}
                 <div>
                   <label className="text-white text-sm font-medium">Descrição do Evento</label>
