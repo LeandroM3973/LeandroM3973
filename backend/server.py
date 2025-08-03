@@ -1806,6 +1806,133 @@ async def auto_verify_pending_payments():
         "auto_verification": True
     }
 
+# Historical Balance Correction System
+@api_router.post("/admin/fix-historical-deposits")
+async def fix_historical_deposits():
+    """Fix historical deposits that had incorrect AbacatePay fee deductions"""
+    print("🔧 STARTING HISTORICAL DEPOSIT CORRECTION")
+    print("🎯 Identifying users affected by incorrect R$ 0.80 fee deductions")
+    
+    corrections_made = []
+    total_users_affected = 0
+    total_amount_refunded = 0.0
+    
+    try:
+        # Find all approved deposit transactions
+        approved_deposits = await db.transactions.find({
+            "type": TransactionType.DEPOSIT,
+            "status": TransactionStatus.APPROVED
+        }).to_list(length=10000)
+        
+        print(f"📊 Found {len(approved_deposits)} approved deposit transactions")
+        
+        # Group by user to avoid multiple corrections for same user
+        user_corrections = {}
+        
+        for transaction in approved_deposits:
+            user_id = transaction["user_id"]
+            amount = transaction["amount"]
+            fee = transaction.get("fee", 0.80)  # Default to 0.80 if not present
+            
+            # Check if this transaction had fee deducted (net_amount exists and is less than amount)
+            net_amount = transaction.get("net_amount")
+            
+            # If net_amount exists and is less than amount, this was affected by incorrect fee deduction
+            if net_amount and net_amount < amount:
+                fee_deducted = amount - net_amount
+                
+                if user_id not in user_corrections:
+                    user_corrections[user_id] = {
+                        "user_id": user_id,
+                        "total_fee_deducted": 0.0,
+                        "affected_transactions": [],
+                        "user_info": None
+                    }
+                
+                user_corrections[user_id]["total_fee_deducted"] += fee_deducted
+                user_corrections[user_id]["affected_transactions"].append({
+                    "transaction_id": transaction["id"],
+                    "amount": amount,
+                    "fee_deducted": fee_deducted,
+                    "date": transaction["created_at"]
+                })
+        
+        print(f"👥 Found {len(user_corrections)} users affected by incorrect fee deductions")
+        
+        # Apply corrections for each affected user
+        for user_id, correction_data in user_corrections.items():
+            try:
+                # Get user information
+                user = await db.users.find_one({"id": user_id})
+                if not user:
+                    print(f"⚠️ User {user_id} not found, skipping")
+                    continue
+                
+                correction_data["user_info"] = {
+                    "name": user["name"],
+                    "email": user["email"],
+                    "current_balance": user["balance"]
+                }
+                
+                # Credit back the incorrectly deducted fees
+                refund_amount = correction_data["total_fee_deducted"]
+                
+                await db.users.update_one(
+                    {"id": user_id},
+                    {"$inc": {"balance": refund_amount}}
+                )
+                
+                # Create correction transaction record
+                correction_transaction = Transaction(
+                    user_id=user_id,
+                    amount=refund_amount,
+                    fee=0.0,
+                    net_amount=refund_amount,
+                    type=TransactionType.DEPOSIT,
+                    status=TransactionStatus.APPROVED,
+                    description=f"Correção histórica: Reembolso taxa AbacatePay incorreta (R$ {refund_amount:.2f})"
+                )
+                await db.transactions.insert_one(correction_transaction.dict())
+                
+                # Get updated balance
+                updated_user = await db.users.find_one({"id": user_id})
+                correction_data["user_info"]["new_balance"] = updated_user["balance"]
+                correction_data["refund_amount"] = refund_amount
+                
+                corrections_made.append(correction_data)
+                total_users_affected += 1
+                total_amount_refunded += refund_amount
+                
+                print(f"✅ CORRECTED: {user['name']} | Refund: R$ {refund_amount:.2f} | New Balance: R$ {updated_user['balance']:.2f}")
+                
+            except Exception as e:
+                print(f"❌ Error correcting user {user_id}: {str(e)}")
+        
+        # Summary
+        correction_summary = {
+            "correction_completed": True,
+            "total_users_affected": total_users_affected,
+            "total_amount_refunded": total_amount_refunded,
+            "corrections_made": corrections_made,
+            "correction_timestamp": datetime.utcnow().isoformat()
+        }
+        
+        print(f"🎉 CORRECTION COMPLETED:")
+        print(f"👥 Users corrected: {total_users_affected}")
+        print(f"💰 Total refunded: R$ {total_amount_refunded:.2f}")
+        
+        return correction_summary
+        
+    except Exception as e:
+        print(f"❌ Critical error in historical correction: {str(e)}")
+        return {
+            "correction_completed": False,
+            "error": str(e),
+            "corrections_made": corrections_made,
+            "total_users_affected": total_users_affected,
+            "total_amount_refunded": total_amount_refunded
+        }
+
 # Emergency Balance Fix Endpoint
 @api_router.post("/admin/fix-pending-payments")
 async def fix_pending_payments():
