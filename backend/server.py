@@ -1559,6 +1559,110 @@ async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
 async def root():
     return {"message": "BetArena API with Payment System is running"}
 
+# Admin Payment Management Endpoints
+@api_router.get("/admin/pending-deposits")
+async def get_pending_deposits():
+    """Get all pending deposit transactions for admin approval"""
+    try:
+        # Find all pending deposit transactions
+        pending_deposits = await db.transactions.find({
+            "status": TransactionStatus.PENDING,
+            "type": TransactionType.DEPOSIT
+        }).sort("created_at", -1).to_list(length=1000)
+        
+        # Enrich with user information
+        enriched_deposits = []
+        for deposit in pending_deposits:
+            user = await db.users.find_one({"id": deposit["user_id"]})
+            if user:
+                enriched_deposit = {
+                    "id": deposit["id"],
+                    "user_id": deposit["user_id"],
+                    "user_name": user["name"],
+                    "user_email": user["email"],
+                    "amount": deposit["amount"],
+                    "fee": deposit.get("fee", 0.80),
+                    "net_amount": deposit["amount"] - deposit.get("fee", 0.80),
+                    "external_reference": deposit.get("external_reference", "N/A"),
+                    "description": deposit.get("description", ""),
+                    "created_at": deposit["created_at"],
+                    "status": deposit["status"]
+                }
+                enriched_deposits.append(enriched_deposit)
+        
+        return {
+            "pending_deposits": enriched_deposits,
+            "total_count": len(enriched_deposits),
+            "total_amount": sum(d["amount"] for d in enriched_deposits)
+        }
+        
+    except Exception as e:
+        print(f"❌ Error fetching pending deposits: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to fetch pending deposits: {str(e)}")
+
+@api_router.post("/admin/approve-deposit/{transaction_id}")
+async def admin_approve_deposit(transaction_id: str):
+    """Manually approve a specific deposit transaction"""
+    try:
+        # Find the transaction
+        transaction = await db.transactions.find_one({"id": transaction_id})
+        if not transaction:
+            raise HTTPException(status_code=404, detail="Transaction not found")
+        
+        if transaction.get("status") == TransactionStatus.APPROVED:
+            return {
+                "message": "Deposit already approved", 
+                "status": "already_approved",
+                "transaction_id": transaction_id
+            }
+        
+        # Get user info
+        user = await db.users.find_one({"id": transaction["user_id"]})
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        print(f"🔧 Admin manual approval for deposit: {transaction_id} - User: {user['name']}")
+        
+        # Update transaction to approved
+        await db.transactions.update_one(
+            {"id": transaction_id},
+            {"$set": {
+                "status": TransactionStatus.APPROVED,
+                "updated_at": datetime.utcnow()
+            }}
+        )
+        
+        # Credit user balance
+        fee = transaction.get("fee", 0.80)
+        net_amount = transaction["amount"] - fee
+        
+        await db.users.update_one(
+            {"id": transaction["user_id"]},
+            {"$inc": {"balance": net_amount}}
+        )
+        
+        # Get updated user balance
+        updated_user = await db.users.find_one({"id": transaction["user_id"]})
+        
+        print(f"✅ Deposit approved: {transaction_id}, User: {user['name']}, Amount: R$ {transaction['amount']}, Net: R$ {net_amount}, New Balance: R$ {updated_user['balance']}")
+        
+        return {
+            "transaction_id": transaction_id,
+            "status": "approved",
+            "message": f"Depósito aprovado com sucesso para {user['name']}",
+            "user_name": user["name"],
+            "user_email": user["email"],
+            "amount": transaction["amount"],
+            "fee": fee,
+            "net_amount": net_amount,
+            "new_user_balance": updated_user["balance"],
+            "approval_time": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        print(f"❌ Admin approval error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to approve deposit: {str(e)}")
+
 # Auto Payment Verification System
 @api_router.post("/admin/auto-verify-payments")
 async def auto_verify_pending_payments():
