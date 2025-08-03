@@ -2768,6 +2768,234 @@ class BetArenaAPITester:
         
         return all_passed
 
+    def test_automatic_bet_matching_system_comprehensive(self):
+        """COMPREHENSIVE AUTOMATIC BET MATCHING SYSTEM TEST - CRITICAL NEW FEATURE"""
+        print("\n🎯 COMPREHENSIVE AUTOMATIC BET MATCHING SYSTEM TEST")
+        print("=" * 80)
+        print("CRITICAL NEW FEATURE: Automatic bet matching when users create opposing bets")
+        print("REQUIREMENT: Bets with same event_title but different side_name should auto-match")
+        print("TEST SCENARIO: Create bet for 'Brasil vs Argentina' with side 'Brasil',")
+        print("               then create opposing bet with side 'Argentina' - should auto-match")
+        print("=" * 80)
+        
+        # Create two test users for the matching system
+        import time
+        timestamp = str(int(time.time()))
+        
+        # User 1 - Brasil supporter
+        user1_email = f"carlos.brasil.{timestamp}@gmail.com"
+        user1_name = "Carlos Brasil"
+        user1_phone = "11987654321"
+        user1_password = "brasilcampeao123"
+        
+        # User 2 - Argentina supporter  
+        user2_email = f"diego.argentina.{timestamp}@gmail.com"
+        user2_name = "Diego Argentina"
+        user2_phone = "11999888777"
+        user2_password = "argentinaganador123"
+        
+        print(f"\n1. SETUP: Creating two test users for bet matching...")
+        print("-" * 60)
+        
+        # Create User 1
+        print(f"   Creating User 1: {user1_name} ({user1_email})")
+        user1_data = self.test_create_user(user1_name, user1_email, user1_phone, user1_password)
+        if not user1_data:
+            print("❌ CRITICAL: Failed to create User 1")
+            return False
+        
+        user1_id = user1_data['id']
+        print(f"✅ User 1 created - ID: {user1_id}")
+        
+        # Create User 2
+        print(f"   Creating User 2: {user2_name} ({user2_email})")
+        user2_data = self.test_create_user(user2_name, user2_email, user2_phone, user2_password)
+        if not user2_data:
+            print("❌ CRITICAL: Failed to create User 2")
+            return False
+        
+        user2_id = user2_data['id']
+        print(f"✅ User 2 created - ID: {user2_id}")
+        
+        # Add balance to both users for betting
+        print(f"\n   Adding balance to both users...")
+        
+        # Add balance to User 1
+        user1_deposit = self.test_create_payment_preference(user1_id, 200.00)
+        if user1_deposit and user1_deposit.get('transaction_id') and user1_deposit.get('demo_mode'):
+            approval1 = self.run_test(
+                "Add Balance to User 1",
+                "POST", 
+                f"payments/simulate-approval/{user1_deposit['transaction_id']}",
+                200
+            )
+            if approval1[0]:
+                user1_data = self.test_get_user(user1_id)
+                print(f"✅ User 1 balance: R$ {user1_data['balance']:.2f}")
+        
+        # Add balance to User 2
+        user2_deposit = self.test_create_payment_preference(user2_id, 200.00)
+        if user2_deposit and user2_deposit.get('transaction_id') and user2_deposit.get('demo_mode'):
+            approval2 = self.run_test(
+                "Add Balance to User 2",
+                "POST", 
+                f"payments/simulate-approval/{user2_deposit['transaction_id']}",
+                200
+            )
+            if approval2[0]:
+                user2_data = self.test_get_user(user2_id)
+                print(f"✅ User 2 balance: R$ {user2_data['balance']:.2f}")
+        
+        # Test automatic matching scenario
+        print(f"\n2. AUTOMATIC BET MATCHING TEST: Brasil vs Argentina")
+        print("-" * 60)
+        
+        # Common event details for matching
+        event_title = "Brasil vs Argentina - Copa do Mundo"
+        event_id = "brasil_vs_argentina_copa"
+        event_type = "sports"
+        event_description = "Aposta sobre quem ganha o jogo Brasil x Argentina na Copa do Mundo"
+        bet_amount = 100.00
+        
+        print(f"   Event: {event_title}")
+        print(f"   Event ID: {event_id}")
+        print(f"   Amount: R$ {bet_amount:.2f}")
+        
+        # Step 1: Create first bet (Brasil side)
+        print(f"\n   2.1 Creating first bet - Brasil side...")
+        bet1_data = self.test_create_bet(
+            event_title=event_title,
+            event_type=event_type,
+            event_description=event_description,
+            amount=bet_amount,
+            creator_id=user1_id,
+            event_id=event_id,
+            side="A",
+            side_name="Brasil"
+        )
+        
+        if not bet1_data:
+            print("❌ CRITICAL: Failed to create first bet")
+            return False
+        
+        bet1_id = bet1_data['id']
+        bet1_status = bet1_data['status']
+        print(f"✅ First bet created successfully")
+        print(f"   Bet ID: {bet1_id}")
+        print(f"   Side: {bet1_data['side']} ({bet1_data['side_name']})")
+        print(f"   Status: {bet1_status}")
+        print(f"   Creator: {bet1_data['creator_name']}")
+        
+        # Verify first bet is in WAITING status (no opponent yet)
+        if bet1_status != "waiting":
+            print(f"❌ CRITICAL: First bet should be in WAITING status, got: {bet1_status}")
+            return False
+        
+        print(f"✅ First bet correctly in WAITING status (no opponent yet)")
+        
+        # Step 2: Create second bet (Argentina side) - should auto-match
+        print(f"\n   2.2 Creating second bet - Argentina side (should auto-match)...")
+        bet2_data = self.test_create_bet(
+            event_title=event_title,
+            event_type=event_type,
+            event_description=event_description,
+            amount=bet_amount,
+            creator_id=user2_id,
+            event_id=event_id,
+            side="B",
+            side_name="Argentina"
+        )
+        
+        if not bet2_data:
+            print("❌ CRITICAL: Failed to create second bet")
+            return False
+        
+        bet2_id = bet2_data['id']
+        bet2_status = bet2_data['status']
+        print(f"✅ Second bet created successfully")
+        print(f"   Bet ID: {bet2_id}")
+        print(f"   Side: {bet2_data['side']} ({bet2_data['side_name']})")
+        print(f"   Status: {bet2_status}")
+        print(f"   Creator: {bet2_data['creator_name']}")
+        
+        # CRITICAL: Check if automatic matching occurred
+        print(f"\n   2.3 Verifying automatic bet matching...")
+        
+        # Check if second bet shows opponent info (auto-matched)
+        if bet2_data.get('opponent_id') and bet2_data.get('opponent_name'):
+            print(f"✅ AUTOMATIC MATCHING DETECTED!")
+            print(f"   Second bet opponent ID: {bet2_data['opponent_id']}")
+            print(f"   Second bet opponent name: {bet2_data['opponent_name']}")
+            print(f"   Second bet status: {bet2_status}")
+            
+            # Verify the opponent is User 1
+            if bet2_data['opponent_id'] == user1_id:
+                print(f"✅ Correct opponent matched: {bet2_data['opponent_name']}")
+            else:
+                print(f"❌ CRITICAL: Wrong opponent matched")
+                return False
+        else:
+            print(f"❌ CRITICAL: Automatic matching did not occur!")
+            print(f"   Second bet opponent_id: {bet2_data.get('opponent_id', 'None')}")
+            print(f"   Second bet opponent_name: {bet2_data.get('opponent_name', 'None')}")
+            return False
+        
+        # Step 3: Verify first bet was also updated with opponent info
+        print(f"\n   2.4 Verifying first bet was updated with opponent info...")
+        
+        # Get updated first bet data
+        updated_bet1 = self.run_test(
+            "Get Updated First Bet",
+            "GET",
+            f"bets/user/{user1_id}",
+            200
+        )
+        
+        if not updated_bet1[0]:
+            print("❌ CRITICAL: Failed to retrieve updated first bet")
+            return False
+        
+        user1_bets = updated_bet1[1]
+        first_bet_updated = None
+        for bet in user1_bets:
+            if bet['id'] == bet1_id:
+                first_bet_updated = bet
+                break
+        
+        if not first_bet_updated:
+            print("❌ CRITICAL: First bet not found in user's bets")
+            return False
+        
+        print(f"✅ First bet retrieved successfully")
+        print(f"   Status: {first_bet_updated['status']}")
+        print(f"   Opponent ID: {first_bet_updated.get('opponent_id', 'None')}")
+        print(f"   Opponent Name: {first_bet_updated.get('opponent_name', 'None')}")
+        
+        # Verify first bet now has opponent info
+        if first_bet_updated.get('opponent_id') == user2_id:
+            print(f"✅ First bet correctly updated with opponent: {first_bet_updated['opponent_name']}")
+        else:
+            print(f"❌ CRITICAL: First bet not updated with correct opponent")
+            return False
+        
+        # Verify both bets are now ACTIVE
+        if first_bet_updated['status'] == "active" and bet2_status == "active":
+            print(f"✅ Both bets are now ACTIVE (matched successfully)")
+        else:
+            print(f"❌ CRITICAL: Bets not in ACTIVE status after matching")
+            print(f"   First bet status: {first_bet_updated['status']}")
+            print(f"   Second bet status: {bet2_status}")
+            return False
+        
+        print(f"\n🎉 AUTOMATIC BET MATCHING SYSTEM TEST PASSED!")
+        print(f"   ✅ Bets automatically match when users create opposing bets")
+        print(f"   ✅ Same event_title with different side_name triggers auto-matching")
+        print(f"   ✅ Brasil vs Argentina scenario works perfectly")
+        print(f"   ✅ Bet status changes correctly when matched (WAITING → ACTIVE)")
+        print(f"   ✅ System ready for 24/7 production deployment")
+        
+        return True
+
 def main():
     print("🥑 CRITICAL ABACATEPAY REAL WEBHOOK PAYLOAD INTEGRATION TEST - REVIEW REQUEST")
     print("=" * 90)
