@@ -2168,24 +2168,31 @@ function App() {
                   {/* Admin Tools */}
                   <div className="bg-red-500/20 rounded-lg p-4 border border-red-500/30 mb-6">
                     <h3 className="text-red-200 font-semibold mb-2">🚨 Ferramentas de Emergência</h3>
-                    <div className="flex flex-wrap gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       <Button
                         onClick={autoVerifyPendingPayments}
                         disabled={loading}
-                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white text-xs px-3 py-2"
                       >
                         {loading ? 'Verificando...' : '🔄 Verificar Pagamentos Pendentes'}
                       </Button>
                       <Button
                         onClick={loadPendingDeposits}
                         disabled={loading}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-2"
                       >
                         {loading ? 'Carregando...' : '🔄 Atualizar Lista'}
                       </Button>
+                      <Button
+                        onClick={fixHistoricalDeposits}
+                        disabled={loading}
+                        className="bg-purple-600 hover:bg-purple-700 text-white text-xs px-3 py-2"
+                      >
+                        {loading ? 'Corrigindo...' : '💰 Corrigir Depósitos Históricos'}
+                      </Button>
                     </div>
                     <p className="text-red-200 text-xs mt-2">
-                      Use apenas se houver problemas com webhooks de pagamento
+                      ⚠️ Use apenas se houver problemas com webhooks de pagamento ou correções necessárias
                     </p>
                   </div>
 
