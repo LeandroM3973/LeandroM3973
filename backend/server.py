@@ -402,7 +402,7 @@ async def login_user(login_data: UserLogin, request: Request):
         )
     
     # Verify password
-    if not verify_password(login_data.password, user["password"]):
+    if not verify_password(login_data.password, user["password_hash"]):
         await log_login_attempt(user["id"], login_data.email, False, "Invalid password")
         raise HTTPException(status_code=401, detail="Senha incorreta")
     
