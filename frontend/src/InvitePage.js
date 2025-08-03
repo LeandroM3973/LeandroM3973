@@ -32,10 +32,17 @@ function InvitePage() {
 
   const loadBetByInvite = async () => {
     try {
+      console.log(`🔗 Loading invite: ${inviteCode}`);
+      console.log(`🌐 API URL: ${API}/bets/invite/${inviteCode}`);
+      
       const response = await axios.get(`${API}/bets/invite/${inviteCode}`);
+      console.log('✅ Invite loaded successfully:', response.data);
       setBet(response.data);
       setError(null);
     } catch (err) {
+      console.error('❌ Error loading invite:', err);
+      console.error('❌ Error response:', err.response);
+      
       if (err.response?.status === 410) {
         setError('Este convite expirou');
       } else if (err.response?.status === 404) {
