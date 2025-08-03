@@ -1676,8 +1676,8 @@ async def get_pending_deposits():
                     "user_name": user["name"],
                     "user_email": user["email"],
                     "amount": deposit["amount"],
-                    "fee": deposit.get("fee", 0.80),
-                    "net_amount": deposit["amount"] - deposit.get("fee", 0.80),
+                    "platform_fee": deposit.get("fee", 0.80),  # Platform absorbs this fee
+                    "net_amount": deposit["amount"],  # User gets full amount
                     "external_reference": deposit.get("external_reference", "N/A"),
                     "description": deposit.get("description", ""),
                     "created_at": deposit["created_at"],
