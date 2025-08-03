@@ -608,6 +608,72 @@ function App() {
     }
   };
 
+  // Fix historical deposits function
+  const fixHistoricalDeposits = async () => {
+    if (!currentUser?.is_admin) {
+      alert('❌ Apenas administradores podem executar correções históricas');
+      return;
+    }
+    
+    if (window.confirm(`⚠️ CORREÇÃO HISTÓRICA DE DEPÓSITOS\n\nEsta função irá:\n\n✅ Identificar usuários que tiveram desconto incorreto de R$ 0,80\n✅ Reembolsar automaticamente os valores\n✅ Criar registros de transação para auditoria\n\n⚠️ Esta operação não pode ser desfeita.\n\nDeseja continuar?`)) {
+      try {
+        setLoading(true);
+        console.log('🔧 Executando correção histórica de depósitos...');
+        
+        const response = await axios.post(`${API}/admin/fix-historical-deposits`);
+        const result = response.data;
+        
+        console.log('✅ Correção histórica concluída:', result);
+        
+        if (result.correction_completed && result.total_users_affected > 0) {
+          let detailsMessage = `✅ CORREÇÃO HISTÓRICA CONCLUÍDA COM SUCESSO!\n\n`;
+          detailsMessage += `👥 Usuários corrigidos: ${result.total_users_affected}\n`;
+          detailsMessage += `💰 Total reembolsado: R$ ${result.total_amount_refunded.toFixed(2)}\n\n`;
+          detailsMessage += `📋 DETALHES DOS REEMBOLSOS:\n\n`;
+          
+          result.corrections_made.forEach((correction, index) => {
+            if (index < 5) { // Show first 5 users
+              detailsMessage += `${index + 1}. ${correction.user_info.name}\n`;
+              detailsMessage += `   💰 Reembolso: R$ ${correction.refund_amount.toFixed(2)}\n`;
+              detailsMessage += `   🏦 Novo saldo: R$ ${correction.user_info.new_balance.toFixed(2)}\n\n`;
+            }
+          });
+          
+          if (result.corrections_made.length > 5) {
+            detailsMessage += `... e mais ${result.corrections_made.length - 5} usuários.\n\n`;
+          }
+          
+          detailsMessage += `✅ Todos os usuários afetados foram reembolsados!\n`;
+          detailsMessage += `📝 Transações de correção criadas para auditoria.`;
+          
+          alert(detailsMessage);
+          
+        } else if (result.correction_completed && result.total_users_affected === 0) {
+          alert(`ℹ️ CORREÇÃO CONCLUÍDA\n\nNenhum usuário foi encontrado com deduções incorretas de taxa.\n\nTodos os depósitos já estão com valores corretos.`);
+        } else {
+          alert(`❌ ERRO NA CORREÇÃO\n\n${result.error || 'Erro desconhecido durante a correção'}`);
+        }
+        
+        // Reload data
+        await Promise.all([
+          loadPendingDeposits(),
+          loadUsers(),
+          loadUserTransactions()
+        ]);
+        
+        if (currentUser) {
+          await refreshCurrentUser();
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro na correção histórica:', error);
+        alert(error.response?.data?.detail || 'Erro na correção histórica de depósitos');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   // Auto verify pending payments function
   const autoVerifyPendingPayments = async () => {
     try {
