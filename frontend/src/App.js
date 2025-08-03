@@ -1860,14 +1860,15 @@ function App() {
                               </p>
                             </div>
                             
-                            <div className="flex space-x-2">
+                            <div className="flex flex-col sm:flex-row gap-2">
                               <Button
                                 size="sm"
                                 onClick={() => copyInviteLink(bet.invite_code)}
                                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
                               >
                                 <Copy className="w-4 h-4 mr-2" />
-                                Copiar Link
+                                <span className="hidden sm:inline">Copiar Link</span>
+                                <span className="sm:hidden">Copiar</span>
                               </Button>
                               <Button
                                 size="sm"
@@ -1875,7 +1876,8 @@ function App() {
                                 className="flex-1 bg-green-600 hover:bg-green-700 text-white"
                               >
                                 <Share2 className="w-4 h-4 mr-2" />
-                                Compartilhar
+                                <span className="hidden sm:inline">Compartilhar</span>
+                                <span className="sm:hidden">Enviar</span>
                               </Button>
                             </div>
                             
