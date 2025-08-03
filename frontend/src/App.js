@@ -29,6 +29,7 @@ function App() {
   const [waitingBets, setWaitingBets] = useState([]);
   const [userBets, setUserBets] = useState([]);
   const [userTransactions, setUserTransactions] = useState([]);
+  const [pendingDeposits, setPendingDeposits] = useState([]); // New state for admin
   const [loading, setLoading] = useState(false);
 
   // Login/Register form
