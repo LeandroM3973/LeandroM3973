@@ -1624,7 +1624,7 @@ async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
         amount=bet["amount"],
         fee=0.0,
         net_amount=bet["amount"],
-        type=TransactionType.BET,
+        type=TransactionType.BET_DEBIT,
         status=TransactionStatus.APPROVED,
         description=f"Entrada em aposta: {bet.get('event_description', 'Evento')}"
     )
