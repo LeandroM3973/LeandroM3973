@@ -170,15 +170,18 @@ frontend:
 
   - task: "Automatic bet matching system"
     implemented: true
-    working: "NA"
+    working: false
     file: "/app/backend/server.py"
-    stuck_count: 0
+    stuck_count: 1
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
         - working: "NA"
           agent: "main"
           comment: "AUTOMATIC BET MATCHING SYSTEM IMPLEMENTED: Added event_title and side_name fields to Bet model and BetCreate schema. Implemented find_and_match_bet function that searches for opposing bets with same event_title but different side_name. Integration in create_bet endpoint automatically matches opposing bets when they exist. Frontend updated to include event_title and side_name in bet creation form. System designed for 24/7 operation to automatically connect opposing bets."
+        - working: false
+          agent: "testing"
+          comment: "CRITICAL ISSUE FOUND: Automatic bet matching system test failed due to insufficient balance error when creating bets. The backend correctly implements the matching logic with event_id, side, and side_name fields, but users need sufficient balance to create bets for testing. The system requires users to have balance before creating bets, which prevented testing the actual matching functionality. The implementation appears correct based on code review - find_matching_bet function looks for opposite sides with same event_id and amount, connect_bets function updates both bets to ACTIVE status. However, the balance requirement prevents comprehensive testing of the matching system. Need to either: 1) Add balance to test users before creating bets, or 2) Create a test mode that bypasses balance checks for testing purposes."
 
 backend:
   - task: "Manual payment verification system"
