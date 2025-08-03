@@ -102,7 +102,7 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "CRÍTICO: usuário foi promovido a administrador no backend, mas no frontend ainda não aparecem as opções de admin - aba Juiz não aparece e não há opções para decidir vencedores"
+user_problem_statement: "CRÍTICO: 3 usuários perderam acesso às suas senhas que funcionavam normalmente antes (Leandro.miguel.360@hotmail.com, Leandro.miguel.360@gmail.com, j.cs26@hotmail.com) - BUG CRÍTICO no sistema de login resolvido"
 
 frontend:
   - task: "Fix mobile navigation tabs text overlap"
