@@ -99,6 +99,10 @@ function App() {
     if (currentUser) {
       loadUserBets();
       loadUserTransactions();
+      // Load pending deposits if user is admin
+      if (currentUser.is_admin) {
+        loadPendingDeposits();
+      }
     }
   }, []);
 
