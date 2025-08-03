@@ -1583,7 +1583,8 @@ async def fix_pending_payments():
             )
             
             # Credit user balance
-            net_amount = transaction["amount"] - transaction["fee"]
+            fee = transaction.get("fee", 0.80)  # Default AbacatePay fee if missing
+            net_amount = transaction["amount"] - fee
             await db.users.update_one(
                 {"id": transaction["user_id"]},
                 {"$inc": {"balance": net_amount}}
