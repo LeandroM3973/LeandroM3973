@@ -77,6 +77,40 @@ function App() {
   const [selectedBetForJudge, setSelectedBetForJudge] = useState(null);
   const [selectedWinner, setSelectedWinner] = useState('');
 
+  // Auto refresh user balance every 30 seconds
+  useEffect(() => {
+    if (!currentUser) return;
+    
+    const balanceCheckInterval = setInterval(async () => {
+      try {
+        const response = await axios.get(`${API}/users/${currentUser.id}`);
+        const serverBalance = response.data.balance;
+        
+        // Check if balance changed
+        if (Math.abs(serverBalance - currentUser.balance) > 0.01) {
+          console.log(`💰 Balance update detected: ${formatCurrency(currentUser.balance)} → ${formatCurrency(serverBalance)}`);
+          
+          // Show notification to user
+          if (serverBalance > currentUser.balance) {
+            const difference = serverBalance - currentUser.balance;
+            alert(`💰 SEU SALDO FOI ATUALIZADO!\n\n` +
+                  `💎 Valor creditado: ${formatCurrency(difference)}\n` +
+                  `💳 Saldo anterior: ${formatCurrency(currentUser.balance)}\n` +
+                  `💳 Novo saldo: ${formatCurrency(serverBalance)}\n\n` +
+                  `✅ Seu depósito foi aprovado pelo administrador!`);
+          }
+          
+          // Update current user data
+          await refreshCurrentUser();
+        }
+      } catch (error) {
+        console.error('Error checking balance updates:', error);
+      }
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(balanceCheckInterval);
+  }, [currentUser]);
+
   useEffect(() => {
     // Load user from localStorage on app initialization
     const savedUser = localStorage.getItem('betarena_user');
