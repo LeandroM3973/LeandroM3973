@@ -1984,10 +1984,102 @@ function App() {
                       >
                         {loading ? 'Verificando...' : '🔄 Verificar Pagamentos Pendentes'}
                       </Button>
+                      <Button
+                        onClick={loadPendingDeposits}
+                        disabled={loading}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                      >
+                        {loading ? 'Carregando...' : '🔄 Atualizar Lista'}
+                      </Button>
                     </div>
                     <p className="text-red-200 text-xs mt-2">
                       Use apenas se houver problemas com webhooks de pagamento
                     </p>
+                  </div>
+
+                  {/* Pending Deposits Management */}
+                  <div className="bg-orange-500/20 rounded-lg p-6 border border-orange-500/30 mb-6">
+                    <h3 className="text-orange-200 font-semibold mb-4 flex items-center space-x-2">
+                      💰 <span>Aprovação Manual de Depósitos</span>
+                      <Badge className="bg-orange-600 text-white">
+                        {pendingDeposits.length} pendentes
+                      </Badge>
+                    </h3>
+                    
+                    <p className="text-orange-200 text-sm mb-4">
+                      ℹ️ Aprove manualmente os depósitos após confirmar o pagamento no AbacatePay
+                    </p>
+                    
+                    {pendingDeposits.length > 0 ? (
+                      <div className="space-y-3 max-h-96 overflow-y-auto">
+                        {pendingDeposits.map((deposit) => (
+                          <Card key={deposit.id} className="bg-white/10 backdrop-blur-lg border-orange-500/30">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex-1">
+                                  <div className="flex items-center space-x-3 mb-2">
+                                    <div className="bg-orange-600 p-2 rounded-full">
+                                      <DollarSign className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div>
+                                      <p className="text-white font-semibold">{deposit.user_name}</p>
+                                      <p className="text-gray-300 text-sm">{deposit.user_email}</p>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                      <p className="text-gray-400">Valor Bruto:</p>
+                                      <p className="text-orange-200 font-medium">R$ {deposit.amount.toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-gray-400">Valor Líquido:</p>
+                                      <p className="text-green-200 font-medium">R$ {deposit.net_amount.toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-gray-400">Taxa:</p>
+                                      <p className="text-red-200 font-medium">R$ {deposit.fee.toFixed(2)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="text-gray-400">Data:</p>
+                                      <p className="text-gray-200 font-medium">
+                                        {new Date(deposit.created_at).toLocaleString('pt-BR')}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  
+                                  {deposit.external_reference !== 'N/A' && (
+                                    <div className="mt-2">
+                                      <p className="text-gray-400 text-xs">ID AbacatePay:</p>
+                                      <p className="text-gray-200 text-xs font-mono break-all">
+                                        {deposit.external_reference}
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                                
+                                <div className="ml-4">
+                                  <Button
+                                    onClick={() => approveDeposit(deposit.id, deposit.user_name)}
+                                    disabled={loading}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                    size="sm"
+                                  >
+                                    {loading ? '⏳' : '✅ Aprovar'}
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <CheckCircle className="w-12 h-12 text-green-400 mx-auto mb-2" />
+                        <p className="text-orange-200">Nenhum depósito pendente</p>
+                        <p className="text-orange-300 text-sm">Todos os depósitos foram processados!</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
