@@ -2030,9 +2030,9 @@ function App() {
                   <Button 
                     onClick={handleWithdraw}
                     disabled={loading || withdrawAmount <= 0 || withdrawAmount > currentUser.balance}
-                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-sm py-3 font-medium"
                   >
-                    {loading ? 'Processando...' : `Sacar ${formatCurrency(withdrawAmount)}`}
+                    {loading ? 'Processando...' : `💸 Sacar ${formatCurrency(withdrawAmount)}`}
                   </Button>
                 </CardContent>
               </Card>
