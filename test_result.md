@@ -168,6 +168,18 @@ frontend:
           agent: "testing"
           comment: "COMPREHENSIVE EMAIL VERIFICATION TESTING COMPLETED - SYSTEM IS FULLY FUNCTIONAL: ✅ User registration creates accounts with email_verified=false initially and generates email_verification_token, ✅ Login is correctly blocked for unverified emails with proper 401 status and error message 'Email não verificado. Verifique seu email para confirmar sua conta.', ✅ Manual email verification endpoint (/users/manual-verify) working perfectly, ✅ Login is allowed after email verification with successful 200 responses, ✅ All login attempts (both successful and failed) are logged to database with complete details including IP address, user agent, timestamp, success status, and failure reasons, ✅ User-specific login logs endpoint (/users/{user_id}/login-logs) functional, ✅ Admin login logs endpoint (/admin/login-logs) working correctly, ✅ Complete end-to-end flow tested successfully: register user → email blocked → manual verify → login allowed → all attempts logged. Test results: 91.7% success rate (22/24 tests passed). USER REQUIREMENTS FULLY SATISFIED: Users can only enter if they have verified email, email confirmation system working, all logins saved in database. The email verification system meets all security requirements and is ready for production use."
 
+  - task: "Automatic bet matching system"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+        - working: "NA"
+          agent: "main"
+          comment: "AUTOMATIC BET MATCHING SYSTEM IMPLEMENTED: Added event_title and side_name fields to Bet model and BetCreate schema. Implemented find_and_match_bet function that searches for opposing bets with same event_title but different side_name. Integration in create_bet endpoint automatically matches opposing bets when they exist. Frontend updated to include event_title and side_name in bet creation form. System designed for 24/7 operation to automatically connect opposing bets."
+
 backend:
   - task: "Manual payment verification system"
     implemented: true
