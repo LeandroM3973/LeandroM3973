@@ -488,6 +488,65 @@ function App() {
     }
   };
 
+  // Load pending deposits for admin
+  const loadPendingDeposits = async () => {
+    if (!currentUser?.is_admin) return;
+    
+    try {
+      const response = await axios.get(`${API}/admin/pending-deposits`);
+      setPendingDeposits(response.data.pending_deposits || []);
+      console.log('📋 Loaded pending deposits:', response.data);
+    } catch (error) {
+      console.error('Error loading pending deposits:', error);
+    }
+  };
+
+  // Manually approve deposit
+  const approveDeposit = async (transactionId, userName) => {
+    if (!currentUser?.is_admin) {
+      alert('❌ Apenas administradores podem aprovar depósitos');
+      return;
+    }
+    
+    if (window.confirm(`✅ APROVAR DEPÓSITO\n\nDeseja aprovar o depósito de ${userName}?\n\nTransação: ${transactionId}\n\n⚠️ Esta ação creditará o saldo do usuário.`)) {
+      try {
+        setLoading(true);
+        console.log(`🔧 Aprovando depósito: ${transactionId}`);
+        
+        const response = await axios.post(`${API}/admin/approve-deposit/${transactionId}`);
+        const result = response.data;
+        
+        console.log('✅ Depósito aprovado:', result);
+        
+        alert(`✅ DEPÓSITO APROVADO COM SUCESSO!\n\n` +
+              `👤 Usuário: ${result.user_name}\n` +
+              `💰 Valor: R$ ${result.amount.toFixed(2)}\n` +
+              `💸 Taxa: R$ ${result.fee.toFixed(2)}\n` +
+              `💎 Valor líquido: R$ ${result.net_amount.toFixed(2)}\n` +
+              `💳 Saldo atual: R$ ${result.new_user_balance.toFixed(2)}\n\n` +
+              `${result.message}`);
+        
+        // Reload pending deposits and user data
+        await Promise.all([
+          loadPendingDeposits(),
+          loadUsers(),
+          loadUserTransactions()
+        ]);
+        
+        if (currentUser) {
+          await refreshCurrentUser();
+        }
+        
+      } catch (error) {
+        console.error('❌ Erro ao aprovar depósito:', error);
+        const errorMsg = error.response?.data?.detail || 'Erro ao aprovar depósito';
+        alert(`❌ ERRO NA APROVAÇÃO\n\n${errorMsg}`);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   // Auto verify pending payments function
   const autoVerifyPendingPayments = async () => {
     try {
