@@ -3238,16 +3238,14 @@ class BetArenaAPITester:
         return True
 
 def main():
-    print("🥑 CRITICAL ABACATEPAY REAL WEBHOOK PAYLOAD INTEGRATION TEST - REVIEW REQUEST")
-    print("=" * 90)
-    print("REVIEW REQUEST: Test complete AbacatePay webhook integration with real payload - CRITICAL INTEGRATION TEST")
-    print("USER PROVIDED REAL WEBHOOK DATA: Successful payment with amount: 1000 cents, fee: 80 cents, method: PIX")
-    print("EXPECTED RESULTS: ✅ Real AbacatePay webhooks processed successfully")
-    print("                  ✅ Transaction matching works with multiple fallback methods")
-    print("                  ✅ User balances updated correctly (amount - R$ 0.80 fee)")
-    print("                  ✅ HTTPS webhook URLs generated securely")
-    print("                  ✅ Complete integration ready for production use")
-    print("=" * 90)
+    print("🔐 CRITICAL PASSWORD LOGIN BUG FIX TEST - REVIEW REQUEST")
+    print("=" * 80)
+    print("REVIEW REQUEST: Test critical password login bug fix that was just implemented")
+    print("BUG CONTEXT: Login endpoint was accessing user['password'] but database stores 'password_hash'")
+    print("AFFECTED USERS: Leandro.miguel.360@hotmail.com, Leandro.miguel.360@gmail.com, j.cs26@hotmail.com")
+    print("EXPECTED PASSWORD: 91608340")
+    print("PRIORITY: CRITICAL - This affects core user authentication")
+    print("=" * 80)
     
     tester = BetArenaAPITester()
     
@@ -3256,129 +3254,91 @@ def main():
     print("-" * 30)
     tester.test_health_check()
     
-    # Test 2: CRITICAL NEW FEATURE - Automatic Bet Matching System
-    print("\n🎯 CRITICAL NEW FEATURE: AUTOMATIC BET MATCHING SYSTEM")
-    print("-" * 65)
-    automatic_matching_success = tester.test_automatic_bet_matching_system_comprehensive()
+    # Test 2: CRITICAL PASSWORD LOGIN BUG FIX (PRIORITY - REVIEW REQUEST)
+    print("\n🔐 MAIN TEST: CRITICAL PASSWORD LOGIN BUG FIX (PRIORITY - REVIEW REQUEST)")
+    print("-" * 80)
+    password_login_success = tester.test_critical_password_login_bug_fix()
     
-    # Test 3: MAIN FOCUS - AbacatePay Real Webhook Payload Integration (CRITICAL - REVIEW REQUEST)
-    print("\n🥑 MAIN TEST: ABACATEPAY REAL WEBHOOK PAYLOAD INTEGRATION (CRITICAL - REVIEW REQUEST)")
-    print("-" * 90)
-    real_webhook_success = tester.test_abacatepay_real_webhook_payload_integration()
+    # Test 3: Email Verification System (Related to login)
+    print("\n📧 RELATED TEST: EMAIL VERIFICATION SYSTEM")
+    print("-" * 50)
+    email_verification_success = tester.test_email_verification_system_comprehensive()
     
-    # Test 3: Secondary - Manual Payment Verification System (CRITICAL)
-    print("\n🔧 SECONDARY TEST: MANUAL PAYMENT VERIFICATION SYSTEM (CRITICAL)")
-    print("-" * 70)
-    manual_payment_success = tester.test_manual_payment_verification_system()
+    # Test 4: Admin Access Control System (Related to user management)
+    print("\n🔒 RELATED TEST: ADMIN ACCESS CONTROL SYSTEM")
+    print("-" * 50)
+    admin_access_success = tester.test_admin_access_control_system()
     
-    # Test 4: AbacatePay Webhook Integration (CRITICAL)
-    print("\n🥑 ADDITIONAL TEST: ABACATEPAY WEBHOOK INTEGRATION (CRITICAL)")
-    print("-" * 65)
-    webhook_integration_success = tester.test_abacatepay_webhook_integration_critical()
-    
-    # Test 5: AbacatePay Balance Crediting System
-    print("\n💰 ADDITIONAL TEST: ABACATEPAY BALANCE CREDITING SYSTEM")
-    print("-" * 60)
-    balance_crediting_success = tester.test_abacatepay_balance_crediting_system()
+    # Test 5: AbacatePay Integration (Secondary)
+    print("\n🥑 SECONDARY TEST: ABACATEPAY INTEGRATION")
+    print("-" * 45)
+    abacatepay_success = tester.test_abacatepay_integration_comprehensive()
     
     # Print final results
-    print("\n" + "=" * 90)
+    print("\n" + "=" * 80)
     print(f"📊 FINAL TEST RESULTS:")
     print(f"   Tests passed: {tester.tests_passed}/{tester.tests_run}")
     print(f"   Success rate: {(tester.tests_passed/tester.tests_run)*100:.1f}%")
     
-    print(f"\n🎯 AUTOMATIC BET MATCHING SYSTEM RESULTS (CRITICAL NEW FEATURE):")
-    if automatic_matching_success:
-        print("   ✅ AUTOMATIC BET MATCHING SYSTEM IS WORKING CORRECTLY")
-        print("   ✅ Bets automatically match when users create opposing bets")
-        print("   ✅ Same event_title with different side_name triggers auto-matching")
-        print("   ✅ Brasil vs Argentina scenario works perfectly")
-        print("   ✅ Bet status changes correctly when matched (WAITING → ACTIVE)")
-        print("   ✅ Balance deductions and payout calculations work for matched bets")
-        print("   ✅ Only pending bets are considered for matching")
-        print("   ✅ System ready for 24/7 production deployment")
+    print(f"\n🔐 CRITICAL PASSWORD LOGIN BUG FIX RESULTS (PRIORITY - REVIEW REQUEST):")
+    if password_login_success:
+        print("   ✅ CRITICAL PASSWORD LOGIN BUG FIX IS WORKING CORRECTLY")
+        print("   ✅ All 3 affected users can login successfully")
+        print("   ✅ Password authentication is working correctly")
+        print("   ✅ Security is maintained - wrong passwords rejected")
+        print("   ✅ User data integrity is preserved")
+        print("   ✅ Login logging system is functional")
+        print("   ✅ Email verification system is working")
+        print("   ✅ CORE BUG RESOLVED: user['password_hash'] field access is working")
     else:
-        print("   ❌ AUTOMATIC BET MATCHING SYSTEM HAS CRITICAL ISSUES")
-        print("   🚨 This affects the core automatic matching functionality")
-        print("   🚨 System is NOT ready for 24/7 production deployment")
+        print("   ❌ CRITICAL PASSWORD LOGIN BUG FIX HAS ISSUES")
+        print("   🚨 This affects core user authentication functionality")
+        print("   🚨 Immediate attention required for affected users")
     
-    print(f"\n🥑 ABACATEPAY REAL WEBHOOK PAYLOAD INTEGRATION RESULTS (CRITICAL - REVIEW REQUEST):")
-    if real_webhook_success:
-        print("   ✅ REAL ABACATEPAY WEBHOOK PAYLOAD INTEGRATION IS WORKING CORRECTLY")
-        print("   ✅ Complete payment flow simulation works (create user, payment preference, webhook)")
-        print("   ✅ Real AbacatePay webhook payload structure processed successfully")
-        print("   ✅ Multiple transaction matching strategies work (external_reference, payment_id, amount)")
-        print("   ✅ Balance updates correctly: R$ 10.00 - R$ 0.80 = R$ 9.20 credit")
-        print("   ✅ Transaction status changes from PENDING to APPROVED")
-        print("   ✅ HTTPS webhook URLs generated securely")
-        print("   ✅ Real production amounts and fee handling work correctly")
-        print("   ✅ PIX payment method detection working")
-        print("   ✅ Production vs dev mode flags handled properly")
-        print("\n🎉 CRITICAL INTEGRATION TEST PASSED - REVIEW REQUEST FULLY SATISFIED!")
-        print("🎉 Real AbacatePay webhook integration ready for production use!")
-        
-        print(f"\n🔧 MANUAL PAYMENT VERIFICATION SYSTEM RESULTS:")
-        if manual_payment_success:
-            print("   ✅ Manual payment verification system also working correctly")
-            print("   ✅ Provides fallback solution for webhook issues")
-        else:
-            print("   ⚠️  Manual payment verification may have issues")
-            print("   ✅ But real webhook integration is the primary solution")
-        
-        print(f"\n🥑 ABACATEPAY WEBHOOK INTEGRATION RESULTS:")
-        if webhook_integration_success:
-            print("   ✅ Additional webhook integration tests also passed")
-            print("   ✅ Comprehensive webhook functionality confirmed")
-        else:
-            print("   ⚠️  Some additional webhook tests may have issues")
-            print("   ✅ But real webhook payload integration works correctly")
-        
-        print(f"\n💰 BALANCE CREDITING SYSTEM RESULTS:")
-        if balance_crediting_success:
-            print("   ✅ Balance crediting system is working correctly")
-            print("   ✅ All payment processing and balance updates functional")
-        else:
-            print("   ⚠️  Some balance crediting features may have minor issues")
-            print("   ✅ But real webhook integration handles balance updates correctly")
-        
-        return 0
+    print(f"\n📧 EMAIL VERIFICATION SYSTEM RESULTS:")
+    if email_verification_success:
+        print("   ✅ EMAIL VERIFICATION SYSTEM IS WORKING CORRECTLY")
+        print("   ✅ Users can only login with verified emails")
+        print("   ✅ Login attempts are properly logged")
+        print("   ✅ Email verification flow is functional")
     else:
-        print("   ❌ REAL ABACATEPAY WEBHOOK PAYLOAD INTEGRATION HAS CRITICAL ISSUES")
-        print("   🚨 This affects the core webhook integration with real AbacatePay data")
-        print("   🚨 REVIEW REQUEST NOT SATISFIED: Real webhook payload processing failed")
-        
-        print("\n🔧 RECOMMENDED FIXES FOR REAL WEBHOOK PAYLOAD INTEGRATION:")
-        print("   1. Check webhook endpoint processing of real AbacatePay payload structure")
-        print("   2. Verify transaction matching with external_reference, payment_id, and amount fallback")
-        print("   3. Test balance update calculation with real amounts (R$ 10.00 - R$ 0.80 = R$ 9.20)")
-        print("   4. Verify transaction status update from PENDING to APPROVED with real data")
-        print("   5. Check HTTPS webhook URL generation and security validation")
-        print("   6. Test PIX payment method detection from real webhook data")
-        print("   7. Verify production vs dev mode flag handling")
-        print("   8. Ensure multiple transaction matching strategies work with real data")
-        
-        print(f"\n🔧 MANUAL PAYMENT VERIFICATION SYSTEM RESULTS:")
-        if manual_payment_success:
-            print("   ✅ Manual payment verification is working")
-            print("   ✅ Provides fallback solution while webhook issues are resolved")
-        else:
-            print("   ❌ Both real webhook integration and manual verification have issues")
-        
-        print(f"\n🥑 ABACATEPAY WEBHOOK INTEGRATION RESULTS:")
-        if webhook_integration_success:
-            print("   ✅ Additional webhook integration tests passed")
-            print("   🚨 But real webhook payload integration has issues")
-        else:
-            print("   ❌ Multiple webhook integration tests have issues")
-        
-        print(f"\n💰 BALANCE CREDITING SYSTEM RESULTS:")
-        if balance_crediting_success:
-            print("   ✅ Balance crediting system is working")
-            print("   🚨 But real webhook payload integration has issues")
-        else:
-            print("   ❌ Multiple payment systems have issues - focus on real webhook integration first")
-        
-        return 1
+        print("   ❌ EMAIL VERIFICATION SYSTEM HAS ISSUES")
+        print("   🚨 This may affect login security")
+    
+    print(f"\n🔒 ADMIN ACCESS CONTROL SYSTEM RESULTS:")
+    if admin_access_success:
+        print("   ✅ ADMIN ACCESS CONTROL SYSTEM IS WORKING CORRECTLY")
+        print("   ✅ Only admin users can access judge functionality")
+        print("   ✅ Regular users are properly blocked from admin functions")
+        print("   ✅ Winner declaration system is functional")
+    else:
+        print("   ❌ ADMIN ACCESS CONTROL SYSTEM HAS ISSUES")
+        print("   🚨 This may affect admin functionality")
+    
+    print(f"\n🥑 ABACATEPAY INTEGRATION RESULTS:")
+    if abacatepay_success:
+        print("   ✅ ABACATEPAY INTEGRATION IS WORKING CORRECTLY")
+        print("   ✅ Payment preferences are created successfully")
+        print("   ✅ Backend payment system is operational")
+    else:
+        print("   ❌ ABACATEPAY INTEGRATION HAS ISSUES")
+        print("   🚨 This may affect payment functionality")
+    
+    # Overall assessment
+    critical_systems_working = password_login_success and email_verification_success
+    
+    print(f"\n🎯 OVERALL ASSESSMENT:")
+    if critical_systems_working:
+        print("   ✅ CRITICAL SYSTEMS ARE WORKING CORRECTLY")
+        print("   ✅ Core authentication functionality is operational")
+        print("   ✅ Password login bug fix has been successfully implemented")
+        print("   ✅ System is ready for user authentication")
+    else:
+        print("   ❌ CRITICAL SYSTEMS HAVE ISSUES")
+        print("   🚨 Core authentication functionality needs attention")
+        print("   🚨 Password login bug fix may need additional work")
+    
+    return critical_systems_working
 
 if __name__ == "__main__":
     sys.exit(main())
