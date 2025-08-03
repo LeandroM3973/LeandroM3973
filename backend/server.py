@@ -1459,9 +1459,14 @@ async def get_all_bets():
     bets = await db.bets.find().sort("created_at", -1).to_list(1000)
     return [Bet(**bet) for bet in bets]
 
-@api_router.get("/bets/waiting", response_model=List[Bet])
+@api_router.get("/bets/waiting")
 async def get_waiting_bets():
-    bets = await db.bets.find({"status": BetStatus.WAITING}).sort("created_at", -1).to_list(1000)
+    """Get all waiting bets that haven't expired"""
+    current_time = datetime.utcnow()
+    bets = await db.bets.find({
+        "status": BetStatus.WAITING,
+        "expires_at": {"$gt": current_time}
+    }).to_list(length=1000)
     
     # Fix for legacy bets without new required fields
     fixed_bets = []
