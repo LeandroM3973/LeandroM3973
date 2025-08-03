@@ -1947,9 +1947,9 @@ function App() {
                   <Button 
                     onClick={handleDeposit}
                     disabled={loading || depositAmount < 10}
-                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                    className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-sm py-3 font-medium"
                   >
-                    {loading ? 'Processando...' : `Depositar ${formatCurrency(depositAmount)}`}
+                    {loading ? 'Processando...' : `💳 Depositar ${formatCurrency(depositAmount)}`}
                   </Button>
                 </CardContent>
               </Card>
