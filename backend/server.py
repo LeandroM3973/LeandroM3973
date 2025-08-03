@@ -1981,6 +1981,47 @@ async def fix_pending_payments():
         "emergency_fix": True
     }
 
+@api_router.post("/admin/test-user-passwords")
+async def test_user_passwords(test_data: dict):
+    """ADMIN: Test multiple passwords for a user to find the correct one"""
+    email = test_data.get("email")
+    passwords_to_test = test_data.get("passwords", [])
+    
+    if not email or not passwords_to_test:
+        raise HTTPException(status_code=400, detail="Email and passwords array required")
+    
+    # Find user by email
+    user = await db.users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    results = []
+    
+    for password in passwords_to_test:
+        try:
+            # Test password
+            password_match = verify_password(password, user["password"])
+            results.append({
+                "password": password,
+                "matches": password_match
+            })
+            
+            if password_match:
+                print(f"✅ CORRECT PASSWORD FOUND for {user['name']}: {password}")
+        except Exception as e:
+            results.append({
+                "password": password,
+                "matches": False,
+                "error": str(e)
+            })
+    
+    return {
+        "user_name": user["name"],
+        "user_email": email,
+        "test_results": results,
+        "correct_passwords": [r["password"] for r in results if r["matches"]]
+    }
+
 @api_router.post("/admin/reset-user-password")
 async def admin_reset_user_password(reset_data: dict):
     """ADMIN: Reset user password for emergency recovery"""
