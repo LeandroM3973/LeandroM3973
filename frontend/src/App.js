@@ -584,7 +584,8 @@ function App() {
               `💸 Taxa: R$ ${result.fee.toFixed(2)}\n` +
               `💎 Valor líquido: R$ ${result.net_amount.toFixed(2)}\n` +
               `💳 Saldo atual: R$ ${result.new_user_balance.toFixed(2)}\n\n` +
-              `${result.message}`);
+              `${result.message}\n\n` +
+              `ℹ️ O usuário será notificado automaticamente em até 30 segundos, ou pode usar o botão "🔄 Atualizar" para ver o saldo imediatamente.`);
         
         // Reload pending deposits and user data
         await Promise.all([
