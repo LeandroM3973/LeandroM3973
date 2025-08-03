@@ -487,6 +487,40 @@ function App() {
     }
   };
 
+  // Auto verify pending payments function
+  const autoVerifyPendingPayments = async () => {
+    try {
+      setLoading(true);
+      console.log('🔄 Verificando pagamentos pendentes automaticamente...');
+      
+      const response = await axios.post(`${API}/admin/auto-verify-payments`);
+      const result = response.data;
+      
+      console.log('✅ Verificação automática concluída:', result);
+      
+      if (result.processed_count > 0) {
+        alert(`✅ VERIFICAÇÃO AUTOMÁTICA CONCLUÍDA!\n\n` +
+              `🔄 Processados: ${result.processed_count} pagamentos\n` +
+              `💰 Saldos dos usuários foram atualizados automaticamente!\n\n` +
+              `Recarregue a página para ver as atualizações.`);
+              
+        // Reload data
+        await Promise.all([loadUsers(), loadBets(), loadUserBets(), loadUserTransactions()]);
+        if (currentUser) {
+          await refreshCurrentUser();
+        }
+      } else {
+        alert(`ℹ️ VERIFICAÇÃO CONCLUÍDA\n\nNenhum pagamento pendente foi encontrado para processar.`);
+      }
+      
+    } catch (error) {
+      console.error('❌ Erro na verificação automática:', error);
+      alert(error.response?.data?.detail || 'Erro na verificação automática de pagamentos');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Manual payment approval function (for testing)
   const manualApprovePayment = async (transactionId, amount) => {
     if (!transactionId || !amount) {
