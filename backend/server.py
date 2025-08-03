@@ -1978,6 +1978,40 @@ async def fix_pending_payments():
         "emergency_fix": True
     }
 
+@api_router.post("/admin/reset-user-password")
+async def admin_reset_user_password(reset_data: dict):
+    """ADMIN: Reset user password for emergency recovery"""
+    email = reset_data.get("email")
+    new_password = reset_data.get("new_password")
+    
+    if not email or not new_password:
+        raise HTTPException(status_code=400, detail="Email and new_password required")
+    
+    # Find user by email
+    user = await db.users.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Hash new password
+    hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+    
+    # Update user password and ensure email is verified
+    await db.users.update_one(
+        {"email": email},
+        {"$set": {
+            "password": hashed_password,
+            "email_verified": True,  # Ensure user can login
+            "email_verification_token": None  # Clear any pending token
+        }}
+    )
+    
+    return {
+        "message": f"Password reset successfully for {user['name']}",
+        "email": email,
+        "user_name": user["name"],
+        "email_verified": True
+    }
+
 @api_router.post("/debug/check-password/{user_id}")
 async def debug_check_password(user_id: str, password_data: dict):
     """DEBUG: Check if password matches for troubleshooting"""
