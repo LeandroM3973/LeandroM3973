@@ -2787,7 +2787,12 @@ def main():
     print("-" * 30)
     tester.test_health_check()
     
-    # Test 2: MAIN FOCUS - AbacatePay Real Webhook Payload Integration (CRITICAL - REVIEW REQUEST)
+    # Test 2: CRITICAL NEW FEATURE - Automatic Bet Matching System
+    print("\n🎯 CRITICAL NEW FEATURE: AUTOMATIC BET MATCHING SYSTEM")
+    print("-" * 65)
+    automatic_matching_success = tester.test_automatic_bet_matching_system_comprehensive()
+    
+    # Test 3: MAIN FOCUS - AbacatePay Real Webhook Payload Integration (CRITICAL - REVIEW REQUEST)
     print("\n🥑 MAIN TEST: ABACATEPAY REAL WEBHOOK PAYLOAD INTEGRATION (CRITICAL - REVIEW REQUEST)")
     print("-" * 90)
     real_webhook_success = tester.test_abacatepay_real_webhook_payload_integration()
