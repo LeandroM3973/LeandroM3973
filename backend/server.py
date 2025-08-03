@@ -1538,9 +1538,9 @@ async def get_user_bets(user_id: str):
     
     return fixed_bets
 
-@api_router.get("/bets/invite/{invite_code}", response_model=Bet)
+@api_router.get("/bets/invite/{invite_code}")
 async def get_bet_by_invite(invite_code: str):
-    """Get bet details by invite code"""
+    """Get bet details by invite code with expiration check and legacy compatibility"""
     bet = await db.bets.find_one({"invite_code": invite_code})
     if not bet:
         raise HTTPException(status_code=404, detail="Convite não encontrado")
@@ -1550,10 +1550,21 @@ async def get_bet_by_invite(invite_code: str):
     if bet["expires_at"] < current_time and bet["status"] == BetStatus.WAITING:
         raise HTTPException(status_code=410, detail="Este convite expirou")
     
-    if bet["status"] != BetStatus.WAITING:
-        raise HTTPException(status_code=400, detail="Esta aposta não está mais disponível")
+    # Add default values for missing required fields (legacy compatibility)
+    if "side" not in bet:
+        bet["side"] = "A"  # Default side
+    if "event_id" not in bet:
+        bet["event_id"] = f"legacy_{bet['id'][:8]}"  # Generate legacy event_id
+    if "side_name" not in bet:
+        bet["side_name"] = "Lado A"  # Default side name
+    if "event_title" not in bet:
+        bet["event_title"] = bet.get("event_description", "Evento Legacy")  # Use description as title
     
-    return Bet(**bet)
+    try:
+        return Bet(**bet)
+    except Exception as e:
+        print(f"❌ Failed to process bet {bet.get('id', 'unknown')}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor ao processar convite")
 
 @api_router.post("/bets/join-by-invite/{invite_code}", response_model=Bet)
 async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
