@@ -1,102 +1,100 @@
 <analysis>
-The previous AI engineer successfully brought the BetArena application from a conceptual MVP to a robust, functional platform, focusing heavily on payment system integration and critical bug fixes. Initially, the project revolved around Mercado Pago, but a significant and complex migration to AbacatePay was undertaken, involving both frontend and backend adjustments, meticulous debugging of API calls, and environment variable management. Key challenges addressed included persistent payment failures due to incorrect SDK usage, invalid URLs, and mobile responsiveness. The engineer also implemented crucial features like email verification, login logging, and a sophisticated admin-only Judge panel. The final stages focused on perfecting the AbacatePay webhook integration, including handling real-world payloads, enforcing HTTPS, and implementing idempotency to prevent duplicate notifications. The trajectory concludes with the implementation of an automatic bet matching system.
+The previous AI engineer successfully stabilized and enhanced the BetArena application, transitioning it from an MVP to a more robust platform. Key areas of focus included a complex migration from Mercado Pago to AbacatePay, which involved extensive debugging of webhook integration, and implementation of an automatic bet matching system. Critical bug fixes addressed persistent issues such as disappearing user balances due to failed payment processing, incorrect fee deductions, and login failures. Significant efforts were also dedicated to improving mobile responsiveness and refining the invite system. A crucial aspect of the work involved rectifying data inconsistencies and ensuring proper handling of historical data in the database. The engineer consistently demonstrated a methodical approach, utilizing debugging, creating temporary test endpoints, and systematically addressing reported bugs to ensure application stability and functionality.
 </analysis>
 
 <product_requirements>
-The BetArena application is a two-player betting platform where users deposit funds, and the winner claims the opponent's deposit. Core features include secure user authentication (email/password with bcrypt hashing), an invite system for private bets (20-minute timeout with automatic refunds), and a real-money payment system for deposits and payouts. Initially, Mercado Pago was integrated but later fully migrated to AbacatePay, supporting fixed-fee PIX transactions. A 20% platform fee is applied to winnings. Key security and usability enhancements include enforced email verification for logins, comprehensive logging of all login attempts, and responsive UI design for mobile devices. Crucially, access to the judge panel, where bet outcomes are decided, must be restricted exclusively to administrators, ensuring that only the platform owner determines winners. The system should also automatically match opposing bets between users for the same event.
+The BetArena application is a two-player betting platform featuring secure user authentication (email/password with bcrypt), an invite system for private bets (20-minute timeout with automatic refunds), and a real-money payment system for deposits and payouts. Initially, Mercado Pago was integrated, but a full migration to AbacatePay for fixed-fee PIX transactions was completed. A 20% platform fee applies only to winnings, *not* to deposits (deposits should be credited fully to the user, with the payment gateway fee absorbed by the platform). Key security and usability features include enforced email verification, comprehensive login attempt logging, and a responsive UI. Access to the judge panel for deciding bet outcomes must be restricted to administrators. The system also requires automatic matching of opposing bets for the same event, ensuring that user balances are correctly debited for bets and credited for winnings. The application must maintain 24/7 availability and data integrity for user credentials and balances.
 </product_requirements>
 
 <key_technical_concepts>
 - **FastAPI**: Python web framework for backend APIs.
 - **React**: JavaScript library for frontend UI.
 - **MongoDB**: NoSQL database for data storage.
-- **AbacatePay SDK**: Current payment gateway integration for PIX.
-- **bcrypt**: Password hashing for user authentication.
-- **React Router DOM**: Client-side routing.
-- **SendGrid**: Email service (planned for 'Forgot Password' and email confirmation).
-- **Webhook Idempotency**: Mechanism to prevent duplicate processing of server-side notifications.
+- **AbacatePay SDK**: Current payment gateway for PIX transactions.
+- **bcrypt**: Password hashing for secure authentication.
+- **Webhook Idempotency**: Prevents duplicate processing of payment notifications.
+- **Pydantic**: Data validation for API models.
+- **UUIDs**: Used for unique identifiers (instead of MongoDB ObjectIDs).
 </key_technical_concepts>
 
 <code_architecture>
-The application follows a full-stack architecture with a React frontend, FastAPI backend, and MongoDB database.
+The application uses a full-stack architecture: React frontend, FastAPI backend, and MongoDB database.
 
 
 
 -   ****:
-    -   **Summary**: Core FastAPI application for user management, bets, payments, and admin functions.
+    -   **Summary**: Centralizes all backend logic for user management, betting, payments, and admin features. It handles API routes, database interactions, and business logic.
     -   **Changes Made**:
-        -   Full migration from Mercado Pago to AbacatePay, including SDK replacement and API call adjustments.
-        -    environment variable introduced for AbacatePay callbacks.
-        -   AbacatePay SDK updated to use  class for billing creation.
-        -   Added email validation and fallback for AbacatePay billing.
-        -   Webhook handling improved:  now included in AbacatePay billing,  parsing fixed for real payloads,  import added, and detailed logging.
-        -   Implemented webhook idempotency using MD5 hashes and a 5-minute cache.
-        -   User model updated to include  and  fields.
-        -   New  model created to track all login attempts (IP, user agent, timestamp).
-        -   Login endpoint modified to enforce email verification and log logins.
-        -   Added  and  endpoints for administrative control.
-        -   Admin check middleware added to  endpoint.
-        -   Added  and  functions to enforce HTTPS for all webhook URLs.
-        -    model fields (, ) fixed to ensure correct data on creation, addressing payment processing errors.
-        -   Implemented  logic and integrated it into  endpoint for automatic bet matching.
-        -   Added  and  to  model.
+        -   Full migration from Mercado Pago to AbacatePay, including SDK and API adjustments.
+        -    environment variable support for AbacatePay callbacks.
+        -   Robust webhook handling: correct  parsing, detailed logging, HTTPS enforcement for webhook URLs, and idempotency using MD5 hashes and a 5-minute cache.
+        -   User model updated (, );  model added for tracking logins.
+        -   Admin endpoints (, ) and middleware for .
+        -    model fixed (, ) for accurate data.
+        -   Implemented  logic for automatic bet matching in  endpoint;  and  added to  model.
+        -   Added demo/admin endpoints:  for testing,  and  for emergency balance correction,  for emergency login fixes,  for one-time historical fee refunds.
+        -   Manual payment approval endpoints (, ) for admin.
+        -   Fixed  to .
+        -   Fixed password field consistency ( vs ) and  logic.
+        -   Ensured legacy bets without  and  are handled with default values in , , , , .
+        -   Crucially, updated payment processing to ensure AbacatePay fees are absorbed by the platform, crediting the full deposit amount to the user.
 
 -   ****:
-    -   **Summary**: Main React component managing UI, routing, and backend interaction.
+    -   **Summary**: The main React component, managing UI state, routing, user interactions, and all API calls to the backend.
     -   **Changes Made**:
-        -   Mercado Pago elements removed, AbacatePay UI integrated (dialogues, fixed fees).
-        -   AbacatePay frontend SDK import and usage removed (as it's a Node.js only SDK, frontend now directly calls backend).
-        -   Improved mobile responsiveness for payment dialogs and general UI.
-        -   User session persistence fixed with  to load data from .
-        -   Added  function and  to refresh user data from backend, ensuring  status is reflected.
-        -   Implemented manual payment status check/approval UI for fallback (yellow card with buttons).
-        -   Added  and  functions for manual payment verification.
-        -   Integrated UI for email verification status and manual verification.
-        -   Admin badge added to header.
-        -   Judge tab visibility restricted to admin users ().
-        -   Bet creation form updated to include  and  for automatic matching.
+        -   UI adapted for AbacatePay (dialogs, fixed fees). Removed client-side SDK usage.
+        -   Improved mobile responsiveness for payment dialogs and general UI, especially the header (logout button visibility).
+        -   User session persistence via  and  for  status.
+        -   Implemented UI for email verification.
+        -   Admin badge and Judge tab visibility tied to .
+        -   Bet creation form updated to include  and .
+        -   Added manual payment status check/approval UI (yellow card, buttons).
+        -   Implemented frontend logic for admin manual deposit approval, including listing and approving.
+        -   Added auto-refresh/polling for user balance and a manual Atualizar button for immediate data refresh.
+        -   Improved error handling in  to prevent  errors.
+        -   Updated  to be sent in the  payload and added to the form.
+        -   Adjusted display of deposit values to reflect platform absorbing AbacatePay fees.
+        -   Added admin UI for historical balance correction and emergency password reset.
 
 -   ****:
-    -   **Summary**: Entry point configuring React app and .
-    -   **Changes Made**: Configured  and  for .
+    -   **Summary**: The application's entry point, responsible for rendering the root React component and configuring routing.
+    -   **Changes Made**: Configured  and  to properly integrate .
 
 -   ****:
-    -   **Summary**: Handles invite links, parses codes, fetches bet details, and allows accepting invites.
-    -   **Changes Made**: Created from scratch.
+    -   **Summary**: Handles invite links, parses codes, fetches bet details, and allows users to accept invites for private bets.
+    -   **Changes Made**: Created from scratch. Improved error message display to be dynamic (e.g., Convite Expirado vs. generic Convite Inválido).
 
 -   ** & **:
-    -   **Summary**: Environment variable files for backend (MongoDB URL, AbacatePay credentials) and frontend (Backend URL, payment provider config).
+    -   **Summary**: Store environment variables for backend (MongoDB URL, AbacatePay credentials) and frontend (Backend URL, payment provider config).
     -   **Changes Made**:
-        -    and  added for backend.
-        -    added to frontend .
-        -    in frontend adjusted to  then to .
-        -    added to backend  ().
+        -   ,  added to backend.
+        -    added to frontend.
+        -   Crucially,  in frontend and  in backend were updated to reflect the correct, active preview URLs, resolving communication issues.
 
--   ****:
-    -   **Summary**: Initially created for frontend AbacatePay SDK interaction.
-    -   **Changes Made**: Removed as AbacatePay has no client-side SDK.
-
--   ****:
-    -   **Summary**: Initially created for configuring AbacatePay frontend SDK.
-    -   **Changes Made**: Removed as AbacatePay has no client-side SDK.
+-   ** & **:
+    -   **Summary**: Previously designed for frontend AbacatePay SDK interaction.
+    -   **Changes Made**: Both files were removed as AbacatePay does not have a client-side SDK, and all payment interactions shifted to the backend.
 </code_architecture>
 
 <pending_tasks>
--   **Forgot Password Feature**: Implement a Forgot Password functionality that sends a confirmation email for password resetting using SendGrid. (Backend setup with SendGrid has started but paused, user still needs to provide credentials).
+-   **Forgot Password Feature**: Implement a Forgot Password functionality that sends a confirmation email for password resetting using SendGrid. (Backend setup with SendGrid has started but is paused, user still needs to provide credentials).
 </pending_tasks>
 
 <current_work>
-Immediately before this summary request, the AI engineer was working on integrating and validating the AbacatePay webhook for automatic balance crediting and implementing an automatic bet matching system.
+Immediately before this summary request, the AI engineer successfully resolved a critical login issue reported by the user. The user reported that a test user () could not log in with their old password, despite previous login-related fixes.
 
-The core issue of the balance not updating after payment (despite the simulated tests showing success) was identified as the real AbacatePay webhook not reaching the backend, primarily due to an incorrect webhook URL and a misunderstanding of how AbacatePay webhooks are configured (dashboard vs. API). The  URL was found to be offline, and the system was updated to use the active  URL. Backend webhook URL generation was fixed to always use HTTPS. The webhook processing logic was made more robust to correctly parse real AbacatePay payloads (which differ from expectations, specifically regarding ). A manual payment verification/approval system was also implemented in the frontend and backend as a fallback, with a dedicated UI.
+The investigation revealed that during prior debugging, the AI engineer had inadvertently reset Leandro's password to a generic leandro123, overwriting his original password. The core problem was identified as an inconsistency in the backend's login logic: the system was attempting to verify  (a non-existent field) while storing the hash under . Additionally, the  function was incorrectly attempting to  an already-bytes object, leading to an .
 
-A critical bug of duplicate notifications was addressed by implementing an idempotency check in the backend webhook processor using MD5 hashes and a 5-minute cache. This prevents multiple creditings for a single payment.
+The AI engineer implemented the following fixes:
+1.  **Corrected Password Field Lookup**: Modified the login endpoint in  to correctly retrieve the hashed password from the  field.
+2.  **Adjusted Password Verification**: Updated the  function to correctly handle password hashes that are already in byte format, preventing redundant  calls.
+3.  **Password Restoration**: After confirming the specific user  still existed and asking the user for the original password (), the AI engineer used a previously implemented emergency reset endpoint () to restore Leandro's password to its original value.
+4.  **Comprehensive Testing**: Verified that Leandro, along with other test users (Pedro, João), could successfully log in using their respective passwords.
+5.  **Clean-up**: Removed temporary debug endpoints introduced during the troubleshooting process for security.
 
-The latest major feature being implemented is the **automatic matching of opposing bets**. This involves adding  and  fields to the  model and  schema, and modifying the  backend endpoint to actively search for and match pending bets that align on event and opposite side. The frontend  was updated to reflect these new fields in the bet creation form.
-
-At the time of this summary, the automatic bet matching system has been implemented on both backend and frontend. The user's last communication confirmed the site is intended to run 24/7, and the system is designed to support this with automatic processes.
+As of this summary, the login system is fully functional, all user data (including balances and admin status) is preserved, and user login experience has been restored to normal without any data loss.
 </current_work>
 
 <optional_next_step>
-Test the newly implemented automatic bet matching feature thoroughly to ensure it connects opposing bets as expected.
+I will now work on implementing the Forgot Password feature using SendGrid, as outlined in the pending tasks.
 </optional_next_step>
