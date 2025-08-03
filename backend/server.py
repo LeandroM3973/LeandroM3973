@@ -1787,9 +1787,8 @@ async def auto_verify_pending_payments():
                 }}
             )
             
-            # Credit user balance
-            fee = transaction.get("fee", 0.80)
-            net_amount = transaction["amount"] - fee
+            # Credit user balance - FULL AMOUNT (AbacatePay fee absorbed by platform)
+            net_amount = transaction["amount"]  # User gets full amount, platform absorbs AbacatePay fee
             await db.users.update_one(
                 {"id": transaction["user_id"]},
                 {"$inc": {"balance": net_amount}}
