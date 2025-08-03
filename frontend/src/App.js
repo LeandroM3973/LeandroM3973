@@ -530,9 +530,10 @@ function App() {
     console.log('Current user:', currentUser);
     console.log('New bet data:', newBet);
     
-    if (!currentUser || !newBet.event_description.trim() || !newBet.event_id.trim() || !newBet.side_name.trim()) {
+    if (!currentUser || !newBet.event_title.trim() || !newBet.event_description.trim() || !newBet.event_id.trim() || !newBet.side_name.trim()) {
       console.log('❌ Validation failed:', {
         hasUser: !!currentUser,
+        hasTitle: !!newBet.event_title.trim(),
         hasDescription: !!newBet.event_description.trim(),
         hasEventId: !!newBet.event_id.trim(),
         hasSideName: !!newBet.side_name.trim()
