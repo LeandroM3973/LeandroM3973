@@ -1006,8 +1006,8 @@ async def process_abacatepay_payment_success(webhook_data: Dict[str, Any]):
             user = await db.users.find_one({"id": transaction["user_id"]})
             old_balance = user.get("balance", 0) if user else 0
             
-            # Update user balance atomically
-            credit_amount = amount - fee
+            # Credit user balance - FULL AMOUNT (AbacatePay fee absorbed by platform)
+            credit_amount = amount  # User gets full amount, platform absorbs AbacatePay fee
             update_result = await db.users.update_one(
                 {"id": transaction["user_id"]},
                 {"$inc": {"balance": credit_amount}}
