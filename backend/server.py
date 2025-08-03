@@ -1566,15 +1566,14 @@ async def get_bet_by_invite(invite_code: str):
         print(f"❌ Failed to process bet {bet.get('id', 'unknown')}: {str(e)}")
         raise HTTPException(status_code=500, detail="Erro interno do servidor ao processar convite")
 
-@api_router.post("/bets/join-by-invite/{invite_code}", response_model=Bet)
+@api_router.post("/bets/join-by-invite/{invite_code}")
 async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
-    """Join bet using invite code"""
-    # Get the bet by invite code
+    """Join a bet using invite code with legacy compatibility"""
     bet = await db.bets.find_one({"invite_code": invite_code})
     if not bet:
         raise HTTPException(status_code=404, detail="Convite não encontrado")
     
-    # Check if bet is still valid
+    # Check if bet is still valid (not expired)
     current_time = datetime.utcnow()
     if bet["expires_at"] < current_time and bet["status"] == BetStatus.WAITING:
         raise HTTPException(status_code=410, detail="Este convite expirou")
@@ -1582,52 +1581,73 @@ async def join_bet_by_invite(invite_code: str, join_data: JoinBet):
     if bet["status"] != BetStatus.WAITING:
         raise HTTPException(status_code=400, detail="Esta aposta não está mais disponível")
     
-    if bet["creator_id"] == join_data.user_id:
-        raise HTTPException(status_code=400, detail="Você não pode participar da sua própria aposta")
+    # Add default values for missing required fields (legacy compatibility)
+    if "side" not in bet:
+        bet["side"] = "A"  # Default side
+    if "event_id" not in bet:
+        bet["event_id"] = f"legacy_{bet['id'][:8]}"  # Generate legacy event_id
+    if "side_name" not in bet:
+        bet["side_name"] = "Lado A"  # Default side name
+    if "event_title" not in bet:
+        bet["event_title"] = bet.get("event_description", "Evento Legacy")  # Use description as title
     
-    # Check if user exists and has enough balance
-    user = await db.users.find_one({"id": join_data.user_id})
+    user_id = join_data.user_id
+    
+    # Check if user has enough balance
+    user = await db.users.find_one({"id": user_id})
     if not user:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     
     if user["balance"] < bet["amount"]:
         raise HTTPException(status_code=400, detail="Saldo insuficiente")
     
-    # Deduct amount from opponent's balance
+    # Deduct amount from joiner's balance
     await db.users.update_one(
-        {"id": join_data.user_id},
+        {"id": user_id},
         {"$inc": {"balance": -bet["amount"]}}
     )
     
-    # Create bet debit transaction for opponent
-    fee = 0.0  # No fee for bet join
-    net_amount = bet["amount"]
+    # Update bet with opponent information
+    await db.bets.update_one(
+        {"id": bet["id"]},
+        {"$set": {
+            "opponent_id": user_id,
+            "opponent_name": user["name"],
+            "status": BetStatus.ACTIVE,
+            "updated_at": current_time
+        }}
+    )
     
+    # Create transaction record for joiner
     transaction = Transaction(
-        user_id=join_data.user_id,
+        user_id=user_id,
         amount=bet["amount"],
-        fee=fee,
-        net_amount=net_amount,
-        type=TransactionType.BET_DEBIT,
+        fee=0.0,
+        net_amount=bet["amount"],
+        type=TransactionType.BET,
         status=TransactionStatus.APPROVED,
-        description=f"Aposta aceita - {bet['event_description']}"
+        description=f"Entrada em aposta: {bet.get('event_description', 'Evento')}"
     )
     await db.transactions.insert_one(transaction.dict())
     
-    # Update bet with opponent info
-    await db.bets.update_one(
-        {"invite_code": invite_code},
-        {
-            "$set": {
-                "opponent_id": join_data.user_id,
-                "opponent_name": user["name"],
-                "status": BetStatus.ACTIVE
-            }
-        }
-    )
+    # Get updated bet
+    updated_bet = await db.bets.find_one({"id": bet["id"]})
     
-    updated_bet = await db.bets.find_one({"invite_code": invite_code})
-    return Bet(**updated_bet)
+    # Add default values for legacy compatibility if needed
+    if "side" not in updated_bet:
+        updated_bet["side"] = "A"
+    if "event_id" not in updated_bet:
+        updated_bet["event_id"] = f"legacy_{updated_bet['id'][:8]}"
+    if "side_name" not in updated_bet:
+        updated_bet["side_name"] = "Lado A"
+    if "event_title" not in updated_bet:
+        updated_bet["event_title"] = updated_bet.get("event_description", "Evento Legacy")
+    
+    try:
+        return Bet(**updated_bet)
+    except Exception as e:
+        print(f"❌ Failed to process updated bet {updated_bet.get('id', 'unknown')}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Erro interno do servidor ao processar aposta atualizada")
 
 # Health Check
 @api_router.get("/")
