@@ -1462,7 +1462,26 @@ async def get_all_bets():
 @api_router.get("/bets/waiting", response_model=List[Bet])
 async def get_waiting_bets():
     bets = await db.bets.find({"status": BetStatus.WAITING}).sort("created_at", -1).to_list(1000)
-    return [Bet(**bet) for bet in bets]
+    
+    # Fix for legacy bets without new required fields
+    fixed_bets = []
+    for bet in bets:
+        # Add default values for missing required fields
+        if "side" not in bet:
+            bet["side"] = "A"  # Default side
+        if "event_id" not in bet:
+            bet["event_id"] = f"legacy_{bet['id'][:8]}"  # Generate legacy event_id
+        if "side_name" not in bet:
+            bet["side_name"] = "Lado A"  # Default side name
+        if "event_title" not in bet:
+            bet["event_title"] = bet.get("event_description", "Evento Legacy")  # Use description as title
+        
+        try:
+            fixed_bets.append(Bet(**bet))
+        except Exception as e:
+            print(f"❌ Failed to process bet {bet.get('id', 'unknown')}: {str(e)}")
+    
+    return fixed_bets
 
 @api_router.get("/bets/user/{user_id}", response_model=List[Bet])
 async def get_user_bets(user_id: str):
