@@ -608,6 +608,46 @@ function App() {
     }
   };
 
+  const [resetPasswordEmail, setResetPasswordEmail] = useState('');
+  const [resetPasswordNew, setResetPasswordNew] = useState('');
+
+  // Reset user password (admin only)
+  const resetUserPassword = async () => {
+    if (!currentUser?.is_admin) {
+      alert('❌ Apenas administradores podem resetar senhas');
+      return;
+    }
+    
+    if (!resetPasswordEmail || !resetPasswordNew) {
+      alert('❌ Preencha email e nova senha');
+      return;
+    }
+    
+    if (window.confirm(`⚠️ RESET DE SENHA\n\nDeseja resetar a senha do usuário:\n${resetPasswordEmail}\n\nNova senha: ${resetPasswordNew}\n\n⚠️ Esta ação não pode ser desfeita.`)) {
+      try {
+        setLoading(true);
+        
+        const response = await axios.post(`${API}/admin/reset-user-password`, {
+          email: resetPasswordEmail,
+          new_password: resetPasswordNew
+        });
+        
+        console.log('✅ Senha resetada:', response.data);
+        
+        alert(`✅ SENHA RESETADA COM SUCESSO!\n\n👤 Usuário: ${response.data.user_name}\n📧 Email: ${response.data.email}\n🔑 Nova senha: ${resetPasswordNew}\n✅ Email verificado automaticamente\n\n📋 O usuário já pode fazer login com a nova senha.`);
+        
+        setResetPasswordEmail('');
+        setResetPasswordNew('');
+        
+      } catch (error) {
+        console.error('❌ Erro ao resetar senha:', error);
+        alert(error.response?.data?.detail || 'Erro ao resetar senha de usuário');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   // Fix historical deposits function
   const fixHistoricalDeposits = async () => {
     if (!currentUser?.is_admin) {
