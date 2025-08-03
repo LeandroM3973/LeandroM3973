@@ -1727,9 +1727,9 @@ async def admin_approve_deposit(transaction_id: str):
             }}
         )
         
-        # Credit user balance
-        fee = transaction.get("fee", 0.80)
-        net_amount = transaction["amount"] - fee
+        # Credit user balance - FULL AMOUNT (AbacatePay fee absorbed by platform)
+        net_amount = transaction["amount"]  # User gets full amount, platform absorbs AbacatePay fee
+        platform_fee = transaction.get("fee", 0.80)  # Platform absorbs this fee
         
         await db.users.update_one(
             {"id": transaction["user_id"]},
@@ -1739,7 +1739,7 @@ async def admin_approve_deposit(transaction_id: str):
         # Get updated user balance
         updated_user = await db.users.find_one({"id": transaction["user_id"]})
         
-        print(f"✅ Deposit approved: {transaction_id}, User: {user['name']}, Amount: R$ {transaction['amount']}, Net: R$ {net_amount}, New Balance: R$ {updated_user['balance']}")
+        print(f"✅ Deposit approved: {transaction_id}, User: {user['name']}, Amount: R$ {transaction['amount']}, Net: R$ {net_amount} (FULL), Platform Fee: R$ {platform_fee}, New Balance: R$ {updated_user['balance']}")
         
         return {
             "transaction_id": transaction_id,
@@ -1748,8 +1748,8 @@ async def admin_approve_deposit(transaction_id: str):
             "user_name": user["name"],
             "user_email": user["email"],
             "amount": transaction["amount"],
-            "fee": fee,
-            "net_amount": net_amount,
+            "platform_fee": platform_fee,  # Platform absorbs this
+            "net_amount": net_amount,  # User gets full amount
             "new_user_balance": updated_user["balance"],
             "approval_time": datetime.utcnow().isoformat()
         }
