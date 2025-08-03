@@ -526,7 +526,17 @@ function App() {
   };
 
   const createBet = async () => {
+    console.log('🎯 Starting createBet function');
+    console.log('Current user:', currentUser);
+    console.log('New bet data:', newBet);
+    
     if (!currentUser || !newBet.event_description.trim() || !newBet.event_id.trim() || !newBet.side_name.trim()) {
+      console.log('❌ Validation failed:', {
+        hasUser: !!currentUser,
+        hasDescription: !!newBet.event_description.trim(),
+        hasEventId: !!newBet.event_id.trim(),
+        hasSideName: !!newBet.side_name.trim()
+      });
       alert('⚠️ Por favor, preencha todos os campos obrigatórios');
       return;
     }
@@ -545,6 +555,8 @@ function App() {
       console.log('🎯 Creating bet with matching system:', betData);
       
       const response = await axios.post(`${API}/bets`, betData);
+      
+      console.log('✅ Bet creation response:', response.data);
       
       // Check if bet was automatically matched
       if (response.data.status === 'active') {
@@ -573,7 +585,9 @@ function App() {
       await refreshCurrentUser();
       
     } catch (error) {
-      console.error('Error creating bet:', error);
+      console.error('❌ Error creating bet - Full error object:', error);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error response data:', error.response?.data);
       
       // Handle different error types more carefully
       let errorMessage = 'Erro ao criar aposta';
@@ -581,6 +595,9 @@ function App() {
       if (error.response?.data?.detail) {
         // Handle string or object detail
         const detail = error.response.data.detail;
+        console.log('❌ Error detail type:', typeof detail);
+        console.log('❌ Error detail value:', detail);
+        
         if (typeof detail === 'string') {
           errorMessage = detail;
         } else if (Array.isArray(detail)) {
@@ -592,6 +609,7 @@ function App() {
         errorMessage = error.message;
       }
       
+      console.log('❌ Final error message:', errorMessage);
       alert(errorMessage);
     }
     setLoading(false);
