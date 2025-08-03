@@ -1346,6 +1346,14 @@ function App() {
               </span>
             </div>
             <Button 
+              onClick={forceRefreshUserData}
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1"
+              size="sm"
+            >
+              {loading ? '⏳' : '🔄 Atualizar'}
+            </Button>
+            <Button 
               variant="outline" 
               onClick={logout}
               className="border-white/20 text-white hover:bg-white/10"
