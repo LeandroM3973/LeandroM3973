@@ -314,9 +314,12 @@ def hash_password(password: str) -> str:
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(password.encode('utf-8'), salt).decode('utf-8')
 
-def verify_password(password: str, hashed: str) -> bool:
+def verify_password(password: str, hashed) -> bool:
     """Verify a password against its hash"""
-    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+    # Handle both string and bytes hashed passwords
+    if isinstance(hashed, str):
+        hashed = hashed.encode('utf-8')
+    return bcrypt.checkpw(password.encode('utf-8'), hashed)
 
 # User Routes
 @api_router.post("/users", response_model=UserResponse)
