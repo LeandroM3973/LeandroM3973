@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class BetArenaAPITester:
-    def __init__(self, base_url="https://47eed0e6-f30e-431a-b6a5-47794796692b.preview.emergentagent.com"):
+    def __init__(self, base_url="https://64abfcf0-ee99-4b43-b7a2-71e6ef16a259.preview.emergentagent.com"):
         self.base_url = base_url
         self.api_url = f"{base_url}/api"
         self.tests_run = 0
@@ -676,7 +676,7 @@ class BetArenaAPITester:
         print(f"✅ Payment preference created with transaction ID: {transaction_id}")
         
         # Verify webhook URL format in backend logs (simulated check)
-        expected_webhook_url = f"https://47eed0e6-f30e-431a-b6a5-47794796692b.preview.emergentagent.com/api/payments/webhook?webhookSecret=betarena_webhook_secret_2025"
+        expected_webhook_url = f"https://64abfcf0-ee99-4b43-b7a2-71e6ef16a259.preview.emergentagent.com/api/payments/webhook?webhookSecret=betarena_webhook_secret_2025"
         print(f"✅ Expected webhook URL format: {expected_webhook_url}")
         
         print(f"\n2. WEBHOOK ENDPOINT TESTING")

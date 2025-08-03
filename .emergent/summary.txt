@@ -1,20 +1,20 @@
 <analysis>
-The AI engineer successfully transformed a conceptual betting application, BetArena, into a functional MVP, then extensively refined and debugged it. Initially, the project focused on core betting logic, user authentication, and integrating Mercado Pago. Significant efforts were directed towards resolving persistent payment integration issues, including incorrect API keys, popup blockers, and hardcoded URLs in both frontend and backend. A major pivot involved migrating the entire payment system from Mercado Pago to AbacatePay, which required comprehensive code changes across the stack, careful debugging of API calls, and environment variable management. The engineer also addressed mobile UI responsiveness and session persistence bugs. The trajectory concludes with the implementation of the AbacatePay frontend SDK, poised for final integration testing.
+The previous AI engineer successfully brought the BetArena application from a conceptual MVP to a robust, functional platform, focusing heavily on payment system integration and critical bug fixes. Initially, the project revolved around Mercado Pago, but a significant and complex migration to AbacatePay was undertaken, involving both frontend and backend adjustments, meticulous debugging of API calls, and environment variable management. Key challenges addressed included persistent payment failures due to incorrect SDK usage, invalid URLs, and mobile responsiveness. The engineer also implemented crucial features like email verification, login logging, and a sophisticated admin-only Judge panel. The final stages focused on perfecting the AbacatePay webhook integration, including handling real-world payloads, enforcing HTTPS, and implementing idempotency to prevent duplicate notifications. The trajectory concludes with the implementation of an automatic bet matching system.
 </analysis>
 
 <product_requirements>
-The BetArena application is a two-player betting platform where users deposit funds, and the winner claims the opponent's deposit. Initially, it supported third-party judging and a simulated payment system. The app evolved to include core two-player betting logic with judge determination, a real Mercado Pago integration for deposits (PIX/cards) and payouts, and a 20% platform fee on winnings. User persistence through secure email/password authentication (bcrypt hashed) was implemented. Bets feature a 20-minute timeout for invite-based bets with automatic refunds. An invite system allows users to create and share unique bet links. UI enhancements include money protection messages and responsive design. The judge panel access needs to be restricted to administrators. The payment system was recently migrated from Mercado Pago to AbacatePay, focusing on fixed-fee PIX transactions.
+The BetArena application is a two-player betting platform where users deposit funds, and the winner claims the opponent's deposit. Core features include secure user authentication (email/password with bcrypt hashing), an invite system for private bets (20-minute timeout with automatic refunds), and a real-money payment system for deposits and payouts. Initially, Mercado Pago was integrated but later fully migrated to AbacatePay, supporting fixed-fee PIX transactions. A 20% platform fee is applied to winnings. Key security and usability enhancements include enforced email verification for logins, comprehensive logging of all login attempts, and responsive UI design for mobile devices. Crucially, access to the judge panel, where bet outcomes are decided, must be restricted exclusively to administrators, ensuring that only the platform owner determines winners. The system should also automatically match opposing bets between users for the same event.
 </product_requirements>
 
 <key_technical_concepts>
--   **FastAPI**: Python web framework for backend APIs.
--   **React**: JavaScript library for frontend UI.
--   **MongoDB**: NoSQL database for data storage.
--   **Mercado Pago SDK**: Initial payment gateway integration.
--   **AbacatePay SDK**: Current payment gateway integration for PIX.
--   **bcrypt**: Password hashing for security.
--   **React Router DOM**: Client-side routing.
--   **SendGrid**: Email service (planned for 'Forgot Password').
+- **FastAPI**: Python web framework for backend APIs.
+- **React**: JavaScript library for frontend UI.
+- **MongoDB**: NoSQL database for data storage.
+- **AbacatePay SDK**: Current payment gateway integration for PIX.
+- **bcrypt**: Password hashing for user authentication.
+- **React Router DOM**: Client-side routing.
+- **SendGrid**: Email service (planned for 'Forgot Password' and email confirmation).
+- **Webhook Idempotency**: Mechanism to prevent duplicate processing of server-side notifications.
 </key_technical_concepts>
 
 <code_architecture>
@@ -23,28 +23,38 @@ The application follows a full-stack architecture with a React frontend, FastAPI
 
 
 -   ****:
-    -   **Summary**: The core FastAPI application handling user authentication, bet management, payment processing, and transaction history.
+    -   **Summary**: Core FastAPI application for user management, bets, payments, and admin functions.
     -   **Changes Made**:
-        -   Initial Mercado Pago integration and webhook handling (later removed).
-        -   Logic for platform fees, automatic refunds for expired bets.
-        -   Password hashing and invite code generation.
-        -   Complete migration from Mercado Pago to AbacatePay: Mercado Pago SDK removed, AbacatePay SDK integrated for  and webhooks.
-        -   Added logic for demo mode fallback for AbacatePay.
-        -   Adjusted AbacatePay API calls (data structure, response parsing).
-        -    environment variable introduced and used for AbacatePay callbacks.
-        -   Validation of AbacatePay API credentials.
+        -   Full migration from Mercado Pago to AbacatePay, including SDK replacement and API call adjustments.
+        -    environment variable introduced for AbacatePay callbacks.
+        -   AbacatePay SDK updated to use  class for billing creation.
+        -   Added email validation and fallback for AbacatePay billing.
+        -   Webhook handling improved:  now included in AbacatePay billing,  parsing fixed for real payloads,  import added, and detailed logging.
+        -   Implemented webhook idempotency using MD5 hashes and a 5-minute cache.
+        -   User model updated to include  and  fields.
+        -   New  model created to track all login attempts (IP, user agent, timestamp).
+        -   Login endpoint modified to enforce email verification and log logins.
+        -   Added  and  endpoints for administrative control.
+        -   Admin check middleware added to  endpoint.
+        -   Added  and  functions to enforce HTTPS for all webhook URLs.
+        -    model fields (, ) fixed to ensure correct data on creation, addressing payment processing errors.
+        -   Implemented  logic and integrated it into  endpoint for automatic bet matching.
+        -   Added  and  to  model.
 
 -   ****:
-    -   **Summary**: The main React component managing UI layout, routing, and interactions with the backend.
+    -   **Summary**: Main React component managing UI, routing, and backend interaction.
     -   **Changes Made**:
-        -   Initial Mercado Pago SDK integration for payment display (later removed).
-        -   UI adjustments for mobile responsiveness (fixing overlapping text in navigation).
-        -   Improved handling of Mercado Pago payment redirects (avoiding popup blockers).
-        -   Implemented mobile-optimized dialogue for deposit function.
-        -   Removed Mercado Pago specific UI elements.
-        -   Updated for AbacatePay integration, including new UI dialogues, display of fixed fees.
-        -   Corrected user session persistence: added  to load user data from  on initial render.
-        -   Integrated AbacatePay frontend SDK.
+        -   Mercado Pago elements removed, AbacatePay UI integrated (dialogues, fixed fees).
+        -   AbacatePay frontend SDK import and usage removed (as it's a Node.js only SDK, frontend now directly calls backend).
+        -   Improved mobile responsiveness for payment dialogs and general UI.
+        -   User session persistence fixed with  to load data from .
+        -   Added  function and  to refresh user data from backend, ensuring  status is reflected.
+        -   Implemented manual payment status check/approval UI for fallback (yellow card with buttons).
+        -   Added  and  functions for manual payment verification.
+        -   Integrated UI for email verification status and manual verification.
+        -   Admin badge added to header.
+        -   Judge tab visibility restricted to admin users ().
+        -   Bet creation form updated to include  and  for automatic matching.
 
 -   ****:
     -   **Summary**: Entry point configuring React app and .
@@ -55,55 +65,38 @@ The application follows a full-stack architecture with a React frontend, FastAPI
     -   **Changes Made**: Created from scratch.
 
 -   ** & **:
-    -   **Summary**: Environment variable files for backend (MongoDB URL, Mercado Pago/AbacatePay credentials) and frontend (Backend URL, payment provider config).
+    -   **Summary**: Environment variable files for backend (MongoDB URL, AbacatePay credentials) and frontend (Backend URL, payment provider config).
     -   **Changes Made**:
-        -   Updated Mercado Pago keys multiple times.
-        -   Added .
-        -   Mercado Pago keys removed;  and  added for backend.
-        -    added to frontend  to switch payment providers.
-        -    in frontend fixed from preview to .
-        -    added to backend  for AbacatePay callbacks, changed from  to .
+        -    and  added for backend.
+        -    added to frontend .
+        -    in frontend adjusted to  then to .
+        -    added to backend  ().
 
 -   ****:
-    -   **Summary**: A newly created file containing service logic for interacting with the AbacatePay frontend SDK.
-    -   **Changes Made**: Created from scratch to encapsulate AbacatePay client-side operations.
+    -   **Summary**: Initially created for frontend AbacatePay SDK interaction.
+    -   **Changes Made**: Removed as AbacatePay has no client-side SDK.
 
 -   ****:
-    -   **Summary**: A newly created file for configuring the AbacatePay frontend SDK.
-    -   **Changes Made**: Created from scratch to centralize AbacatePay client configuration.
-
+    -   **Summary**: Initially created for configuring AbacatePay frontend SDK.
+    -   **Changes Made**: Removed as AbacatePay has no client-side SDK.
 </code_architecture>
 
 <pending_tasks>
--   **Forgot Password Feature**: Implement a Forgot Password functionality that sends a confirmation email for password resetting. (Backend setup with SendGrid has started but paused).
--   **Judge Panel Access**: Restrict the Judge Panel to only administrator users.
+-   **Forgot Password Feature**: Implement a Forgot Password functionality that sends a confirmation email for password resetting using SendGrid. (Backend setup with SendGrid has started but paused, user still needs to provide credentials).
 </pending_tasks>
 
 <current_work>
-Immediately before this summary, the AI engineer successfully completed the full migration from Mercado Pago to AbacatePay. This involved extensive modifications to the backend () to remove Mercado Pago SDK, integrate AbacatePay API calls for payment preference creation and webhooks, and handle credential validation. Frontend () was updated to reflect AbacatePay branding, dialogs, and to process payments via the new provider.
+Immediately before this summary request, the AI engineer was working on integrating and validating the AbacatePay webhook for automatic balance crediting and implementing an automatic bet matching system.
 
-The system was fully tested for AbacatePay production keys (), with successful payment preference creation and accurate fee calculation (R$ 0,80 fixed fee).
+The core issue of the balance not updating after payment (despite the simulated tests showing success) was identified as the real AbacatePay webhook not reaching the backend, primarily due to an incorrect webhook URL and a misunderstanding of how AbacatePay webhooks are configured (dashboard vs. API). The  URL was found to be offline, and the system was updated to use the active  URL. Backend webhook URL generation was fixed to always use HTTPS. The webhook processing logic was made more robust to correctly parse real AbacatePay payloads (which differ from expectations, specifically regarding ). A manual payment verification/approval system was also implemented in the frontend and backend as a fallback, with a dedicated UI.
 
-The last significant bug fixed was the persistent payment failure, which involved two core issues:
-1.  **Frontend Backend URL**:  in  was hardcoded to an invalid preview URL, preventing correct backend communication. This was changed to .
-2.  **Backend Callback URLs**: AbacatePay callback URLs in  were hardcoded to preview URLs, and then rejected . This was resolved by using an environment variable  () in  and utilizing it in the backend code.
+A critical bug of duplicate notifications was addressed by implementing an idempotency check in the backend webhook processor using MD5 hashes and a 5-minute cache. This prevents multiple creditings for a single payment.
 
-The very last set of actions involved implementing the AbacatePay JavaScript SDK on the frontend:
--    was installed via yarn install v1.22.22
-[1/4] Resolving packages...
-[2/4] Fetching packages...
-[3/4] Linking dependencies...
-[4/4] Building fresh packages...
-success Saved lockfile.
-Done in 0.19s. in .
--    was created for frontend configuration.
--   The SDK was imported into .
--    was created to handle frontend SDK interactions.
--   The payment function in  was improved to leverage the new frontend SDK.
+The latest major feature being implemented is the **automatic matching of opposing bets**. This involves adding  and  fields to the  model and  schema, and modifying the  backend endpoint to actively search for and match pending bets that align on event and opposite side. The frontend  was updated to reflect these new fields in the bet creation form.
 
-The current state is that the AbacatePay frontend SDK has been implemented and is ready for a comprehensive full-stack integration test.
+At the time of this summary, the automatic bet matching system has been implemented on both backend and frontend. The user's last communication confirmed the site is intended to run 24/7, and the system is designed to support this with automatic processes.
 </current_work>
 
 <optional_next_step>
-Test the complete frontend and backend integration of the AbacatePay SDK.
+Test the newly implemented automatic bet matching feature thoroughly to ensure it connects opposing bets as expected.
 </optional_next_step>
