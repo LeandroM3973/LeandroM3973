@@ -110,14 +110,32 @@ function InvitePage() {
   }
 
   if (error) {
+    // Determine the appropriate title based on error type
+    let errorTitle = "Convite Inválido";
+    let errorIcon = "❌";
+    
+    if (error.includes("expirou")) {
+      errorTitle = "Convite Expirado";
+      errorIcon = "⏰";
+    } else if (error.includes("não encontrado")) {
+      errorTitle = "Convite Não Encontrado";
+      errorIcon = "🔍";
+    } else if (error.includes("não está mais disponível")) {
+      errorTitle = "Aposta Indisponível";
+      errorIcon = "🚫";
+    } else if (error.includes("carregar")) {
+      errorTitle = "Erro de Conexão";
+      errorIcon = "📡";
+    }
+    
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md bg-white/10 backdrop-blur-lg border-white/20">
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
-              <Trophy className="w-8 h-8 text-red-400" />
+              <span className="text-3xl">{errorIcon}</span>
             </div>
-            <CardTitle className="text-2xl font-bold text-white">Convite Inválido</CardTitle>
+            <CardTitle className="text-2xl font-bold text-white">{errorTitle}</CardTitle>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-gray-300">{error}</p>
