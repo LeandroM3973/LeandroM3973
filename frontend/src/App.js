@@ -1897,13 +1897,30 @@ function App() {
           {currentUser?.is_admin && (
             <TabsContent value="judge">
               <div className="space-y-6">
-                <div className="bg-white/10 backdrop-blur-lg border-white/20 rounded-lg p-6">
+                  <div className="bg-white/10 backdrop-blur-lg border-white/20 rounded-lg p-6">
                   <h2 className="text-2xl font-bold text-white flex items-center space-x-2 mb-4">
                     🔒 <span>Painel do Juiz (Administrador)</span>
                   </h2>
                   <p className="text-gray-300 mb-6">
                     ⚠️ <strong>Acesso restrito ao administrador.</strong> Apenas você pode declarar vencedores das apostas.
                   </p>
+                  
+                  {/* Admin Tools */}
+                  <div className="bg-red-500/20 rounded-lg p-4 border border-red-500/30 mb-6">
+                    <h3 className="text-red-200 font-semibold mb-2">🚨 Ferramentas de Emergência</h3>
+                    <div className="flex flex-wrap gap-4">
+                      <Button
+                        onClick={autoVerifyPendingPayments}
+                        disabled={loading}
+                        className="bg-yellow-600 hover:bg-yellow-700 text-white"
+                      >
+                        {loading ? 'Verificando...' : '🔄 Verificar Pagamentos Pendentes'}
+                      </Button>
+                    </div>
+                    <p className="text-red-200 text-xs mt-2">
+                      Use apenas se houver problemas com webhooks de pagamento
+                    </p>
+                  </div>
                 </div>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {bets.filter(bet => bet.status === 'active').map((bet) => (
