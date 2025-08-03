@@ -580,9 +580,9 @@ function App() {
         
         alert(`✅ DEPÓSITO APROVADO COM SUCESSO!\n\n` +
               `👤 Usuário: ${result.user_name}\n` +
-              `💰 Valor: R$ ${result.amount.toFixed(2)}\n` +
-              `💸 Taxa: R$ ${result.fee.toFixed(2)}\n` +
-              `💎 Valor líquido: R$ ${result.net_amount.toFixed(2)}\n` +
+              `💰 Valor Depositado: R$ ${result.amount.toFixed(2)}\n` +
+              `💎 Valor Creditado: R$ ${result.net_amount.toFixed(2)} (VALOR INTEGRAL)\n` +
+              `🏢 Taxa Platform: R$ ${result.platform_fee.toFixed(2)} (absorvida pela BetArena)\n` +
               `💳 Saldo atual: R$ ${result.new_user_balance.toFixed(2)}\n\n` +
               `${result.message}\n\n` +
               `ℹ️ O usuário será notificado automaticamente em até 30 segundos, ou pode usar o botão "🔄 Atualizar" para ver o saldo imediatamente.`);
