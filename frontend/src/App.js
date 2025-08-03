@@ -1760,9 +1760,9 @@ function App() {
                 <Button
                   onClick={createBet}
                   disabled={loading || !currentUser}
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-sm py-3 font-medium"
                 >
-                  {loading ? 'Criando Aposta...' : '🎯 Criar Aposta (Auto-Match)'}
+                  {loading ? '⏳ Criando Aposta...' : '🎯 Criar Aposta (Auto-Match)'}
                 </Button>
               </CardContent>
             </Card>
