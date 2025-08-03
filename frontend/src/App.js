@@ -574,7 +574,25 @@ function App() {
       
     } catch (error) {
       console.error('Error creating bet:', error);
-      alert(error.response?.data?.detail || 'Erro ao criar aposta');
+      
+      // Handle different error types more carefully
+      let errorMessage = 'Erro ao criar aposta';
+      
+      if (error.response?.data?.detail) {
+        // Handle string or object detail
+        const detail = error.response.data.detail;
+        if (typeof detail === 'string') {
+          errorMessage = detail;
+        } else if (Array.isArray(detail)) {
+          errorMessage = detail.map(err => typeof err === 'string' ? err : JSON.stringify(err)).join('\n');
+        } else if (typeof detail === 'object') {
+          errorMessage = JSON.stringify(detail);
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
     }
     setLoading(false);
   };
